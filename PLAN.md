@@ -1568,15 +1568,17 @@ To ensure stable, reproducible output across runs, environments, and tool versio
 - [x] Implement `generate_activity_id()`
 - [x] Implement `_hash_xml_span()`
 - [x] Implement `_normalize_xml()`
-- [ ] Update `Activity` model with `xml_span` field
+- [x] Update `Activity` model with `xml_span` field
 - [ ] Update `XamlParser` to capture XML spans
 - [ ] Update `XamlParser` to generate stable IDs
-- [ ] Create `python/xaml_parser/ordering.py`
-- [ ] Implement `sort_by_id()`
+- [x] Create `python/xaml_parser/ordering.py`
+- [x] Implement `sort_by_id()` and deterministic sorting utilities
 - [x] Create `python/tests/test_id_generation.py`
 - [x] Write ID generation tests
 - [x] Write determinism tests
 - [x] Run tests: `pytest python/tests/test_id_generation.py -v` (21 tests pass)
+- [x] Create `python/tests/test_ordering.py`
+- [x] Write ordering tests (22 tests pass)
 
 ### Phase 2: Control Flow Extraction
 - [ ] Define `EdgeDto` dataclass
