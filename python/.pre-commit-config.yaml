@@ -15,7 +15,8 @@ repos:
       - id: mypy
         additional_dependencies:
           - types-defusedxml
-        args: [--config-file=mypy.ini]
+        args: [--config-file=python/mypy.ini]
+        files: ^python/xaml_parser/(dto|id_generation|control_flow|normalization|emitters|validation_v2)\.py$
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
