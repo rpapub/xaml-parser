@@ -45,6 +45,12 @@ test = [
     "pytest>=8.0",
     "pytest-cov>=4.1",
 ]
+docs = [
+    "jinja2>=3.1",
+]
+full = [
+    "jinja2>=3.1",
+]
 
 [dependency-groups]
 test = [
@@ -63,9 +69,13 @@ xaml-parser = "xaml_parser.cli:main"
 [project.entry-points."xamlparser.emitters"]
 json = "xaml_parser.emitters.json_emitter:JsonEmitter"
 mermaid = "xaml_parser.emitters.mermaid_emitter:MermaidEmitter"
+doc = "xaml_parser.emitters.doc_emitter:DocEmitter"
 
 [tool.hatch.build.targets.wheel]
 packages = ["xaml_parser"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"xaml_parser/templates" = "xaml_parser/templates"
 
 [tool.ruff]
 line-length = 100
