@@ -62,6 +62,7 @@ xaml-parser = "xaml_parser.cli:main"
 
 [project.entry-points."xamlparser.emitters"]
 json = "xaml_parser.emitters.json_emitter:JsonEmitter"
+mermaid = "xaml_parser.emitters.mermaid_emitter:MermaidEmitter"
 
 [tool.hatch.build.targets.wheel]
 packages = ["xaml_parser"]
