@@ -34,6 +34,90 @@ The parser handles malformed input gracefully:
 
 ## Architecture Overview
 
+### Current Architecture (v1.0.0+)
+
+The parser uses a layered architecture separating parsing, normalization, and output:
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│                         Input Layer                            │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  XAML File(s) → File Reading → Encoding Detection        │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└────────────────────────┬───────────────────────────────────────┘
+                         │
+┌────────────────────────▼───────────────────────────────────────┐
+│                    Parsing Layer (Existing)                    │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  XamlParser / ProjectParser                              │  │
+│  │    ├─► XML Parsing (defusedxml)                          │  │
+│  │    ├─► Argument Extraction                               │  │
+│  │    ├─► Variable Extraction                               │  │
+│  │    ├─► Activity Extraction                               │  │
+│  │    ├─► Expression Analysis                               │  │
+│  │    └─► Metadata Extraction                               │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│  Output: ParseResult (internal models)                         │
+└────────────────────────┬───────────────────────────────────────┘
+                         │
+┌────────────────────────▼───────────────────────────────────────┐
+│                  Normalization Layer (NEW)                     │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Normalizer                                              │  │
+│  │    ├─► IdGenerator                                       │  │
+│  │    │   └─► Content-hash based IDs (wf:sha256:...)       │  │
+│  │    ├─► ControlFlowExtractor                              │  │
+│  │    │   └─► Explicit edges (Then/Else/Next/...)          │  │
+│  │    ├─► Deterministic Sorting                             │  │
+│  │    └─► DTO Transformation                                │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│  Output: WorkflowDto[] (self-describing)                       │
+└────────────────────────┬───────────────────────────────────────┘
+                         │
+┌────────────────────────▼───────────────────────────────────────┐
+│                      DTO Layer (NEW)                           │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  WorkflowDto - Self-describing workflow representation   │  │
+│  │    ├─► schema_id, schema_version (self-describing)       │  │
+│  │    ├─► id (content-hash: wf:sha256:...)                  │  │
+│  │    ├─► source (path, hash, aliases)                      │  │
+│  │    ├─► activities[] (with stable IDs)                    │  │
+│  │    ├─► edges[] (explicit control flow)                   │  │
+│  │    ├─► invocations[] (workflow calls)                    │  │
+│  │    └─► issues[] (parsing/validation issues)              │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└────────────────────────┬───────────────────────────────────────┘
+                         │
+┌────────────────────────▼───────────────────────────────────────┐
+│                   Emitter Layer (NEW - Pluggable)              │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  EmitterRegistry (plugin discovery via entry points)     │  │
+│  │    ├─► DataEmitter (JSON, YAML)                          │  │
+│  │    │   ├─► Combined mode (single file)                   │  │
+│  │    │   └─► Per-workflow mode (multiple files)            │  │
+│  │    ├─► DiagramEmitter (Mermaid, DOT, PlantUML)           │  │
+│  │    │   └─► Visualize control flow graphs                 │  │
+│  │    └─► DocEmitter (Markdown via Jinja2)                  │  │
+│  │        ├─► Workflow documentation                        │  │
+│  │        ├─► Index pages                                   │  │
+│  │        └─► Custom templates                              │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└────────────────────────┬───────────────────────────────────────┘
+                         │
+┌────────────────────────▼───────────────────────────────────────┐
+│                   Validation Layer (NEW)                       │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │  Validator                                               │  │
+│  │    ├─► SchemaValidator (JSON Schema validation)          │  │
+│  │    └─► ReferentialValidator (ID references)              │  │
+│  └──────────────────────────────────────────────────────────┘  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+### Legacy Architecture (v0.x - Deprecated)
+
+The original monolithic architecture combined parsing and output:
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    XAML Parser                          │
@@ -67,6 +151,63 @@ The parser handles malformed input gracefully:
 │    - Diagnostics reporting                              │
 └─────────────────────────────────────────────────────────┘
 ```
+
+## Layer Responsibilities
+
+### Input Layer
+- File I/O and encoding detection
+- Path normalization (to POSIX format)
+- Initial XML structure validation
+
+### Parsing Layer (Existing)
+- XML parsing with defusedxml for security
+- Element extraction (arguments, variables, activities)
+- Expression analysis and variable reference tracking
+- Metadata extraction (namespaces, assembly references)
+- Internal model construction (ParseResult)
+
+### Normalization Layer (NEW in v1.0.0)
+- **IdGenerator**: Generate stable content-hash based IDs
+  - W3C XML Canonicalization (C14N) for deterministic hashing
+  - SHA-256 with 16-char truncation
+  - Format: `prefix:sha256:abc123def456...`
+- **ControlFlowExtractor**: Extract explicit edges from activity tree
+  - Support for all edge kinds (Then, Else, Next, Case, etc.)
+  - Condition extraction for conditional branches
+  - State machine and flowchart modeling
+- **Normalizer**: Transform ParseResult → WorkflowDto
+  - Deterministic sorting of all collections
+  - Field mapping and enrichment
+  - Self-describing metadata addition
+
+### DTO Layer (NEW in v1.0.0)
+- **Separation of Concerns**: DTOs independent from internal parsing models
+- **Schema Versioning**: Self-describing with `schema_id` and `schema_version`
+- **Stable IDs**: Content-hash based, path-independent
+- **Complete Information**: Activities include all business logic
+- **Control Flow**: Explicit edges separate from tree hierarchy
+
+### Emitter Layer (NEW in v1.0.0)
+- **Pluggable Architecture**: Entry point based plugin system
+- **DataEmitter**: JSON output (YAML in v1.1.0)
+  - Combined mode: Single file for all workflows
+  - Per-workflow mode: One file per workflow
+  - Field profiles: full, minimal, mcp, datalake
+- **DiagramEmitter**: Mermaid diagrams (DOT/PlantUML in v1.1.0)
+  - Control flow visualization
+  - Activity graph rendering
+  - Configurable styling
+- **DocEmitter**: Markdown documentation via Jinja2
+  - Per-workflow documentation
+  - Index generation
+  - Custom template support
+
+### Validation Layer (NEW in v1.0.0)
+- **SchemaValidator**: JSON Schema validation
+- **ReferentialValidator**: ID reference integrity checking
+- **Issue Collection**: Structured error/warning reporting
+
+---
 
 ## Component Design
 
@@ -378,7 +519,15 @@ parser = XamlParser(config)
 
 ## References
 
+### Architecture Documents
+- [ADR: DTO Design](ADR-DTO-DESIGN.md) - Design decisions for DTO layer
+- [PLAN.md](../PLAN.md) - Implementation plan and roadmap
+- [zweitmeinung.md](zweitmeinung.md) - Analyst requirements
+
+### External References
 - [JSON Schema Specification](https://json-schema.org/)
+- [JSON Schema Draft 2020-12](https://json-schema.org/draft/2020-12/schema)
+- [W3C XML Canonicalization](https://www.w3.org/TR/xml-c14n)
 - [UiPath XAML Documentation](https://docs.uipath.com/)
 - [Python Type Hints](https://peps.python.org/pep-0484/)
 - [Go Project Layout](https://github.com/golang-standards/project-layout)
