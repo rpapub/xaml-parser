@@ -53,6 +53,12 @@ from .constants import (
     SKIP_ELEMENTS,
     DEFAULT_CONFIG
 )
+from .project import (
+    ProjectParser,
+    ProjectConfig,
+    ProjectResult,
+    WorkflowResult
+)
 
 # Public API
 __all__ = [
@@ -98,7 +104,13 @@ __all__ = [
     'STANDARD_NAMESPACES',
     'CORE_VISUAL_ACTIVITIES',
     'SKIP_ELEMENTS',
-    'DEFAULT_CONFIG'
+    'DEFAULT_CONFIG',
+
+    # Project parsing
+    'ProjectParser',
+    'ProjectConfig',
+    'ProjectResult',
+    'WorkflowResult'
 ]
 
 

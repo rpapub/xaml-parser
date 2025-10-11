@@ -35,7 +35,8 @@ def test_xaml():
 @pytest.fixture
 def testdata_dir():
     """Path to shared testdata directory."""
-    return Path(__file__).parent.parent / "testdata"
+    # testdata is at monorepo root, not in python/
+    return Path(__file__).parent.parent.parent / "testdata"
 
 
 @pytest.fixture

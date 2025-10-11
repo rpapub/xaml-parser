@@ -97,14 +97,65 @@ uv run xaml-parser workflow.xaml
 - `--strict` - Fail on any error
 - `--help` - Show all options
 
+### Project Parsing
+
+Parse entire UiPath projects automatically:
+
+```bash
+# Parse entire project (discovers all workflows from entry points)
+xaml-parser --project /path/to/project
+
+# Show workflow dependency graph
+xaml-parser --project . --graph
+
+# Parse only entry points (no recursive discovery)
+xaml-parser --project . --entry-points-only
+```
+
+**Python API for Projects:**
+
+```python
+from pathlib import Path
+from xaml_parser import ProjectParser
+
+# Parse entire project
+parser = ProjectParser()
+result = parser.parse_project(Path("path/to/project"))
+
+if result.success:
+    print(f"Project: {result.project_config.name}")
+    print(f"Workflows: {result.total_workflows}")
+
+    # Access entry points
+    for workflow in result.get_entry_points():
+        print(f"Entry: {workflow.relative_path}")
+
+    # Access dependency graph
+    for workflow_path, dependencies in result.dependency_graph.items():
+        print(f"{workflow_path} invokes:")
+        for dep in dependencies:
+            print(f"  -> {dep}")
+else:
+    print("Project parsing failed:", result.errors)
+```
+
+**How it works:**
+1. Reads `project.json` to find entry points
+2. Parses entry point workflows
+3. Recursively discovers workflows via `InvokeWorkflowFile` activities
+4. Builds complete dependency graph
+5. Returns all workflows with parse results
+
 ## Features
 
 - **Zero Dependencies**: Uses only Python standard library (except defusedxml for security)
 - **Complete Extraction**: Arguments, variables, activities, expressions, annotations
+- **Project Parsing**: Auto-discover and parse entire UiPath projects with dependency analysis
 - **Type Safety**: Full type hints for all APIs
 - **Error Handling**: Graceful degradation with detailed error reporting
 - **Schema Validation**: Output validates against JSON schemas
 - **Performance**: Fast parsing even for large workflows
+- **CLI Tool**: Full-featured command-line interface for batch processing
 
 ## Configuration
 
@@ -124,7 +175,7 @@ result = parser.parse_file(file_path)
 
 ### XamlParser
 
-Main parser class:
+Main workflow parser class:
 
 ```python
 parser = XamlParser(config=None)
@@ -132,16 +183,35 @@ result = parser.parse_file(Path("workflow.xaml"))
 result = parser.parse_content(xaml_string)
 ```
 
+### ProjectParser
+
+Project-level parser class:
+
+```python
+parser = ProjectParser(config=None)
+result = parser.parse_project(
+    project_dir=Path("path/to/project"),
+    recursive=True,              # Follow InvokeWorkflowFile references
+    entry_points_only=False      # Only parse entry points
+)
+```
+
 ### Models
 
 Data models for parsed content:
 
+**Workflow Models:**
 - `ParseResult`: Top-level result with success/error info
 - `WorkflowContent`: Complete workflow metadata
 - `WorkflowArgument`: Argument definition
 - `WorkflowVariable`: Variable definition
 - `Activity`: Activity with full metadata
 - `Expression`: Expression with language detection
+
+**Project Models:**
+- `ProjectResult`: Complete project parsing result
+- `ProjectConfig`: Parsed project.json configuration
+- `WorkflowResult`: Individual workflow result in project context
 
 ### Validation
 
@@ -206,7 +276,9 @@ python/
 ├── xaml_parser/          # Source package
 │   ├── __init__.py       # Public API
 │   ├── __version__.py    # Version info
-│   ├── parser.py         # Main parser
+│   ├── parser.py         # Main workflow parser
+│   ├── project.py        # Project parser (NEW)
+│   ├── cli.py            # Command-line interface
 │   ├── models.py         # Data models
 │   ├── extractors.py     # Extraction logic
 │   ├── utils.py          # Utilities
@@ -216,6 +288,7 @@ python/
 ├── tests/                # Test suite
 │   ├── conftest.py       # Pytest fixtures
 │   ├── test_parser.py    # Parser tests
+│   ├── test_project.py   # Project parser tests (NEW)
 │   ├── test_corpus.py    # Corpus tests
 │   └── test_validation.py
 ├── pyproject.toml        # Package configuration

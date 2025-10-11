@@ -10,6 +10,7 @@ import io
 
 from .parser import XamlParser
 from .models import ParseResult
+from .project import ProjectParser, ProjectResult
 
 # Fix stdout encoding for Windows
 if sys.platform == 'win32':
@@ -174,6 +175,101 @@ def format_summary(results: List[tuple[str, ParseResult]]) -> str:
     return "\n".join(lines)
 
 
+def format_project_summary(project_result: ProjectResult) -> str:
+    """Format project parsing summary."""
+    lines = []
+
+    lines.append(f"Project: {project_result.project_config.name}")
+    lines.append(f"Directory: {project_result.project_dir}")
+    lines.append("")
+
+    if not project_result.success:
+        lines.append("[!] Project parsing FAILED")
+        lines.append("")
+        lines.append("Errors:")
+        for error in project_result.errors:
+            lines.append(f"  • {error}")
+        return "\n".join(lines)
+
+    lines.append("[OK] Project parsing succeeded")
+    lines.append("")
+
+    # Project configuration
+    lines.append("Configuration:")
+    if project_result.project_config.main:
+        lines.append(f"  Main: {project_result.project_config.main}")
+    lines.append(f"  Expression Language: {project_result.project_config.expression_language}")
+    if project_result.project_config.dependencies:
+        lines.append(f"  Dependencies: {len(project_result.project_config.dependencies)}")
+    lines.append("")
+
+    # Entry points
+    entry_points = project_result.get_entry_points()
+    if entry_points:
+        lines.append(f"Entry Points: ({len(entry_points)} total)")
+        for ep in entry_points:
+            status = "[OK]" if ep.parse_result.success else "[!]"
+            lines.append(f"  {status} {ep.relative_path}")
+        lines.append("")
+
+    # Workflows summary
+    lines.append(f"Workflows: ({project_result.total_workflows} total)")
+    lines.append(f"  Successfully parsed: {sum(1 for w in project_result.workflows if w.parse_result.success)}")
+    failed = project_result.get_failed_workflows()
+    if failed:
+        lines.append(f"  Failed to parse: {len(failed)}")
+    lines.append(f"  Total parse time: {project_result.total_parse_time_ms:.2f}ms")
+    lines.append("")
+
+    # Workflow list (first 10)
+    lines.append("Workflows:")
+    for workflow in project_result.workflows[:10]:
+        status = "[OK]" if workflow.parse_result.success else "[!]"
+        ep_marker = " (entry)" if workflow.is_entry_point else ""
+        lines.append(f"  {status} {workflow.relative_path}{ep_marker}")
+
+        if workflow.parse_result.success and workflow.parse_result.content:
+            content = workflow.parse_result.content
+            lines.append(f"      Args: {len(content.arguments)}, "
+                        f"Vars: {len(content.variables)}, "
+                        f"Acts: {len(content.activities)}")
+
+    if len(project_result.workflows) > 10:
+        lines.append(f"  ... and {len(project_result.workflows) - 10} more")
+
+    if project_result.warnings:
+        lines.append("")
+        lines.append(f"Warnings: ({len(project_result.warnings)} total, showing first 5)")
+        for warning in project_result.warnings[:5]:
+            lines.append(f"  [!] {warning}")
+
+    return "\n".join(lines)
+
+
+def format_dependency_graph(project_result: ProjectResult) -> str:
+    """Format project dependency graph."""
+    lines = []
+
+    lines.append(f"Project: {project_result.project_config.name}")
+    lines.append(f"Dependency Graph:")
+    lines.append("")
+
+    if not project_result.dependency_graph:
+        lines.append("No dependencies found")
+        return "\n".join(lines)
+
+    for workflow_path, dependencies in sorted(project_result.dependency_graph.items()):
+        lines.append(f"{workflow_path}")
+        if dependencies:
+            for dep in dependencies:
+                lines.append(f"  -> {dep}")
+        else:
+            lines.append(f"  (no dependencies)")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def parse_files(patterns: List[str], config: dict) -> List[tuple[str, ParseResult]]:
     """Parse multiple files from glob patterns."""
     parser = XamlParser(config)
@@ -218,21 +314,46 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
+  # Single file parsing
   xaml-parser Main.xaml                    # Pretty print summary
   xaml-parser Main.xaml --json             # JSON output
   xaml-parser Main.xaml --arguments        # List arguments only
   xaml-parser Main.xaml --activities       # List activities
   xaml-parser Main.xaml --tree             # Activity tree view
   xaml-parser Main.xaml -o output.json     # Save JSON to file
+
+  # Multiple file parsing
   xaml-parser *.xaml --summary             # Summary for multiple files
   xaml-parser **/*.xaml --summary          # Recursive search
+
+  # Project parsing
+  xaml-parser --project /path/to/project   # Parse entire project
+  xaml-parser --project . --graph          # Show dependency graph
+  xaml-parser --project . --entry-points-only  # Parse only entry points
         """
     )
 
     parser.add_argument(
         'files',
-        nargs='+',
+        nargs='*',
         help='XAML file(s) to parse (supports wildcards)'
+    )
+
+    # Project parsing
+    parser.add_argument(
+        '--project',
+        metavar='DIR',
+        help='Parse entire UiPath project (directory with project.json)'
+    )
+    parser.add_argument(
+        '--entry-points-only',
+        action='store_true',
+        help='Only parse entry points (no recursive discovery)'
+    )
+    parser.add_argument(
+        '--graph',
+        action='store_true',
+        help='Show workflow dependency graph'
     )
 
     # Output format options
@@ -302,7 +423,50 @@ Examples:
         'max_depth': args.max_depth,
     }
 
-    # Parse files
+    # Validate arguments
+    if args.project and args.files:
+        print("Error: Cannot specify both --project and files", file=sys.stderr)
+        sys.exit(1)
+
+    if not args.project and not args.files:
+        print("Error: Must specify either files or --project", file=sys.stderr)
+        sys.exit(1)
+
+    # Handle project parsing mode
+    if args.project:
+        project_parser = ProjectParser(config)
+        project_result = project_parser.parse_project(
+            Path(args.project),
+            recursive=not args.entry_points_only,
+            entry_points_only=args.entry_points_only
+        )
+
+        # Format project output
+        if args.graph:
+            output = format_dependency_graph(project_result)
+        elif args.json:
+            # TODO: Implement JSON output for projects
+            output = json.dumps({
+                'project_name': project_result.project_config.name,
+                'project_dir': str(project_result.project_dir),
+                'success': project_result.success,
+                'total_workflows': project_result.total_workflows,
+                'errors': project_result.errors
+            }, indent=2)
+        else:
+            output = format_project_summary(project_result)
+
+        # Write output
+        if args.output:
+            Path(args.output).write_text(output, encoding='utf-8')
+            print(f"Output written to: {args.output}")
+        else:
+            print(output)
+
+        # Exit code
+        sys.exit(0 if project_result.success else 1)
+
+    # Handle file parsing mode
     results = parse_files(args.files, config)
 
     # Handle no files matched
