@@ -58,8 +58,28 @@ else:
 
 ### Command Line Interface
 
+**Project Parsing (Primary Mode):**
+
 ```bash
-# Pretty print workflow summary
+# Parse entire project from project.json
+xaml-parser project.json
+xaml-parser /path/to/project.json
+xaml-parser /path/to/project        # Directory containing project.json
+
+# Show workflow dependency graph
+xaml-parser project.json --graph
+
+# Parse only entry points (no recursive discovery)
+xaml-parser project.json --entry-points-only
+
+# Save to file
+xaml-parser project.json --json -o output.json
+```
+
+**Individual Workflow Files:**
+
+```bash
+# Parse single workflow
 xaml-parser Main.xaml
 
 # JSON output
@@ -71,9 +91,6 @@ xaml-parser Main.xaml --arguments
 # Show activity tree
 xaml-parser Main.xaml --tree
 
-# Save output to file
-xaml-parser Main.xaml --json -o output.json
-
 # Process multiple files
 xaml-parser *.xaml --summary
 
@@ -83,34 +100,28 @@ xaml-parser **/*.xaml --summary
 
 **Using with uv (development):**
 ```bash
+uv run xaml-parser project.json
 uv run xaml-parser workflow.xaml
 ```
 
 **CLI Options:**
+
+*All modes:*
 - `--json` - Output as JSON
-- `--arguments` - Show only arguments
-- `--activities` - Show only activities
-- `--tree` - Show activity tree with nesting
-- `--summary` - Summary for multiple files
 - `-o FILE` - Write output to file
 - `--no-expressions` - Skip expression extraction (faster)
 - `--strict` - Fail on any error
 - `--help` - Show all options
 
-### Project Parsing
+*Project mode:*
+- `--graph` - Show workflow dependency graph
+- `--entry-points-only` - Parse only entry points (no recursive discovery)
 
-Parse entire UiPath projects automatically:
-
-```bash
-# Parse entire project (discovers all workflows from entry points)
-xaml-parser --project /path/to/project
-
-# Show workflow dependency graph
-xaml-parser --project . --graph
-
-# Parse only entry points (no recursive discovery)
-xaml-parser --project . --entry-points-only
-```
+*File mode:*
+- `--arguments` - Show only arguments
+- `--activities` - Show only activities
+- `--tree` - Show activity tree with nesting
+- `--summary` - Summary for multiple files
 
 **Python API for Projects:**
 

@@ -310,11 +310,18 @@ def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         prog='xaml-parser',
-        description='Parse UiPath XAML workflow files and extract metadata',
+        description='Parse UiPath projects and XAML workflow files',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Single file parsing
+  # Project parsing (default/primary mode)
+  xaml-parser project.json                 # Parse entire project
+  xaml-parser /path/to/project.json        # Absolute path
+  xaml-parser /path/to/project             # Directory containing project.json
+  xaml-parser project.json --graph         # Show dependency graph
+  xaml-parser project.json --entry-points-only  # Parse only entry points
+
+  # Single workflow file parsing
   xaml-parser Main.xaml                    # Pretty print summary
   xaml-parser Main.xaml --json             # JSON output
   xaml-parser Main.xaml --arguments        # List arguments only
@@ -322,38 +329,28 @@ Examples:
   xaml-parser Main.xaml --tree             # Activity tree view
   xaml-parser Main.xaml -o output.json     # Save JSON to file
 
-  # Multiple file parsing
+  # Multiple workflow files
   xaml-parser *.xaml --summary             # Summary for multiple files
   xaml-parser **/*.xaml --summary          # Recursive search
-
-  # Project parsing
-  xaml-parser --project /path/to/project   # Parse entire project
-  xaml-parser --project . --graph          # Show dependency graph
-  xaml-parser --project . --entry-points-only  # Parse only entry points
         """
     )
 
     parser.add_argument(
-        'files',
-        nargs='*',
-        help='XAML file(s) to parse (supports wildcards)'
+        'input',
+        nargs='+',
+        help='project.json, directory with project.json, or XAML file(s) to parse'
     )
 
-    # Project parsing
-    parser.add_argument(
-        '--project',
-        metavar='DIR',
-        help='Parse entire UiPath project (directory with project.json)'
-    )
+    # Project parsing options
     parser.add_argument(
         '--entry-points-only',
         action='store_true',
-        help='Only parse entry points (no recursive discovery)'
+        help='[Project mode] Only parse entry points (no recursive discovery)'
     )
     parser.add_argument(
         '--graph',
         action='store_true',
-        help='Show workflow dependency graph'
+        help='[Project mode] Show workflow dependency graph'
     )
 
     # Output format options
@@ -423,20 +420,51 @@ Examples:
         'max_depth': args.max_depth,
     }
 
-    # Validate arguments
-    if args.project and args.files:
-        print("Error: Cannot specify both --project and files", file=sys.stderr)
-        sys.exit(1)
+    # Detect mode: project vs file parsing
+    first_input = args.input[0]
+    input_path = Path(first_input)
 
-    if not args.project and not args.files:
-        print("Error: Must specify either files or --project", file=sys.stderr)
-        sys.exit(1)
+    # Determine if this is project mode
+    is_project_mode = False
+    project_dir = None
+
+    # Check if input is project.json file
+    if first_input.endswith('project.json') or input_path.name == 'project.json':
+        is_project_mode = True
+        if input_path.is_file():
+            project_dir = input_path.parent
+        else:
+            print(f"Error: File not found: {first_input}", file=sys.stderr)
+            sys.exit(1)
+
+    # Check if input is a directory containing project.json
+    elif input_path.is_dir():
+        project_json = input_path / "project.json"
+        if project_json.exists():
+            is_project_mode = True
+            project_dir = input_path
+        else:
+            print(f"Error: No project.json found in directory: {first_input}", file=sys.stderr)
+            sys.exit(1)
+
+    # Validate: project mode options only work in project mode
+    if not is_project_mode:
+        if args.entry_points_only:
+            print("Error: --entry-points-only only works with project.json", file=sys.stderr)
+            sys.exit(1)
+        if args.graph:
+            print("Error: --graph only works with project.json", file=sys.stderr)
+            sys.exit(1)
 
     # Handle project parsing mode
-    if args.project:
+    if is_project_mode:
+        if len(args.input) > 1:
+            print("Error: Cannot specify multiple inputs in project mode", file=sys.stderr)
+            sys.exit(1)
+
         project_parser = ProjectParser(config)
         project_result = project_parser.parse_project(
-            Path(args.project),
+            project_dir,
             recursive=not args.entry_points_only,
             entry_points_only=args.entry_points_only
         )
@@ -467,11 +495,11 @@ Examples:
         sys.exit(0 if project_result.success else 1)
 
     # Handle file parsing mode
-    results = parse_files(args.files, config)
+    results = parse_files(args.input, config)
 
     # Handle no files matched
     if not results:
-        print(f"Error: No files matched pattern(s): {', '.join(args.files)}", file=sys.stderr)
+        print(f"Error: No files matched pattern(s): {', '.join(args.input)}", file=sys.stderr)
         sys.exit(1)
 
     # Format output
