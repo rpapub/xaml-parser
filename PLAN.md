@@ -1583,21 +1583,26 @@ To ensure stable, reproducible output across runs, environments, and tool versio
 - [x] Parser integration: Capture XML spans and generate stable IDs (43 tests pass)
 
 ### Phase 2: Control Flow Extraction
-- [ ] Define `EdgeDto` dataclass
+- [x] Define `EdgeDto` dataclass (already in Phase 0)
 - [ ] Document edge semantics in `docs/CONTROL-FLOW.md`
-- [ ] Create `python/xaml_parser/control_flow.py`
-- [ ] Implement `ControlFlowExtractor` class
-- [ ] Implement `_extract_if_edges()`
-- [ ] Implement `_extract_switch_edges()`
-- [ ] Implement `_extract_flow_decision_edges()`
-- [ ] Implement `_extract_try_catch_edges()`
-- [ ] Implement `_extract_sequence_edges()`
-- [ ] Extract branch conditions
-- [ ] Create `InvocationDto` model
+- [x] Create `python/xaml_parser/control_flow.py`
+- [x] Implement `ControlFlowExtractor` class
+- [x] Implement `_extract_if_edges()` - Then/Else branches
+- [x] Implement `_extract_switch_edges()` - Case/Default branches
+- [x] Implement `_extract_flow_decision_edges()` - True/False paths
+- [x] Implement `_extract_try_catch_edges()` - Try/Catch/Finally edges
+- [x] Implement `_extract_sequence_edges()` - Sequential Next edges
+- [x] Implement `_extract_flowchart_edges()` - Flowchart links
+- [x] Implement `_extract_parallel_edges()` - Parallel branches
+- [x] Implement `_extract_pick_edges()` - Event triggers
+- [x] Implement `_extract_state_machine_edges()` - State transitions
+- [x] Implement `_extract_retry_scope_edges()` - Retry edges
+- [x] Extract branch conditions
+- [ ] Create `InvocationDto` model (already exists in Phase 0)
 - [ ] Extract InvokeWorkflowFile references
-- [ ] Create `python/tests/test_control_flow.py`
-- [ ] Write control flow tests
-- [ ] Run tests: `pytest python/tests/test_control_flow.py -v`
+- [x] Create `python/tests/test_control_flow.py`
+- [x] Write control flow tests (13 tests)
+- [x] Run tests: `pytest python/tests/test_control_flow.py -v` (13 tests pass)
 
 ### Phase 3: DTO Layer & Normalization
 - [ ] Create `python/xaml_parser/normalization.py`
