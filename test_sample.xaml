@@ -1,0 +1,48 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main" xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation" xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation" xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property sap2010:Annotation.AnnotationText="Input file path" Name="in_FilePath" Type="InArgument(x:String)" />
+    <x:Property Name="out_Result" Type="OutArgument(x:String)" />
+  </x:Members>
+  <sap2010:WorkflowViewState.IdRef>Main_1</sap2010:WorkflowViewState.IdRef>
+  <Sequence DisplayName="Main Sequence" sap2010:Annotation.AnnotationText="This is the main workflow sequence">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:Int32" Name="varCount" />
+      <Variable x:TypeArguments="x:String" Default="Hello" Name="varMessage" />
+    </Sequence.Variables>
+    <sap2010:WorkflowViewState.IdRef>Sequence_1</sap2010:WorkflowViewState.IdRef>
+    <Assign DisplayName="Initialize Counter">
+      <Assign.To>
+        <OutArgument x:TypeArguments="x:Int32">[varCount]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="x:Int32">[0]</InArgument>
+      </Assign.Value>
+      <sap2010:WorkflowViewState.IdRef>Assign_1</sap2010:WorkflowViewState.IdRef>
+    </Assign>
+    <If Condition="[varCount &gt; 0]" DisplayName="Check Counter">
+      <sap2010:WorkflowViewState.IdRef>If_1</sap2010:WorkflowViewState.IdRef>
+      <If.Then>
+        <Assign DisplayName="Set Result (Then)">
+          <Assign.To>
+            <OutArgument x:TypeArguments="x:String">[out_Result]</OutArgument>
+          </Assign.To>
+          <Assign.Value>
+            <InArgument x:TypeArguments="x:String">["Counter is positive"]</InArgument>
+          </Assign.Value>
+          <sap2010:WorkflowViewState.IdRef>Assign_2</sap2010:WorkflowViewState.IdRef>
+        </Assign>
+      </If.Then>
+      <If.Else>
+        <Assign DisplayName="Set Result (Else)">
+          <Assign.To>
+            <OutArgument x:TypeArguments="x:String">[out_Result]</OutArgument>
+          </Assign.To>
+          <Assign.Value>
+            <InArgument x:TypeArguments="x:String">["Counter is zero or negative"]</InArgument>
+          </Assign.Value>
+          <sap2010:WorkflowViewState.IdRef>Assign_3</sap2010:WorkflowViewState.IdRef>
+        </Assign>
+      </If.Else>
+    </If>
+  </Sequence>
+</Activity>

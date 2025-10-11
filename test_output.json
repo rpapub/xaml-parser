@@ -1,0 +1,244 @@
+{
+  "schema_id": "https://rpax.io/schemas/xaml-workflow-collection.json",
+  "schema_version": "1.0.0",
+  "collected_at": "2025-10-11T10:03:26Z",
+  "workflows": [
+    {
+      "schema_id": "https://rpax.io/schemas/xaml-workflow.json",
+      "schema_version": "1.0.0",
+      "collected_at": "2025-10-11T10:03:26Z",
+      "id": "wf:sha256:c7c3e6cb4ab2d8af",
+      "name": "test_sample",
+      "source": {
+        "path": "..\\test_sample.xaml",
+        "path_aliases": [],
+        "hash": "",
+        "size_bytes": 2613,
+        "encoding": "utf-8"
+      },
+      "metadata": {
+        "expression_language": "VisualBasic",
+        "annotation": "This is the main workflow sequence"
+      },
+      "variables": [
+        {
+          "id": "var:sha256:7aa0fb41110e650f",
+          "name": "varCount",
+          "type": "Object",
+          "scope": "workflow"
+        },
+        {
+          "id": "var:sha256:97f9349f898dbd3c",
+          "name": "varMessage",
+          "type": "Object",
+          "scope": "workflow",
+          "default_value": "Hello"
+        }
+      ],
+      "arguments": [
+        {
+          "id": "arg:sha256:51ba4c23fd4e0abd",
+          "name": "in_FilePath",
+          "type": "InArgument(x:String)",
+          "direction": "In",
+          "annotation": "Input file path"
+        },
+        {
+          "id": "arg:sha256:7f37e9b88278d59b",
+          "name": "out_Result",
+          "type": "OutArgument(x:String)",
+          "direction": "Out"
+        }
+      ],
+      "dependencies": [],
+      "activities": [
+        {
+          "id": "act:sha256:3d10ca250cd29769",
+          "type": "Assign",
+          "type_short": "Assign",
+          "display_name": "Set Result (Then)",
+          "location": {
+            "xpath": "/Assign"
+          },
+          "parent_id": "act:sha256:5242aa18e33e37be",
+          "children": [],
+          "depth": 4,
+          "properties": {
+            "DisplayName": "Set Result (Then)"
+          },
+          "in_args": {
+            "DisplayName": "Set Result (Then)"
+          },
+          "out_args": {},
+          "expressions": [],
+          "variables_referenced": []
+        },
+        {
+          "id": "act:sha256:5242aa18e33e37be",
+          "type": "If.Then",
+          "type_short": "Then",
+          "location": {
+            "xpath": "/If.Then"
+          },
+          "parent_id": "act:sha256:dbba7e02f4b920ca",
+          "children": [
+            "act:sha256:3d10ca250cd29769"
+          ],
+          "depth": 3,
+          "properties": {},
+          "in_args": {},
+          "out_args": {},
+          "expressions": [],
+          "variables_referenced": []
+        },
+        {
+          "id": "act:sha256:567344b71c11b57f",
+          "type": "If.Else",
+          "type_short": "Else",
+          "location": {
+            "xpath": "/If.Else"
+          },
+          "parent_id": "act:sha256:dbba7e02f4b920ca",
+          "children": [
+            "act:sha256:6ee83d5fa8b7fa0a"
+          ],
+          "depth": 3,
+          "properties": {},
+          "in_args": {},
+          "out_args": {},
+          "expressions": [],
+          "variables_referenced": []
+        },
+        {
+          "id": "act:sha256:6ee83d5fa8b7fa0a",
+          "type": "Assign",
+          "type_short": "Assign",
+          "display_name": "Set Result (Else)",
+          "location": {
+            "xpath": "/Assign"
+          },
+          "parent_id": "act:sha256:567344b71c11b57f",
+          "children": [],
+          "depth": 4,
+          "properties": {
+            "DisplayName": "Set Result (Else)"
+          },
+          "in_args": {
+            "DisplayName": "Set Result (Else)"
+          },
+          "out_args": {},
+          "expressions": [],
+          "variables_referenced": []
+        },
+        {
+          "id": "act:sha256:af0fe2dbc4f28931",
+          "type": "Assign",
+          "type_short": "Assign",
+          "display_name": "Initialize Counter",
+          "location": {
+            "xpath": "/Assign"
+          },
+          "parent_id": "act:sha256:b2076ac4316cc95c",
+          "children": [],
+          "depth": 2,
+          "properties": {
+            "DisplayName": "Initialize Counter"
+          },
+          "in_args": {
+            "DisplayName": "Initialize Counter"
+          },
+          "out_args": {},
+          "expressions": [],
+          "variables_referenced": []
+        },
+        {
+          "id": "act:sha256:b2076ac4316cc95c",
+          "type": "Sequence",
+          "type_short": "Sequence",
+          "display_name": "Main Sequence",
+          "location": {
+            "xpath": "/Sequence"
+          },
+          "parent_id": "act:sha256:daeb9572cc218671",
+          "children": [
+            "act:sha256:af0fe2dbc4f28931",
+            "act:sha256:dbba7e02f4b920ca"
+          ],
+          "depth": 1,
+          "properties": {
+            "DisplayName": "Main Sequence"
+          },
+          "in_args": {
+            "DisplayName": "Main Sequence"
+          },
+          "out_args": {},
+          "annotation": "This is the main workflow sequence",
+          "expressions": [],
+          "variables_referenced": []
+        },
+        {
+          "id": "act:sha256:daeb9572cc218671",
+          "type": "Activity",
+          "type_short": "Activity",
+          "location": {
+            "xpath": "/root"
+          },
+          "children": [
+            "act:sha256:b2076ac4316cc95c"
+          ],
+          "depth": 0,
+          "properties": {
+            "{http://schemas.openxmlformats.org/markup-compatibility/2006}Ignorable": "sap sap2010",
+            "{http://schemas.microsoft.com/winfx/2006/xaml}Class": "Main"
+          },
+          "in_args": {
+            "{http://schemas.openxmlformats.org/markup-compatibility/2006}Ignorable": "sap sap2010",
+            "{http://schemas.microsoft.com/winfx/2006/xaml}Class": "Main"
+          },
+          "out_args": {},
+          "expressions": [],
+          "variables_referenced": []
+        },
+        {
+          "id": "act:sha256:dbba7e02f4b920ca",
+          "type": "If",
+          "type_short": "If",
+          "display_name": "Check Counter",
+          "location": {
+            "xpath": "/If"
+          },
+          "parent_id": "act:sha256:b2076ac4316cc95c",
+          "children": [
+            "act:sha256:5242aa18e33e37be",
+            "act:sha256:567344b71c11b57f"
+          ],
+          "depth": 2,
+          "properties": {
+            "Condition": "[varCount > 0]",
+            "DisplayName": "Check Counter"
+          },
+          "in_args": {
+            "Condition": "[varCount > 0]",
+            "DisplayName": "Check Counter"
+          },
+          "out_args": {},
+          "expressions": [
+            "[varCount > 0]"
+          ],
+          "variables_referenced": []
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge:sha256:833fddbe3da72b48",
+          "from_id": "act:sha256:af0fe2dbc4f28931",
+          "to_id": "act:sha256:dbba7e02f4b920ca",
+          "kind": "Next"
+        }
+      ],
+      "invocations": [],
+      "issues": []
+    }
+  ],
+  "issues": []
+}

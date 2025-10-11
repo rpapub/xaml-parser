@@ -12,9 +12,9 @@ from .parser import XamlParser
 from .project import ProjectParser, ProjectResult
 
 # Fix stdout encoding for Windows
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 
 def format_pretty(result: ParseResult, file_path: str | None = None) -> str:
@@ -84,9 +84,13 @@ def format_pretty(result: ParseResult, file_path: str | None = None) -> str:
         lines.append(f"Activities: ({len(content.activities)} total)")
         activity_types = {}
         for activity in content.activities:
-            activity_types[activity.activity_type] = activity_types.get(activity.activity_type, 0) + 1
+            activity_types[activity.activity_type] = (
+                activity_types.get(activity.activity_type, 0) + 1
+            )
 
-        for activity_type, count in sorted(activity_types.items(), key=lambda x: x[1], reverse=True)[:10]:
+        for activity_type, count in sorted(
+            activity_types.items(), key=lambda x: x[1], reverse=True
+        )[:10]:
             lines.append(f"  {activity_type}: {count}")
 
     if result.warnings:
@@ -165,9 +169,11 @@ def format_summary(results: list[tuple[str, ParseResult]]) -> str:
 
         if result.success:
             content = result.content
-            lines.append(f"    Arguments: {len(content.arguments)}, "
-                        f"Variables: {len(content.variables)}, "
-                        f"Activities: {len(content.activities)}")
+            lines.append(
+                f"    Arguments: {len(content.arguments)}, "
+                f"Variables: {len(content.variables)}, "
+                f"Activities: {len(content.activities)}"
+            )
         else:
             lines.append(f"    Errors: {', '.join(result.errors[:2])}")
 
@@ -213,7 +219,8 @@ def format_project_summary(project_result: ProjectResult) -> str:
 
     # Workflows summary
     lines.append(f"Workflows: ({project_result.total_workflows} total)")
-    lines.append(f"  Successfully parsed: {sum(1 for w in project_result.workflows if w.parse_result.success)}")
+    success_count = sum(1 for w in project_result.workflows if w.parse_result.success)
+    lines.append(f"  Successfully parsed: {success_count}")
     failed = project_result.get_failed_workflows()
     if failed:
         lines.append(f"  Failed to parse: {len(failed)}")
@@ -229,9 +236,11 @@ def format_project_summary(project_result: ProjectResult) -> str:
 
         if workflow.parse_result.success and workflow.parse_result.content:
             content = workflow.parse_result.content
-            lines.append(f"      Args: {len(content.arguments)}, "
-                        f"Vars: {len(content.variables)}, "
-                        f"Acts: {len(content.activities)}")
+            lines.append(
+                f"      Args: {len(content.arguments)}, "
+                f"Vars: {len(content.variables)}, "
+                f"Acts: {len(content.activities)}"
+            )
 
     if len(project_result.workflows) > 10:
         lines.append(f"  ... and {len(project_result.workflows) - 10} more")
@@ -277,7 +286,7 @@ def parse_files(patterns: list[str], config: dict) -> list[tuple[str, ParseResul
     files = set()
     for pattern in patterns:
         # Handle wildcards
-        if '*' in pattern or '?' in pattern:
+        if "*" in pattern or "?" in pattern:
             matched = glob.glob(pattern, recursive=True)
             files.update(matched)
         else:
@@ -295,7 +304,7 @@ def parse_files(patterns: list[str], config: dict) -> list[tuple[str, ParseResul
                 parse_time_ms=0,
                 file_path=file_path,
                 diagnostics=None,
-                config_used=config
+                config_used=config,
             )
         else:
             result = parser.parse_file(path)
@@ -305,11 +314,11 @@ def parse_files(patterns: list[str], config: dict) -> list[tuple[str, ParseResul
     return results
 
 
-def main():
+def main() -> None:
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
-        prog='xaml-parser',
-        description='Parse UiPath projects and XAML workflow files',
+        prog="xaml-parser",
+        description="Parse UiPath projects and XAML workflow files",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -331,92 +340,76 @@ Examples:
   # Multiple workflow files
   xaml-parser *.xaml --summary             # Summary for multiple files
   xaml-parser **/*.xaml --summary          # Recursive search
-        """
+        """,
     )
 
     parser.add_argument(
-        'input',
-        nargs='+',
-        help='project.json, directory with project.json, or XAML file(s) to parse'
+        "input",
+        nargs="+",
+        help="project.json, directory with project.json, or XAML file(s) to parse",
     )
 
     # Project parsing options
     parser.add_argument(
-        '--entry-points-only',
-        action='store_true',
-        help='[Project mode] Only parse entry points (no recursive discovery)'
+        "--entry-points-only",
+        action="store_true",
+        help="[Project mode] Only parse entry points (no recursive discovery)",
     )
     parser.add_argument(
-        '--graph',
-        action='store_true',
-        help='[Project mode] Show workflow dependency graph'
+        "--graph", action="store_true", help="[Project mode] Show workflow dependency graph"
     )
 
     # Output format options
     format_group = parser.add_mutually_exclusive_group()
+    format_group.add_argument("--json", action="store_true", help="Output as JSON")
     format_group.add_argument(
-        '--json',
-        action='store_true',
-        help='Output as JSON'
+        "--dto",
+        action="store_true",
+        help="Output as WorkflowDto JSON (with stable IDs, edges, full normalization)",
     )
+    format_group.add_argument("--arguments", action="store_true", help="Show only arguments")
+    format_group.add_argument("--activities", action="store_true", help="Show only activities")
+    format_group.add_argument("--tree", action="store_true", help="Show activity tree")
     format_group.add_argument(
-        '--arguments',
-        action='store_true',
-        help='Show only arguments'
-    )
-    format_group.add_argument(
-        '--activities',
-        action='store_true',
-        help='Show only activities'
-    )
-    format_group.add_argument(
-        '--tree',
-        action='store_true',
-        help='Show activity tree'
-    )
-    format_group.add_argument(
-        '--summary',
-        action='store_true',
-        help='Show summary for multiple files'
+        "--summary", action="store_true", help="Show summary for multiple files"
     )
 
+    parser.add_argument("-o", "--output", help="Output file (default: stdout)")
+
+    # DTO output options
     parser.add_argument(
-        '-o', '--output',
-        help='Output file (default: stdout)'
+        "--profile",
+        choices=["full", "minimal", "mcp", "datalake"],
+        default="full",
+        help="DTO field profile (default: full) [requires --dto]",
+    )
+    parser.add_argument(
+        "--combine",
+        action="store_true",
+        help="Combine multiple workflows into single file [requires --dto]",
     )
 
     # Parser configuration
     parser.add_argument(
-        '--no-expressions',
-        action='store_true',
-        help='Skip expression extraction (faster)'
+        "--no-expressions", action="store_true", help="Skip expression extraction (faster)"
     )
     parser.add_argument(
-        '--strict',
-        action='store_true',
-        help='Enable strict mode (fail on any error)'
+        "--strict", action="store_true", help="Enable strict mode (fail on any error)"
     )
     parser.add_argument(
-        '--max-depth',
-        type=int,
-        default=50,
-        help='Maximum activity nesting depth (default: 50)'
+        "--max-depth", type=int, default=50, help="Maximum activity nesting depth (default: 50)"
     )
 
     # Misc options
-    parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Verbose output'
-    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     args = parser.parse_args()
 
     # Build parser config
     config = {
-        'extract_expressions': not args.no_expressions,
-        'strict_mode': args.strict,
-        'max_depth': args.max_depth,
+        "extract_expressions": not args.no_expressions,
+        "strict_mode": args.strict,
+        "max_depth": args.max_depth,
     }
 
     # Detect mode: project vs file parsing
@@ -428,7 +421,7 @@ Examples:
     project_dir = None
 
     # Check if input is project.json file
-    if first_input.endswith('project.json') or input_path.name == 'project.json':
+    if first_input.endswith("project.json") or input_path.name == "project.json":
         is_project_mode = True
         if input_path.is_file():
             project_dir = input_path.parent
@@ -465,7 +458,7 @@ Examples:
         project_result = project_parser.parse_project(
             project_dir,
             recursive=not args.entry_points_only,
-            entry_points_only=args.entry_points_only
+            entry_points_only=args.entry_points_only,
         )
 
         # Format project output
@@ -473,19 +466,22 @@ Examples:
             output = format_dependency_graph(project_result)
         elif args.json:
             # TODO: Implement JSON output for projects
-            output = json.dumps({
-                'project_name': project_result.project_config.name,
-                'project_dir': str(project_result.project_dir),
-                'success': project_result.success,
-                'total_workflows': project_result.total_workflows,
-                'errors': project_result.errors
-            }, indent=2)
+            output = json.dumps(
+                {
+                    "project_name": project_result.project_config.name,
+                    "project_dir": str(project_result.project_dir),
+                    "success": project_result.success,
+                    "total_workflows": project_result.total_workflows,
+                    "errors": project_result.errors,
+                },
+                indent=2,
+            )
         else:
             output = format_project_summary(project_result)
 
         # Write output
         if args.output:
-            Path(args.output).write_text(output, encoding='utf-8')
+            Path(args.output).write_text(output, encoding="utf-8")
             print(f"Output written to: {args.output}")
         else:
             print(output)
@@ -501,6 +497,63 @@ Examples:
         print(f"Error: No files matched pattern(s): {', '.join(args.input)}", file=sys.stderr)
         sys.exit(1)
 
+    # Handle DTO output mode
+    if args.dto:
+        from .control_flow import ControlFlowExtractor
+        from .emitters import EmitterConfig
+        from .emitters.json_emitter import JsonEmitter
+        from .id_generation import IdGenerator
+        from .normalization import Normalizer
+
+        # Normalize all successful parse results to DTOs
+        id_generator = IdGenerator()
+        flow_extractor = ControlFlowExtractor(id_generator)
+        normalizer = Normalizer(id_generator, flow_extractor)
+
+        workflows = []
+        for file_path, parse_result in results:
+            if parse_result.success:
+                workflow_name = Path(file_path).stem
+                workflow_dto = normalizer.normalize(parse_result, workflow_name=workflow_name)
+                workflows.append(workflow_dto)
+
+        if not workflows:
+            print("Error: No workflows parsed successfully", file=sys.stderr)
+            sys.exit(1)
+
+        # Emit using JSON emitter
+        emitter = JsonEmitter()
+        emitter_config = EmitterConfig(
+            field_profile=args.profile,
+            combine=args.combine,
+            pretty=True,
+            exclude_none=True,
+        )
+
+        # Determine output path
+        if args.output:
+            output_path = Path(args.output)
+        elif args.combine:
+            output_path = Path("workflows.json")
+        else:
+            output_path = Path(".")
+
+        # Emit
+        result = emitter.emit(workflows, output_path, emitter_config)
+
+        if result.success:
+            if args.output:
+                print(f"✓ Wrote {len(result.files_written)} file(s) to {args.output}")
+            else:
+                for file_path in result.files_written:
+                    print(f"✓ Wrote: {file_path}")
+            sys.exit(0)
+        else:
+            print("✗ Emission failed:", file=sys.stderr)
+            for error in result.errors:
+                print(f"  - {error}", file=sys.stderr)
+            sys.exit(1)
+
     # Format output
     if args.summary or len(results) > 1:
         output = format_summary(results)
@@ -510,50 +563,50 @@ Examples:
         if args.json:
             # Convert result to dict for JSON serialization
             output_dict = {
-                'file_path': file_path,
-                'success': result.success,
-                'errors': result.errors,
-                'warnings': result.warnings,
-                'parse_time_ms': result.parse_time_ms,
+                "file_path": file_path,
+                "success": result.success,
+                "errors": result.errors,
+                "warnings": result.warnings,
+                "parse_time_ms": result.parse_time_ms,
             }
 
             if result.success and result.content:
-                output_dict['content'] = {
-                    'arguments': [
+                output_dict["content"] = {
+                    "arguments": [
                         {
-                            'name': arg.name,
-                            'type': arg.type,
-                            'direction': arg.direction,
-                            'annotation': arg.annotation,
-                            'default_value': arg.default_value
+                            "name": arg.name,
+                            "type": arg.type,
+                            "direction": arg.direction,
+                            "annotation": arg.annotation,
+                            "default_value": arg.default_value,
                         }
                         for arg in result.content.arguments
                     ],
-                    'variables': [
+                    "variables": [
                         {
-                            'name': var.name,
-                            'type': var.type,
-                            'scope': var.scope,
-                            'default_value': var.default_value
+                            "name": var.name,
+                            "type": var.type,
+                            "scope": var.scope,
+                            "default_value": var.default_value,
                         }
                         for var in result.content.variables
                     ],
-                    'activities': [
+                    "activities": [
                         {
-                            'activity_type': act.activity_type,
-                            'activity_id': act.activity_id,
-                            'display_name': act.display_name,
-                            'annotation': act.annotation,
-                            'depth': act.depth
+                            "activity_type": act.activity_type,
+                            "activity_id": act.activity_id,
+                            "display_name": act.display_name,
+                            "annotation": act.annotation,
+                            "depth": act.depth,
                         }
                         for act in result.content.activities
                     ],
-                    'display_name': result.content.display_name,
-                    'root_annotation': result.content.root_annotation,
-                    'expression_language': result.content.expression_language,
-                    'total_arguments': result.content.total_arguments,
-                    'total_variables': result.content.total_variables,
-                    'total_activities': result.content.total_activities
+                    "display_name": result.content.display_name,
+                    "root_annotation": result.content.root_annotation,
+                    "expression_language": result.content.expression_language,
+                    "total_arguments": result.content.total_arguments,
+                    "total_variables": result.content.total_variables,
+                    "total_activities": result.content.total_activities,
                 }
 
             output = json.dumps(output_dict, indent=2)
@@ -570,7 +623,7 @@ Examples:
 
     # Write output
     if args.output:
-        Path(args.output).write_text(output, encoding='utf-8')
+        Path(args.output).write_text(output, encoding="utf-8")
         print(f"Output written to: {args.output}")
     else:
         print(output)
@@ -582,5 +635,5 @@ Examples:
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
