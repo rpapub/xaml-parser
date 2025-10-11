@@ -6,7 +6,7 @@ allowing for modular and maintainable parsing logic.
 
 import html
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 from .constants import (
     ARGUMENT_DIRECTIONS,
@@ -16,14 +16,14 @@ from .constants import (
 )
 from .models import Activity, Expression, WorkflowArgument, WorkflowVariable
 from .utils import ActivityUtils
-from .visibility import get_visible_elements, get_local_tag, is_visible_element
+from .visibility import get_local_tag, get_visible_elements, is_visible_element
 
 
 class ArgumentExtractor:
     """Extracts workflow arguments from x:Members section."""
     
     @staticmethod
-    def extract_arguments(root: ET.Element, namespaces: Dict[str, str]) -> List[WorkflowArgument]:
+    def extract_arguments(root: ET.Element, namespaces: dict[str, str]) -> list[WorkflowArgument]:
         """Extract all workflow arguments with complete metadata."""
         arguments = []
         
@@ -46,7 +46,7 @@ class ArgumentExtractor:
         return arguments
     
     @staticmethod
-    def _extract_single_argument(prop: ET.Element, sap2010_ns: str) -> Optional[WorkflowArgument]:
+    def _extract_single_argument(prop: ET.Element, sap2010_ns: str) -> WorkflowArgument | None:
         """Extract single argument from x:Property element."""
         name = prop.get("Name")
         type_attr = prop.get("Type", "")
@@ -89,7 +89,7 @@ class VariableExtractor:
     """Extracts workflow variables from all scopes."""
     
     @staticmethod
-    def extract_variables(root: ET.Element, namespaces: Dict[str, str]) -> List[WorkflowVariable]:
+    def extract_variables(root: ET.Element, namespaces: dict[str, str]) -> list[WorkflowVariable]:
         """Extract all variables from workflow with scope information."""
         variables = []
         
@@ -113,7 +113,7 @@ class VariableExtractor:
         )
     
     @staticmethod
-    def _extract_single_variable(elem: ET.Element) -> Optional[WorkflowVariable]:
+    def _extract_single_variable(elem: ET.Element) -> WorkflowVariable | None:
         """Extract single variable from Variable element."""
         name = elem.get('Name')
         if not name:
@@ -146,7 +146,7 @@ class VariableExtractor:
 class ActivityExtractor:
     """Extracts activity information with complete metadata."""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """Initialize with parser configuration."""
         self.config = config
         self._activity_counter = 0
@@ -155,12 +155,12 @@ class ActivityExtractor:
         self._max_depth = config.get('max_depth', 50)  # Prevent deep recursion
         self._batch_size = config.get('batch_size', 100)  # Process activities in batches
     
-    def extract_activities(self, root: ET.Element, namespaces: Dict[str, str]) -> List[Dict[str, Any]]:
+    def extract_activities(self, root: ET.Element, namespaces: dict[str, str]) -> list[dict[str, Any]]:
         """Extract all activities with complete metadata."""
         activities = []
         self._activity_counter = 0
         
-        def process_element(elem: ET.Element, parent_id: Optional[str] = None, depth: int = 0):
+        def process_element(elem: ET.Element, parent_id: str | None = None, depth: int = 0):
             """Recursively process elements to find activities."""
             tag_name = elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
             
@@ -220,10 +220,10 @@ class ActivityExtractor:
         self, 
         elem: ET.Element, 
         tag_name: str, 
-        namespaces: Dict[str, str], 
-        parent_id: Optional[str], 
+        namespaces: dict[str, str], 
+        parent_id: str | None, 
         depth: int
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Extract complete metadata from single activity."""
         self._activity_counter += 1
         activity_id = f"activity_{self._activity_counter}"
@@ -261,7 +261,7 @@ class ActivityExtractor:
             'xpath_location': self._get_xpath_location(elem)
         }
     
-    def _categorize_attributes(self, attrib: Dict[str, str]) -> Tuple[Dict[str, str], Dict[str, str]]:
+    def _categorize_attributes(self, attrib: dict[str, str]) -> tuple[dict[str, str], dict[str, str]]:
         """Categorize attributes into visible and invisible."""
         visible = {}
         invisible = {}
@@ -285,7 +285,7 @@ class ActivityExtractor:
         
         return visible, invisible
     
-    def _extract_annotation(self, elem: ET.Element, sap2010_ns: str) -> Optional[str]:
+    def _extract_annotation(self, elem: ET.Element, sap2010_ns: str) -> str | None:
         """Extract annotation text from activity."""
         if not sap2010_ns:
             return None
@@ -298,7 +298,7 @@ class ActivityExtractor:
         
         return None
     
-    def _extract_configuration(self, elem: ET.Element) -> Dict[str, Any]:
+    def _extract_configuration(self, elem: ET.Element) -> dict[str, Any]:
         """Extract nested configuration from activity."""
         config = {}
         
@@ -349,7 +349,7 @@ class ActivityExtractor:
         
         return result
     
-    def _extract_activity_variables(self, elem: ET.Element, activity_id: str) -> List[WorkflowVariable]:
+    def _extract_activity_variables(self, elem: ET.Element, activity_id: str) -> list[WorkflowVariable]:
         """Extract variables scoped to this activity."""
         variables = []
         
@@ -367,7 +367,7 @@ class ActivityExtractor:
         
         return variables
     
-    def _extract_expressions(self, elem: ET.Element) -> List[Expression]:
+    def _extract_expressions(self, elem: ET.Element) -> list[Expression]:
         """Extract expressions from activity element."""
         expressions = []
         
@@ -422,7 +422,7 @@ class ActivityExtractor:
         tag = elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
         return f"/{tag}"
     
-    def _update_parent_child_relationships(self, activities: List[Dict[str, Any]], parent_id: Optional[str], child_id: str):
+    def _update_parent_child_relationships(self, activities: list[dict[str, Any]], parent_id: str | None, child_id: str):
         """Update parent-child relationships in activities list."""
         if not parent_id:
             return
@@ -432,8 +432,8 @@ class ActivityExtractor:
                 activity['child_activities'].append(child_id)
                 break
     
-    def extract_activity_instances(self, root: ET.Element, namespaces: Dict[str, str], 
-                                  workflow_id: str, project_id: str) -> List[Activity]:
+    def extract_activity_instances(self, root: ET.Element, namespaces: dict[str, str], 
+                                  workflow_id: str, project_id: str) -> list[Activity]:
         """Extract all activity instances with complete business logic configurations.
         
         This method implements the ActivityInstance extraction as specified in ADR-009,
@@ -458,7 +458,7 @@ class ActivityExtractor:
         # Pre-compute common namespace lookups for performance
         self._namespace_cache = self._precompute_namespace_cache(namespaces)
         
-        def process_element(elem: ET.Element, parent_activity_id: Optional[str] = None, 
+        def process_element(elem: ET.Element, parent_activity_id: str | None = None, 
                           depth: int = 0, node_path: str = "Activity") -> None:
             """Recursively process visible elements to extract activities."""
             # Performance: Early depth check to prevent stack overflow
@@ -520,10 +520,10 @@ class ActivityExtractor:
         process_element(root)
         return activities
     
-    def _extract_single_activity_instance(self, element: ET.Element, namespaces: Dict[str, str],
+    def _extract_single_activity_instance(self, element: ET.Element, namespaces: dict[str, str],
                                         workflow_id: str, project_id: str,
-                                        parent_activity_id: Optional[str], depth: int,
-                                        node_path: str) -> Optional[Activity]:
+                                        parent_activity_id: str | None, depth: int,
+                                        node_path: str) -> Activity | None:
         """Extract complete configuration from single activity element.
         
         Implements complete business logic extraction as specified in ADR-009.
@@ -592,7 +592,7 @@ class ActivityExtractor:
             source_line=None  # Could be implemented with line number tracking
         )
     
-    def _extract_activity_arguments(self, element: ET.Element) -> Dict[str, Any]:
+    def _extract_activity_arguments(self, element: ET.Element) -> dict[str, Any]:
         """Extract all activity arguments from attributes and nested elements."""
         arguments = {}
         
@@ -608,7 +608,7 @@ class ActivityExtractor:
         
         return arguments
     
-    def _extract_visible_properties(self, element: ET.Element) -> Dict[str, Any]:
+    def _extract_visible_properties(self, element: ET.Element) -> dict[str, Any]:
         """Extract visible properties (user-facing business logic)."""
         properties = {}
         
@@ -627,7 +627,7 @@ class ActivityExtractor:
         
         return properties
     
-    def _extract_activity_metadata(self, element: ET.Element) -> Dict[str, Any]:
+    def _extract_activity_metadata(self, element: ET.Element) -> dict[str, Any]:
         """Extract technical metadata (ViewState, IdRef, etc.)."""
         metadata = {}
         
@@ -643,7 +643,7 @@ class ActivityExtractor:
         
         return metadata
     
-    def _extract_nested_configuration(self, element: ET.Element) -> Dict[str, Any]:
+    def _extract_nested_configuration(self, element: ET.Element) -> dict[str, Any]:
         """Extract nested configuration objects from activity element."""
         configuration = {}
         
@@ -694,7 +694,7 @@ class ActivityExtractor:
         
         return result
     
-    def _extract_business_logic_expressions(self, element: ET.Element) -> List[str]:
+    def _extract_business_logic_expressions(self, element: ET.Element) -> list[str]:
         """Extract UiPath expressions containing business logic."""
         expressions = []
         
@@ -710,8 +710,8 @@ class ActivityExtractor:
         
         return list(set(expressions))  # Remove duplicates
     
-    def _extract_variable_references(self, element: ET.Element, expressions: List[str], 
-                                   arguments: Dict[str, Any]) -> List[str]:
+    def _extract_variable_references(self, element: ET.Element, expressions: list[str], 
+                                   arguments: dict[str, Any]) -> list[str]:
         """Extract variable references from expressions and arguments."""
         variables = []
         
@@ -728,9 +728,9 @@ class ActivityExtractor:
         
         return list(set(variables))  # Remove duplicates
     
-    def _serialize_activity_for_hashing(self, activity_type: str, arguments: Dict[str, Any],
-                                      configuration: Dict[str, Any], properties: Dict[str, Any],
-                                      metadata: Dict[str, Any]) -> str:
+    def _serialize_activity_for_hashing(self, activity_type: str, arguments: dict[str, Any],
+                                      configuration: dict[str, Any], properties: dict[str, Any],
+                                      metadata: dict[str, Any]) -> str:
         """Serialize activity data for content hashing."""
         # Create a deterministic representation for hashing
         hash_data = {
@@ -744,14 +744,14 @@ class ActivityExtractor:
         # Convert to string for hashing (exclude metadata for stability)
         return str(hash_data)
     
-    def _determine_container_type(self, element: ET.Element) -> Optional[str]:
+    def _determine_container_type(self, element: ET.Element) -> str | None:
         """Determine parent container type."""
         parent = element.getparent() if hasattr(element, 'getparent') else None
         if parent is not None:
             return get_local_tag(parent)
         return None
     
-    def _precompute_namespace_cache(self, namespaces: Dict[str, str]) -> Dict[str, str]:
+    def _precompute_namespace_cache(self, namespaces: dict[str, str]) -> dict[str, str]:
         """Pre-compute commonly used namespace lookups for performance."""
         cache = {}
         
@@ -771,7 +771,7 @@ class AnnotationExtractor:
     """Extracts annotations and documentation from workflows."""
     
     @staticmethod
-    def extract_root_annotation(root: ET.Element, namespaces: Dict[str, str]) -> Optional[str]:
+    def extract_root_annotation(root: ET.Element, namespaces: dict[str, str]) -> str | None:
         """Extract root workflow annotation."""
         sap2010_ns = namespaces.get('sap2010', '')
         if not sap2010_ns:
@@ -794,7 +794,7 @@ class AnnotationExtractor:
         return None
     
     @staticmethod
-    def extract_all_annotations(root: ET.Element, namespaces: Dict[str, str]) -> Dict[str, str]:
+    def extract_all_annotations(root: ET.Element, namespaces: dict[str, str]) -> dict[str, str]:
         """Extract all annotations mapped by element ID or path."""
         annotations = {}
         sap2010_ns = namespaces.get('sap2010', '')
@@ -821,7 +821,7 @@ class MetadataExtractor:
     """Extracts technical metadata from workflows."""
     
     @staticmethod
-    def extract_namespaces(root: ET.Element) -> Dict[str, str]:
+    def extract_namespaces(root: ET.Element) -> dict[str, str]:
         """Extract all XML namespaces."""
         namespaces = {}
         
@@ -835,7 +835,7 @@ class MetadataExtractor:
         return namespaces
     
     @staticmethod
-    def extract_assembly_references(root: ET.Element) -> List[str]:
+    def extract_assembly_references(root: ET.Element) -> list[str]:
         """Extract assembly references."""
         references = []
         

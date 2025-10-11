@@ -4,18 +4,17 @@ This module provides validation functions to ensure parser output
 conforms to strict JSON schemas, enabling reliable data lake integration.
 """
 
-import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from .models import WorkflowContent, ParseResult, ParseDiagnostics
+from .models import ParseDiagnostics, ParseResult, WorkflowContent
 
 
 class ValidationError(Exception):
     """Raised when output validation fails."""
     
-    def __init__(self, message: str, field_path: str = "", schema_violations: List[str] = None):
+    def __init__(self, message: str, field_path: str = "", schema_violations: list[str] = None):
         self.field_path = field_path
         self.schema_violations = schema_violations or []
         super().__init__(message)
@@ -24,7 +23,7 @@ class ValidationError(Exception):
 class OutputValidator:
     """Validates parser output against JSON schemas."""
     
-    def __init__(self, schemas_dir: Optional[Path] = None):
+    def __init__(self, schemas_dir: Path | None = None):
         """Initialize validator with schema directory.
         
         Args:
@@ -35,7 +34,7 @@ class OutputValidator:
         self.schemas_dir = schemas_dir
         self._schemas_cache = {}
     
-    def validate_parse_result(self, result: ParseResult) -> List[str]:
+    def validate_parse_result(self, result: ParseResult) -> list[str]:
         """Validate complete parse result against schema.
         
         Args:
@@ -80,7 +79,7 @@ class OutputValidator:
         
         return errors
     
-    def validate_workflow_content(self, content: WorkflowContent) -> List[str]:
+    def validate_workflow_content(self, content: WorkflowContent) -> list[str]:
         """Validate workflow content structure.
         
         Args:
@@ -136,7 +135,7 @@ class OutputValidator:
         
         return errors
     
-    def validate_diagnostics(self, diagnostics: ParseDiagnostics) -> List[str]:
+    def validate_diagnostics(self, diagnostics: ParseDiagnostics) -> list[str]:
         """Validate diagnostics structure.
         
         Args:
@@ -177,7 +176,7 @@ class OutputValidator:
         
         return errors
     
-    def validate_config(self, config: Dict[str, Any]) -> List[str]:
+    def validate_config(self, config: dict[str, Any]) -> list[str]:
         """Validate parser configuration.
         
         Args:
@@ -211,7 +210,7 @@ class OutputValidator:
         
         return errors
     
-    def _validate_argument(self, arg: Any) -> List[str]:
+    def _validate_argument(self, arg: Any) -> list[str]:
         """Validate single workflow argument."""
         errors = []
         
@@ -226,7 +225,7 @@ class OutputValidator:
         
         return errors
     
-    def _validate_variable(self, var: Any) -> List[str]:
+    def _validate_variable(self, var: Any) -> list[str]:
         """Validate single workflow variable."""
         errors = []
         
@@ -241,7 +240,7 @@ class OutputValidator:
         
         return errors
     
-    def _validate_activity(self, activity: Any, activity_ids: set) -> List[str]:
+    def _validate_activity(self, activity: Any, activity_ids: set) -> list[str]:
         """Validate single activity."""
         errors = []
         
@@ -311,7 +310,7 @@ def get_validator() -> OutputValidator:
     return _default_validator
 
 
-def validate_output(result: ParseResult, strict: bool = True) -> List[str]:
+def validate_output(result: ParseResult, strict: bool = True) -> list[str]:
     """Validate parser output with optional strict mode.
     
     Args:

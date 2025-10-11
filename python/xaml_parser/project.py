@@ -10,24 +10,24 @@ This module provides functionality to parse entire UiPath projects by:
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
-from .parser import XamlParser
 from .models import ParseResult, WorkflowContent
+from .parser import XamlParser
 
 
 @dataclass
 class ProjectConfig:
     """Configuration loaded from project.json."""
     name: str
-    main: Optional[str] = None
-    description: Optional[str] = None
+    main: str | None = None
+    description: str | None = None
     expression_language: str = "VisualBasic"
-    entry_points: List[Dict[str, Any]] = field(default_factory=list)
-    dependencies: Dict[str, str] = field(default_factory=dict)
-    schema_version: Optional[str] = None
-    project_version: Optional[str] = None
-    raw_data: Dict[str, Any] = field(default_factory=dict)
+    entry_points: list[dict[str, Any]] = field(default_factory=list)
+    dependencies: dict[str, str] = field(default_factory=dict)
+    schema_version: str | None = None
+    project_version: str | None = None
+    raw_data: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -36,7 +36,7 @@ class WorkflowResult:
     file_path: Path
     relative_path: str
     parse_result: ParseResult
-    invoked_workflows: List[str] = field(default_factory=list)
+    invoked_workflows: list[str] = field(default_factory=list)
     is_entry_point: bool = False
 
 
@@ -45,26 +45,26 @@ class ProjectResult:
     """Result of parsing an entire project."""
     project_dir: Path
     project_config: ProjectConfig
-    workflows: List[WorkflowResult] = field(default_factory=list)
-    dependency_graph: Dict[str, List[str]] = field(default_factory=dict)
+    workflows: list[WorkflowResult] = field(default_factory=list)
+    dependency_graph: dict[str, list[str]] = field(default_factory=dict)
     success: bool = True
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     total_workflows: int = 0
     total_parse_time_ms: float = 0.0
 
-    def get_workflow(self, relative_path: str) -> Optional[WorkflowResult]:
+    def get_workflow(self, relative_path: str) -> WorkflowResult | None:
         """Get workflow result by relative path."""
         for workflow in self.workflows:
             if workflow.relative_path == relative_path:
                 return workflow
         return None
 
-    def get_entry_points(self) -> List[WorkflowResult]:
+    def get_entry_points(self) -> list[WorkflowResult]:
         """Get all entry point workflows."""
         return [w for w in self.workflows if w.is_entry_point]
 
-    def get_failed_workflows(self) -> List[WorkflowResult]:
+    def get_failed_workflows(self) -> list[WorkflowResult]:
         """Get workflows that failed to parse."""
         return [w for w in self.workflows if not w.parse_result.success]
 
@@ -76,7 +76,7 @@ class ProjectParser:
     entry points defined in project.json.
     """
 
-    def __init__(self, parser_config: Optional[Dict[str, Any]] = None):
+    def __init__(self, parser_config: dict[str, Any] | None = None):
         """Initialize project parser.
 
         Args:
@@ -194,7 +194,7 @@ class ProjectParser:
         if not project_json_path.exists():
             raise FileNotFoundError(f"project.json not found at {project_json_path}")
 
-        with open(project_json_path, 'r', encoding='utf-8') as f:
+        with open(project_json_path, encoding='utf-8') as f:
             data = json.load(f)
 
         return ProjectConfig(
@@ -213,7 +213,7 @@ class ProjectParser:
         self,
         project_config: ProjectConfig,
         project_dir: Path
-    ) -> List[Path]:
+    ) -> list[Path]:
         """Get entry point file paths from project config.
 
         Args:
@@ -246,7 +246,7 @@ class ProjectParser:
         project_config: ProjectConfig,
         project_dir: Path,
         recursive: bool = True
-    ) -> tuple[List[Path], Set[str]]:
+    ) -> tuple[list[Path], set[str]]:
         """Discover all workflows starting from entry points.
 
         Args:
@@ -317,7 +317,7 @@ class ProjectParser:
     def _extract_invoke_workflow_files(
         self,
         content: WorkflowContent
-    ) -> List[str]:
+    ) -> list[str]:
         """Extract InvokeWorkflowFile references from workflow.
 
         Args:
@@ -359,7 +359,7 @@ class ProjectParser:
         workflow_ref: str,
         current_workflow: Path,
         project_dir: Path
-    ) -> Optional[Path]:
+    ) -> Path | None:
         """Resolve workflow reference to absolute path.
 
         Args:
@@ -440,8 +440,8 @@ class ProjectParser:
 
     def _build_dependency_graph(
         self,
-        workflow_results: List[WorkflowResult]
-    ) -> Dict[str, List[str]]:
+        workflow_results: list[WorkflowResult]
+    ) -> dict[str, list[str]]:
         """Build workflow dependency graph.
 
         Args:

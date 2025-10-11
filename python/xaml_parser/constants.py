@@ -4,10 +4,9 @@ All namespace definitions, blacklists, and parsing patterns
 centralized for easy maintenance.
 """
 
-from typing import Dict, Set
 
 # Standard XAML namespaces used in workflow automation
-STANDARD_NAMESPACES: Dict[str, str] = {
+STANDARD_NAMESPACES: dict[str, str] = {
     'x': 'http://schemas.microsoft.com/winfx/2006/xaml',
     'activities': 'http://schemas.microsoft.com/netfx/2009/xaml/activities',
     'sap': 'http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation',
@@ -21,7 +20,7 @@ STANDARD_NAMESPACES: Dict[str, str] = {
 }
 
 # Elements to skip during activity parsing (metadata, not workflow logic)
-SKIP_ELEMENTS: Set[str] = {
+SKIP_ELEMENTS: set[str] = {
     # XAML structure elements
     'Members', 'Variables', 'Arguments', 'Imports',
     'NamespacesForImplementation', 'ReferencesForImplementation',
@@ -45,7 +44,7 @@ SKIP_ELEMENTS: Set[str] = {
 }
 
 # Activity elements that are always considered visual/workflow logic
-CORE_VISUAL_ACTIVITIES: Set[str] = {
+CORE_VISUAL_ACTIVITIES: set[str] = {
     # Control flow
     'Sequence', 'Flowchart', 'StateMachine', 'TryCatch', 'Parallel',
     'ParallelForEach', 'ForEach', 'While', 'DoWhile', 'If', 'Switch',
@@ -62,7 +61,7 @@ CORE_VISUAL_ACTIVITIES: Set[str] = {
 }
 
 # Attribute patterns that indicate invisible/technical properties
-INVISIBLE_ATTRIBUTE_PATTERNS: Set[str] = {
+INVISIBLE_ATTRIBUTE_PATTERNS: set[str] = {
     'VirtualizedContainerService.HintSize',
     'WorkflowViewState.IdRef', 
     'Annotation.AnnotationText',  # This is visible content but stored as invisible attribute
@@ -70,14 +69,14 @@ INVISIBLE_ATTRIBUTE_PATTERNS: Set[str] = {
 }
 
 # Standard argument direction mappings
-ARGUMENT_DIRECTIONS: Dict[str, str] = {
+ARGUMENT_DIRECTIONS: dict[str, str] = {
     'InArgument': 'in',
     'OutArgument': 'out', 
     'InOutArgument': 'inout'
 }
 
 # Expression patterns for detection
-EXPRESSION_PATTERNS: Set[str] = {
+EXPRESSION_PATTERNS: set[str] = {
     '[', ']',           # VB.NET expressions in brackets
     'New ', 'new ',     # Object creation
     'Function(', 'function(',  # VB.NET lambdas
@@ -88,7 +87,7 @@ EXPRESSION_PATTERNS: Set[str] = {
 }
 
 # Common ViewState properties
-VIEWSTATE_PROPERTIES: Set[str] = {
+VIEWSTATE_PROPERTIES: set[str] = {
     'IsExpanded', 'IsPinned', 'IsAnnotationDocked',
     'IsEnabled', 'IsVisible', 'IsSelected'
 }

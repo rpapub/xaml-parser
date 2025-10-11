@@ -1,15 +1,14 @@
 """Command-line interface for XAML Parser."""
 
-import sys
-import json
 import argparse
-from pathlib import Path
-from typing import Optional, List
 import glob
 import io
+import json
+import sys
+from pathlib import Path
 
-from .parser import XamlParser
 from .models import ParseResult
+from .parser import XamlParser
 from .project import ProjectParser, ProjectResult
 
 # Fix stdout encoding for Windows
@@ -18,7 +17,7 @@ if sys.platform == 'win32':
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
 
-def format_pretty(result: ParseResult, file_path: Optional[str] = None) -> str:
+def format_pretty(result: ParseResult, file_path: str | None = None) -> str:
     """Format result as human-readable output."""
     lines = []
 
@@ -147,7 +146,7 @@ def format_tree(result: ParseResult) -> str:
     return "\n".join(lines) if lines else "No activities found"
 
 
-def format_summary(results: List[tuple[str, ParseResult]]) -> str:
+def format_summary(results: list[tuple[str, ParseResult]]) -> str:
     """Format summary for multiple files."""
     lines = []
 
@@ -251,7 +250,7 @@ def format_dependency_graph(project_result: ProjectResult) -> str:
     lines = []
 
     lines.append(f"Project: {project_result.project_config.name}")
-    lines.append(f"Dependency Graph:")
+    lines.append("Dependency Graph:")
     lines.append("")
 
     if not project_result.dependency_graph:
@@ -264,13 +263,13 @@ def format_dependency_graph(project_result: ProjectResult) -> str:
             for dep in dependencies:
                 lines.append(f"  -> {dep}")
         else:
-            lines.append(f"  (no dependencies)")
+            lines.append("  (no dependencies)")
         lines.append("")
 
     return "\n".join(lines)
 
 
-def parse_files(patterns: List[str], config: dict) -> List[tuple[str, ParseResult]]:
+def parse_files(patterns: list[str], config: dict) -> list[tuple[str, ParseResult]]:
     """Parse multiple files from glob patterns."""
     parser = XamlParser(config)
     results = []

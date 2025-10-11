@@ -6,11 +6,12 @@ workflow metadata from XAML files using only Python stdlib.
 
 import html
 import time
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 
 # Use secure XML parsing
 import xml.etree.ElementTree as ET
+from pathlib import Path
+from typing import Any
+
 try:
     from defusedxml.ElementTree import fromstring as defused_fromstring
 except ImportError:
@@ -30,8 +31,8 @@ from .constants import (
 from .models import (
     Activity,
     Expression,
-    ParseResult,
     ParseDiagnostics,
+    ParseResult,
     WorkflowArgument,
     WorkflowContent,
     WorkflowVariable,
@@ -46,7 +47,7 @@ class XamlParser:
     annotations, and expressions from XAML workflow files.
     """
     
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize parser with configuration.
         
         Args:
@@ -257,7 +258,7 @@ class XamlParser:
         
         return content
     
-    def _extract_namespaces(self, root: ET.Element) -> Dict[str, str]:
+    def _extract_namespaces(self, root: ET.Element) -> dict[str, str]:
         """Extract all XML namespaces from root element."""
         namespaces = {}
         
@@ -272,7 +273,7 @@ class XamlParser:
         # Merge with standard namespaces
         return {**STANDARD_NAMESPACES, **namespaces}
     
-    def _extract_arguments(self, root: ET.Element, namespaces: Dict[str, str]) -> List[WorkflowArgument]:
+    def _extract_arguments(self, root: ET.Element, namespaces: dict[str, str]) -> list[WorkflowArgument]:
         """Extract workflow arguments from x:Members section."""
         arguments = []
         
@@ -323,7 +324,7 @@ class XamlParser:
         
         return arguments
     
-    def _extract_variables(self, root: ET.Element, namespaces: Dict[str, str]) -> List[WorkflowVariable]:
+    def _extract_variables(self, root: ET.Element, namespaces: dict[str, str]) -> list[WorkflowVariable]:
         """Extract all variables from workflow scopes."""
         variables = []
         
@@ -348,12 +349,12 @@ class XamlParser:
         
         return variables
     
-    def _extract_activities(self, root: ET.Element, namespaces: Dict[str, str]) -> List[Activity]:
+    def _extract_activities(self, root: ET.Element, namespaces: dict[str, str]) -> list[Activity]:
         """Extract all activities with complete metadata."""
         activities = []
         sap2010_ns = namespaces.get('sap2010', '')
         
-        def process_element(elem: ET.Element, parent_id: Optional[str] = None, depth: int = 0):
+        def process_element(elem: ET.Element, parent_id: str | None = None, depth: int = 0):
             """Recursively process elements to find activities."""
             tag_name = elem.tag.split('}')[-1] if '}' in elem.tag else elem.tag
             
@@ -452,7 +453,7 @@ class XamlParser:
         process_element(root)
         return activities
     
-    def _extract_root_annotation(self, root: ET.Element, namespaces: Dict[str, str]) -> Optional[str]:
+    def _extract_root_annotation(self, root: ET.Element, namespaces: dict[str, str]) -> str | None:
         """Extract root workflow annotation."""
         sap2010_ns = namespaces.get('sap2010', '')
         if not sap2010_ns:
@@ -474,7 +475,7 @@ class XamlParser:
         
         return None
     
-    def _extract_assembly_references(self, root: ET.Element) -> List[str]:
+    def _extract_assembly_references(self, root: ET.Element) -> list[str]:
         """Extract assembly references from workflow."""
         references = []
         
@@ -511,7 +512,7 @@ class XamlParser:
                 return parent_tag
         return "workflow"
     
-    def _categorize_attributes(self, attrib: Dict[str, str]) -> tuple[Dict[str, str], Dict[str, str]]:
+    def _categorize_attributes(self, attrib: dict[str, str]) -> tuple[dict[str, str], dict[str, str]]:
         """Categorize attributes into visible and invisible."""
         visible = {}
         invisible = {}
@@ -553,7 +554,7 @@ class XamlParser:
         
         return False
     
-    def _extract_configuration(self, elem: ET.Element) -> Dict[str, Any]:
+    def _extract_configuration(self, elem: ET.Element) -> dict[str, Any]:
         """Extract nested configuration from activity element."""
         config = {}
         
@@ -597,7 +598,7 @@ class XamlParser:
             # Only attributes
             return elem.attrib
     
-    def _extract_expressions_from_element(self, elem: ET.Element) -> List[Expression]:
+    def _extract_expressions_from_element(self, elem: ET.Element) -> list[Expression]:
         """Extract all expressions from an activity element."""
         expressions = []
         

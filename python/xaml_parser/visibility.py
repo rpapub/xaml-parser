@@ -4,13 +4,11 @@ Based on graphical activity extractor by Christian Prior-Mamulyan.
 Used to filter out technical metadata and focus on business logic elements.
 """
 
-from typing import Set
 import xml.etree.ElementTree as ET
-
 
 # Blacklist of non-visual tags that represent metadata or structural elements
 # not shown in the visual workflow designer (e.g., variable declarations, layout hints)
-BLACKLIST_TAGS: Set[str] = {
+BLACKLIST_TAGS: set[str] = {
     "Members",
     "HintSize", 
     "Property",
@@ -34,7 +32,7 @@ BLACKLIST_TAGS: Set[str] = {
 }
 
 # Visual container activities that are always shown
-VISUAL_CONTAINERS: Set[str] = {
+VISUAL_CONTAINERS: set[str] = {
     "Sequence",
     "TryCatch", 
     "Flowchart",

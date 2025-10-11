@@ -7,15 +7,15 @@ data validation, and text processing operations.
 import hashlib
 import html
 import re
-from typing import Any, Dict, List, Optional, Set, Union
 import xml.etree.ElementTree as ET
+from typing import Any
 
 
 class XmlUtils:
     """XML processing utilities."""
     
     @staticmethod
-    def safe_parse(content: str, encoding: str = 'utf-8') -> Optional[ET.Element]:
+    def safe_parse(content: str, encoding: str = 'utf-8') -> ET.Element | None:
         """Safely parse XML content with error handling.
         
         Args:
@@ -50,7 +50,7 @@ class XmlUtils:
         return elem.text.strip() if elem.text else default
     
     @staticmethod
-    def find_elements_by_attribute(root: ET.Element, attr_name: str, attr_value: str = None) -> List[ET.Element]:
+    def find_elements_by_attribute(root: ET.Element, attr_name: str, attr_value: str = None) -> list[ET.Element]:
         """Find all elements with specific attribute.
         
         Args:
@@ -69,7 +69,7 @@ class XmlUtils:
         return matches
     
     @staticmethod
-    def get_namespace_prefix(tag: str) -> Optional[str]:
+    def get_namespace_prefix(tag: str) -> str | None:
         """Extract namespace prefix from qualified tag name.
         
         Args:
@@ -186,7 +186,7 @@ class ValidationUtils:
     """Validation and data quality utilities."""
     
     @staticmethod
-    def validate_workflow_content(content: Dict[str, Any]) -> List[str]:
+    def validate_workflow_content(content: dict[str, Any]) -> list[str]:
         """Validate workflow content structure and data quality.
         
         Args:
@@ -216,7 +216,7 @@ class ValidationUtils:
         return errors
     
     @staticmethod
-    def _validate_arguments(arguments: List[Dict[str, Any]]) -> List[str]:
+    def _validate_arguments(arguments: list[dict[str, Any]]) -> list[str]:
         """Validate argument definitions."""
         errors = []
         names = set()
@@ -241,7 +241,7 @@ class ValidationUtils:
         return errors
     
     @staticmethod
-    def _validate_activities(activities: List[Dict[str, Any]]) -> List[str]:
+    def _validate_activities(activities: list[dict[str, Any]]) -> list[str]:
         """Validate activity definitions."""
         errors = []
         activity_ids = set()
@@ -294,7 +294,7 @@ class DataUtils:
     """Data structure and conversion utilities."""
     
     @staticmethod
-    def merge_dictionaries(dict1: Dict[str, Any], dict2: Dict[str, Any]) -> Dict[str, Any]:
+    def merge_dictionaries(dict1: dict[str, Any], dict2: dict[str, Any]) -> dict[str, Any]:
         """Merge two dictionaries with deep merging of nested dicts.
         
         Args:
@@ -315,7 +315,7 @@ class DataUtils:
         return result
     
     @staticmethod
-    def flatten_nested_dict(nested_dict: Dict[str, Any], separator: str = '.') -> Dict[str, Any]:
+    def flatten_nested_dict(nested_dict: dict[str, Any], separator: str = '.') -> dict[str, Any]:
         """Flatten nested dictionary structure.
         
         Args:
@@ -325,7 +325,7 @@ class DataUtils:
         Returns:
             Flattened dictionary
         """
-        def _flatten(obj: Any, parent_key: str = '') -> Dict[str, Any]:
+        def _flatten(obj: Any, parent_key: str = '') -> dict[str, Any]:
             items = []
             
             if isinstance(obj, dict):
@@ -340,7 +340,7 @@ class DataUtils:
         return _flatten(nested_dict)
     
     @staticmethod
-    def extract_unique_values(data: List[Dict[str, Any]], field: str) -> Set[str]:
+    def extract_unique_values(data: list[dict[str, Any]], field: str) -> set[str]:
         """Extract unique values for a field from list of dictionaries.
         
         Args:
@@ -360,7 +360,7 @@ class DataUtils:
         return values
     
     @staticmethod
-    def group_by_field(data: List[Dict[str, Any]], field: str) -> Dict[str, List[Dict[str, Any]]]:
+    def group_by_field(data: list[dict[str, Any]], field: str) -> dict[str, list[dict[str, Any]]]:
         """Group list of dictionaries by field value.
         
         Args:
@@ -383,7 +383,7 @@ class DebugUtils:
     """Debugging and diagnostic utilities."""
     
     @staticmethod
-    def element_info(elem: ET.Element) -> Dict[str, Any]:
+    def element_info(elem: ET.Element) -> dict[str, Any]:
         """Get diagnostic information about XML element.
         
         Args:
@@ -403,7 +403,7 @@ class DebugUtils:
         }
     
     @staticmethod
-    def summarize_parsing_stats(content: Dict[str, Any]) -> Dict[str, Any]:
+    def summarize_parsing_stats(content: dict[str, Any]) -> dict[str, Any]:
         """Generate parsing statistics summary.
         
         Args:
@@ -473,7 +473,7 @@ class ActivityUtils:
         return f"{project_id}#{workflow_id}#{node_id}#{content_hash}"
     
     @staticmethod
-    def extract_expressions_from_text(text: str) -> List[str]:
+    def extract_expressions_from_text(text: str) -> list[str]:
         """Extract UiPath expressions from text content.
         
         Args:
@@ -502,7 +502,7 @@ class ActivityUtils:
         return list(set(expressions))  # Remove duplicates
     
     @staticmethod
-    def extract_variable_references(text: str) -> List[str]:
+    def extract_variable_references(text: str) -> list[str]:
         """Extract variable references from expressions.
         
         Args:
@@ -550,7 +550,7 @@ class ActivityUtils:
         return list(set(filtered_vars))  # Remove duplicates
     
     @staticmethod
-    def extract_selectors_from_config(configuration: Dict[str, Any]) -> Dict[str, str]:
+    def extract_selectors_from_config(configuration: dict[str, Any]) -> dict[str, str]:
         """Extract UI selectors from activity configuration.
         
         Args:

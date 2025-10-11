@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
 name = "xaml-parser"
@@ -11,47 +11,44 @@ authors = [
 description = "Standalone XAML workflow parser for automation projects"
 readme = "README.md"
 license = {text = "CC-BY-4.0"}
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Other/Proprietary License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup :: XML",
     "Topic :: Office/Business :: Office Suites",
 ]
 keywords = ["xaml", "workflow", "automation", "parsing", "rpa", "uipath"]
 
-# Minimal dependencies for standalone package (ADR-015)
+# Minimal dependencies for standalone package
 dependencies = [
     "defusedxml>=0.7.1",  # Security for XML parsing
-    "pytest>=7.4",       # Testing framework for uv run pytest
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4",
-    "pytest-cov>=4.1", 
-    "black>=23.0",
-    "isort>=5.12",
-    "ruff>=0.1",
-    "mypy>=1.7",
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "ruff>=0.6",
+    "mypy>=1.11",
     "types-defusedxml",
+    "pre-commit>=3.5",
+    "twine>=5.0",
 ]
 test = [
-    "pytest>=7.4",
+    "pytest>=8.0",
     "pytest-cov>=4.1",
 ]
 
 [dependency-groups]
 test = [
-    "pytest>=7.4",
+    "pytest>=8.0",
     "pytest-cov>=4.1",
 ]
 
@@ -63,35 +60,59 @@ Issues = "https://github.com/rpapub/xaml-parser/issues"
 [project.scripts]
 xaml-parser = "xaml_parser.cli:main"
 
-[tool.setuptools]
-package-dir = {"" = "."}
-
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["xaml_parser*"]
-
-[tool.black]
-line-length = 88
-target-version = ['py39']
+[tool.hatch.build.targets.wheel]
+packages = ["xaml_parser"]
 
 [tool.ruff]
-line-length = 88
-target-version = "py39"
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "N", "D", "ANN"]
+ignore = ["D203", "D212", "ANN101", "ANN102", "ANN401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.mypy]
-python_version = "3.9"
-warn_return_any = true
+python_version = "3.11"
+strict = true
 warn_unused_configs = true
+warn_return_any = true
+warn_redundant_casts = true
+warn_unused_ignores = true
 disallow_untyped_defs = true
+disallow_any_unimported = false
+no_implicit_optional = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "defusedxml.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--verbose"
+addopts = "--verbose --cov=xaml_parser --cov-report=term-missing --cov-report=html --cov-fail-under=90"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "corpus: marks tests that use corpus data"
+]
+
+[tool.coverage.run]
+source = ["xaml_parser"]
+omit = ["tests/*", "**/__pycache__/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
 ]

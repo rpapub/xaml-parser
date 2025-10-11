@@ -5,7 +5,7 @@ completely self-contained and reusable in any Python project.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 @dataclass
@@ -16,22 +16,22 @@ class WorkflowContent:
     from a workflow XAML file.
     """
     # Core workflow elements
-    arguments: List['WorkflowArgument'] = field(default_factory=list)
-    variables: List['WorkflowVariable'] = field(default_factory=list)
-    activities: List['Activity'] = field(default_factory=list)
+    arguments: list['WorkflowArgument'] = field(default_factory=list)
+    variables: list['WorkflowVariable'] = field(default_factory=list)
+    activities: list['Activity'] = field(default_factory=list)
     
     # Workflow metadata
-    root_annotation: Optional[str] = None
-    display_name: Optional[str] = None
-    description: Optional[str] = None
+    root_annotation: str | None = None
+    display_name: str | None = None
+    description: str | None = None
     
     # XAML technical metadata
-    namespaces: Dict[str, str] = field(default_factory=dict)
-    assembly_references: List[str] = field(default_factory=list)
+    namespaces: dict[str, str] = field(default_factory=dict)
+    assembly_references: list[str] = field(default_factory=list)
     expression_language: str = 'VisualBasic'
     
     # Raw metadata for future extensions
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     
     # Statistics
     total_activities: int = 0
@@ -45,8 +45,8 @@ class WorkflowArgument:
     name: str
     type: str                           # Full .NET type signature
     direction: str                      # 'in', 'out', 'inout'
-    annotation: Optional[str] = None    # sap2010:Annotation.AnnotationText
-    default_value: Optional[str] = None # From default attribute or this: prefix
+    annotation: str | None = None    # sap2010:Annotation.AnnotationText
+    default_value: str | None = None # From default attribute or this: prefix
 
 
 @dataclass
@@ -54,7 +54,7 @@ class WorkflowVariable:
     """Variable definition from workflow scope."""
     name: str
     type: str                           # Full .NET type signature
-    default_value: Optional[str] = None # Default value expression
+    default_value: str | None = None # Default value expression
     scope: str = "workflow"             # Which element scope owns this variable
 
 
@@ -69,36 +69,36 @@ class Activity:
     activity_id: str                                    # Unique activity identifier
     workflow_id: str                                   # Parent workflow
     activity_type: str                                 # e.g., "uix:NClick"
-    display_name: Optional[str] = None                 # User-visible name
+    display_name: str | None = None                 # User-visible name
     node_id: str = ""                                  # Hierarchical path
-    parent_activity_id: Optional[str] = None           # Parent in hierarchy
+    parent_activity_id: str | None = None           # Parent in hierarchy
     depth: int = 0                                     # Nesting level
     
     # Complete business logic extraction
-    arguments: Dict[str, Any] = field(default_factory=dict)      # All activity arguments
-    configuration: Dict[str, Any] = field(default_factory=dict)  # Nested objects (Target, etc.)
-    properties: Dict[str, Any] = field(default_factory=dict)     # All visible properties
-    metadata: Dict[str, Any] = field(default_factory=dict)       # ViewState, IdRef, etc.
+    arguments: dict[str, Any] = field(default_factory=dict)      # All activity arguments
+    configuration: dict[str, Any] = field(default_factory=dict)  # Nested objects (Target, etc.)
+    properties: dict[str, Any] = field(default_factory=dict)     # All visible properties
+    metadata: dict[str, Any] = field(default_factory=dict)       # ViewState, IdRef, etc.
     
     # Business logic analysis
-    expressions: List[str] = field(default_factory=list)         # UiPath expressions found
-    variables_referenced: List[str] = field(default_factory=list) # Variables used
-    selectors: Dict[str, str] = field(default_factory=dict)      # UI selectors
+    expressions: list[str] = field(default_factory=list)         # UiPath expressions found
+    variables_referenced: list[str] = field(default_factory=list) # Variables used
+    selectors: dict[str, str] = field(default_factory=dict)      # UI selectors
     
-    annotation: Optional[str] = None                   # Activity annotation
+    annotation: str | None = None                   # Activity annotation
     is_visible: bool = True                           # Visual designer visibility
-    container_type: Optional[str] = None              # Parent container type
+    container_type: str | None = None              # Parent container type
     
     # Legacy fields for backward compatibility  
-    visible_attributes: Dict[str, str] = field(default_factory=dict)     # User-visible config (legacy)
-    invisible_attributes: Dict[str, str] = field(default_factory=dict)   # ViewState, technical (legacy)
-    variables: List[WorkflowVariable] = field(default_factory=list)      # Activity-scoped variables (legacy)
-    child_activities: List[str] = field(default_factory=list)            # Legacy hierarchy
-    expression_objects: List['Expression'] = field(default_factory=list)  # Detailed expression objects (legacy)
+    visible_attributes: dict[str, str] = field(default_factory=dict)     # User-visible config (legacy)
+    invisible_attributes: dict[str, str] = field(default_factory=dict)   # ViewState, technical (legacy)
+    variables: list[WorkflowVariable] = field(default_factory=list)      # Activity-scoped variables (legacy)
+    child_activities: list[str] = field(default_factory=list)            # Legacy hierarchy
+    expression_objects: list['Expression'] = field(default_factory=list)  # Detailed expression objects (legacy)
     
     # Position context
-    xpath_location: Optional[str] = None    # XPath for debugging
-    source_line: Optional[int] = None       # Line number in XAML
+    xpath_location: str | None = None    # XPath for debugging
+    source_line: int | None = None       # Line number in XAML
 
 
 @dataclass
@@ -107,19 +107,19 @@ class Expression:
     content: str                        # Raw expression text
     expression_type: str                # 'assignment', 'condition', 'message', etc.
     language: str = 'VisualBasic'       # Expression language
-    context: Optional[str] = None       # Which activity property contains this
-    contains_variables: List[str] = field(default_factory=list)  # Variable references
-    contains_methods: List[str] = field(default_factory=list)    # Method calls detected
+    context: str | None = None       # Which activity property contains this
+    contains_variables: list[str] = field(default_factory=list)  # Variable references
+    contains_methods: list[str] = field(default_factory=list)    # Method calls detected
 
 
 @dataclass
 class ViewStateData:
     """ViewState information (invisible UI metadata)."""
-    is_expanded: Optional[bool] = None
-    is_pinned: Optional[bool] = None
-    is_annotation_docked: Optional[bool] = None
-    hint_size: Optional[str] = None
-    other_properties: Dict[str, Any] = field(default_factory=dict)
+    is_expanded: bool | None = None
+    is_pinned: bool | None = None
+    is_annotation_docked: bool | None = None
+    hint_size: str | None = None
+    other_properties: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -135,21 +135,21 @@ class ParseDiagnostics:
     skipped_elements: int = 0
     xml_depth: int = 0
     file_size_bytes: int = 0
-    encoding_detected: Optional[str] = None
-    root_element_tag: Optional[str] = None
-    processing_steps: List[str] = field(default_factory=list)
-    performance_metrics: Dict[str, float] = field(default_factory=dict)
+    encoding_detected: str | None = None
+    root_element_tag: str | None = None
+    processing_steps: list[str] = field(default_factory=list)
+    performance_metrics: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass
 class ParseResult:
     """Complete parsing result with success/error information and diagnostics."""
-    content: Optional[WorkflowContent] = None
+    content: WorkflowContent | None = None
     success: bool = True
-    errors: List[str] = field(default_factory=list)
-    warnings: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
     parse_time_ms: float = 0.0
-    file_path: Optional[str] = None
+    file_path: str | None = None
     # Enhanced diagnostics for troubleshooting
-    diagnostics: Optional[ParseDiagnostics] = None
-    config_used: Dict[str, Any] = field(default_factory=dict)
+    diagnostics: ParseDiagnostics | None = None
+    config_used: dict[str, Any] = field(default_factory=dict)
