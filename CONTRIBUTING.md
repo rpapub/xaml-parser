@@ -1,56 +1,96 @@
 # Contributing to XAML Parser
 
-Thank you for your interest in contributing to the XAML Parser project! This document provides guidelines and information for contributors.
+Thank you for your interest in contributing! This guide covers everything you need to know to develop, test, and contribute to the XAML Parser project.
 
 ## Code of Conduct
 
-This project follows a respectful and collaborative approach. Please:
-- Be respectful and constructive in all interactions
+- Be respectful and constructive
 - Welcome newcomers and help them get started
 - Focus on what is best for the community
-- Show empathy towards other community members
+- Show empathy towards other contributors
 
 ## How to Contribute
 
 ### Reporting Issues
 
-When reporting issues, please include:
-
-1. **Clear description**: What were you trying to do?
-2. **Steps to reproduce**: How can we reproduce the issue?
-3. **Expected behavior**: What did you expect to happen?
-4. **Actual behavior**: What actually happened?
-5. **Environment**: OS, Python/Go version, etc.
-6. **Sample XAML**: If applicable, provide a minimal XAML sample that demonstrates the issue
+Include:
+1. **Clear description** - What were you trying to do?
+2. **Steps to reproduce** - How can we reproduce it?
+3. **Expected vs actual behavior**
+4. **Environment** - OS, Python/Go version
+5. **Sample XAML** - Minimal example demonstrating the issue
 
 ### Suggesting Features
 
-Feature suggestions are welcome! Please:
-
-1. Check existing issues to avoid duplicates
-2. Clearly describe the feature and its use case
-3. Explain how it would benefit users
-4. Consider how it fits with the project's goals (zero-dependency, multi-language support)
+Before suggesting:
+1. Check existing issues for duplicates
+2. Describe the use case clearly
+3. Explain how it benefits users
+4. Consider fit with project goals (zero-dependency, multi-language)
 
 ### Submitting Pull Requests
 
-1. **Fork the repository** and create your branch from `main`
-2. **Make your changes** following the coding guidelines below
-3. **Add tests** for new functionality
-4. **Update documentation** as needed
-5. **Ensure tests pass** for all affected implementations
-6. **Submit a pull request** with a clear description
+1. Fork and create branch from `main`
+2. Follow coding guidelines below
+3. Add tests for new functionality
+4. Update documentation
+5. Ensure all tests pass
+6. Submit PR with clear description
+
+## Repository Structure
+
+```
+xaml-parser/                  # Monorepo root
+├── python/                   # Python implementation
+│   ├── xaml_parser/          # Source package
+│   │   ├── __init__.py       # Public API
+│   │   ├── parser.py         # Main parser
+│   │   ├── models.py         # Data models
+│   │   ├── extractors.py     # Extraction logic
+│   │   ├── utils.py          # Utilities
+│   │   ├── validation.py     # Schema validation
+│   │   └── constants.py      # Configuration
+│   ├── tests/                # Python tests
+│   │   ├── conftest.py       # Pytest fixtures
+│   │   ├── test_parser.py    # Parser tests
+│   │   └── test_corpus.py    # Corpus tests
+│   ├── pyproject.toml        # Package config
+│   └── README.md             # Python docs
+├── go/                       # Go implementation (planned)
+│   ├── parser/               # Go package
+│   │   ├── models.go         # Data structures
+│   │   ├── parser.go         # Parser implementation
+│   │   └── parser_test.go    # Tests
+│   ├── go.mod                # Go module
+│   └── README.md             # Go docs
+├── testdata/                 # Shared test corpus
+│   ├── golden/               # Golden freeze tests
+│   │   ├── *.xaml            # Input XAML files
+│   │   └── *.json            # Expected JSON output
+│   └── corpus/               # Realistic projects
+│       ├── simple_project/   # Basic UiPath project
+│       └── edge_cases/       # Error conditions
+├── schemas/                  # JSON schemas
+│   ├── parse_result.schema.json
+│   └── workflow_content.schema.json
+├── docs/                     # Documentation
+│   ├── MIGRATION.md          # Migration history
+│   └── architecture.md       # Design docs
+├── LICENSE                   # CC-BY 4.0
+├── README.md                 # User documentation
+└── CONTRIBUTING.md           # This file
+```
 
 ## Development Setup
 
-### Python Implementation
+### Python
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/rpapub/xaml-parser.git
 cd xaml-parser/python
 
-# Install dependencies with uv (recommended)
+# Install with uv (recommended)
 uv sync
 
 # Or with pip
@@ -58,6 +98,9 @@ pip install -e ".[dev]"
 
 # Run tests
 uv run pytest tests/ -v
+
+# Run with coverage
+uv run pytest tests/ --cov=xaml_parser --cov-report=html
 
 # Format code
 uv run black xaml_parser/ tests/
@@ -70,16 +113,19 @@ uv run ruff check xaml_parser/ tests/
 uv run mypy xaml_parser/
 ```
 
-### Go Implementation
+### Go
 
 ```bash
 cd go
 
-# Get dependencies
+# Download dependencies
 go mod download
 
 # Run tests
 go test ./...
+
+# Run with verbose output
+go test -v ./...
 
 # Format code
 go fmt ./...
@@ -87,50 +133,130 @@ go fmt ./...
 # Lint (requires golangci-lint)
 golangci-lint run
 
-# Vet
+# Vet code
 go vet ./...
+```
+
+## Test Data Organization
+
+### Golden Freeze Tests (`testdata/golden/`)
+
+Reference test pairs with known-good output:
+- `simple_sequence.xaml` + `simple_sequence.json`
+- `complex_workflow.xaml` + `complex_workflow.json`
+- `invoke_workflows.xaml` + `invoke_workflows.json`
+- `ui_automation.xaml` + `ui_automation.json`
+
+**Purpose:**
+- Regression testing - detect unintended changes
+- Cross-language validation - ensure Python and Go match
+- Schema compliance - validate against JSON schemas
+- Performance benchmarks - track parsing speed
+
+**Adding golden tests:**
+1. Create XAML file in `testdata/golden/`
+2. Run parser to generate JSON output
+3. **Manually review** output for correctness
+4. Save as `<name>.json` in `testdata/golden/`
+5. Add test case in both Python and Go
+6. Commit XAML and JSON together
+
+### Corpus Tests (`testdata/corpus/`)
+
+Complete project structures for realistic testing:
+
+**`simple_project/`** - Basic UiPath project
+- Main.xaml with arguments and variables
+- Invoked workflows in `workflows/`
+- project.json configuration
+
+**`edge_cases/`** - Error conditions
+- `malformed.xaml` - Invalid XML
+- `empty.xaml` - Minimal workflow
+
+**Adding corpus tests:**
+1. Create directory in `testdata/corpus/`
+2. Add complete project structure
+3. Include project.json if applicable
+4. Update `testdata/README.md`
+5. Add test cases using the corpus
+
+### Test Data Access
+
+**Python:**
+```python
+# In conftest.py
+testdata_dir = Path(__file__).parent.parent / "testdata"
+golden_dir = testdata_dir / "golden"
+corpus_dir = testdata_dir / "corpus"
+
+# In tests
+def test_golden(golden_dir):
+    xaml = golden_dir / "simple_sequence.xaml"
+    golden = golden_dir / "simple_sequence.json"
+    # ...
+```
+
+**Go:**
+```go
+testdataDir := filepath.Join("..", "..", "testdata", "golden")
+xamlPath := filepath.Join(testdataDir, "simple_sequence.xaml")
+goldenPath := filepath.Join(testdataDir, "simple_sequence.json")
 ```
 
 ## Coding Guidelines
 
 ### Python
 
-- **Style**: Follow PEP 8, enforced by Black and Ruff
-- **Type Hints**: Use type hints for all functions and methods
-- **Docstrings**: Use Google-style docstrings
-- **Imports**: Organized by isort (stdlib, third-party, local)
-- **Line Length**: 88 characters (Black default)
+**Style:**
+- Follow PEP 8
+- Use Black (88 char line length)
+- Organize imports with isort (stdlib, third-party, local)
+- Type hints for all functions
 
+**Example:**
 ```python
-def parse_xaml_file(file_path: Path, config: Optional[Dict] = None) -> ParseResult:
+from typing import Optional
+from pathlib import Path
+
+def parse_workflow(
+    file_path: Path,
+    config: Optional[dict] = None
+) -> ParseResult:
     """Parse a XAML workflow file.
 
     Args:
-        file_path: Path to the XAML file to parse
-        config: Optional parser configuration dictionary
+        file_path: Path to XAML file
+        config: Optional parser configuration
 
     Returns:
-        ParseResult with workflow content and diagnostics
+        ParseResult with workflow content
 
     Raises:
-        FileNotFoundError: If the file does not exist
-        ValueError: If the file is not valid XAML
+        FileNotFoundError: If file doesn't exist
+        ValueError: If XAML is invalid
     """
-    # Implementation here
+    # Implementation
 ```
 
 ### Go
 
-- **Style**: Follow Go conventions, enforced by gofmt
-- **Comments**: Exported functions must have comments
-- **Error Handling**: Return errors, don't panic
-- **Testing**: Use table-driven tests where appropriate
+**Style:**
+- Follow Go conventions
+- Use gofmt for formatting
+- Comment all exported functions
+- Return errors, don't panic
 
+**Example:**
 ```go
-// ParseFile parses a XAML workflow file and returns the result.
+// ParseFile parses a XAML workflow file.
 // Returns an error if the file cannot be read or parsed.
 func (p *Parser) ParseFile(filePath string) (*ParseResult, error) {
-    // Implementation here
+    data, err := os.ReadFile(filePath)
+    if err != nil {
+        return nil, fmt.Errorf("failed to read file: %w", err)
+    }
+    // Implementation
 }
 ```
 
@@ -138,27 +264,47 @@ func (p *Parser) ParseFile(filePath string) (*ParseResult, error) {
 
 ### Unit Tests
 
-- Write tests for all new functionality
-- Aim for high code coverage (>80%)
+- Test all new functionality
+- Aim for >80% code coverage
 - Use descriptive test names
-- Test both success and failure cases
+- Test success and failure cases
 
-### Golden Freeze Tests
+**Python example:**
+```python
+def test_parse_valid_workflow(parser):
+    """Test parsing a valid XAML workflow."""
+    result = parser.parse_content(VALID_XAML)
 
-When adding new golden freeze tests:
+    assert result.success
+    assert len(result.content.arguments) == 2
+    assert result.content.arguments[0].name == "in_Config"
+```
 
-1. **Create XAML file** in `testdata/golden/`
-2. **Generate expected output** by running the parser
-3. **Manual review** to ensure correctness
-4. **Add test cases** in both Python and Go
+**Go example:**
+```go
+func TestParseValidWorkflow(t *testing.T) {
+    parser := New(nil)
+    result, err := parser.ParseContent(validXAML, nil)
 
-Example test structure:
+    if err != nil {
+        t.Fatalf("unexpected error: %v", err)
+    }
+
+    if !result.Success {
+        t.Error("expected success to be true")
+    }
+}
+```
+
+### Integration Tests
+
+Use golden freeze tests for integration:
 
 ```python
-# Python
-def test_my_feature(golden_dir):
-    xaml_path = golden_dir / "my_feature.xaml"
-    golden_path = golden_dir / "my_feature.json"
+def test_simple_sequence_golden(golden_dir):
+    """Test against golden freeze data."""
+    xaml_path = golden_dir / "simple_sequence.xaml"
+    golden_path = golden_dir / "simple_sequence.json"
 
     parser = XamlParser()
     result = parser.parse_file(xaml_path)
@@ -166,137 +312,177 @@ def test_my_feature(golden_dir):
     with open(golden_path) as f:
         expected = json.load(f)
 
-    assert result.content == expected
+    assert result.content.to_dict() == expected['content']
 ```
 
-```go
-// Go
-func TestMyFeature(t *testing.T) {
-    xamlPath := filepath.Join("..", "..", "testdata", "golden", "my_feature.xaml")
-    goldenPath := filepath.Join("..", "..", "testdata", "golden", "my_feature.json")
+### Test Markers
 
-    parser := New(nil)
-    result, err := parser.ParseFile(xamlPath)
-    // Assertions here
-}
+Python tests use pytest markers:
+- `@pytest.mark.slow` - Long-running tests
+- `@pytest.mark.integration` - Integration tests
+- `@pytest.mark.corpus` - Tests requiring corpus data
+
+Run specific markers:
+```bash
+pytest -m "not slow"  # Skip slow tests
+pytest -m corpus      # Run only corpus tests
 ```
-
-### Corpus Tests
-
-For complex scenarios, add complete project structures to `testdata/corpus/`.
 
 ## Schema Changes
 
-When modifying JSON schemas in `schemas/`:
-
-1. **Backward Compatibility**: Avoid breaking changes if possible
-2. **Versioning**: Follow semantic versioning for schemas
-3. **Documentation**: Update `schemas/README.md`
-4. **Testing**: Update all golden freeze tests
-5. **Cross-Language**: Ensure both Python and Go implementations support the change
+JSON schemas in `schemas/` define the API contract.
 
 ### Adding Optional Fields
+
+Safe - doesn't break existing code:
 
 ```json
 {
   "properties": {
     "new_field": {
       "type": "string",
-      "description": "Description of new field"
+      "description": "New optional field"
     }
   }
 }
 ```
 
-Note: Don't add `new_field` to the `required` array.
+Do NOT add to `required` array.
 
 ### Breaking Changes
 
-Breaking changes require:
-- Major version bump
-- Update to all golden freeze tests
-- Migration guide in documentation
-- Deprecation notice (if applicable)
+Require careful handling:
+1. **Major version bump** (0.1.0 → 1.0.0)
+2. **Update all golden tests** with new format
+3. **Update both implementations** (Python and Go)
+4. **Document migration** in `docs/MIGRATION.md`
+5. **Deprecation notice** if removing fields
 
-## Documentation
-
-### Code Documentation
-
-- **Python**: Use Google-style docstrings
-- **Go**: Follow Go doc conventions
-- **Examples**: Include usage examples in docstrings
-
-### README Files
-
-- Keep language-specific READMEs up to date
-- Update main README.md for project-wide changes
-- Include examples and getting started guides
-
-### Migration Guide
-
-When making breaking changes, document the migration path in `docs/MIGRATION.md`.
+**Process:**
+1. Discuss in issue first
+2. Update schema with new version
+3. Update implementations
+4. Update all test data
+5. Update documentation
+6. Create PR with full context
 
 ## Pull Request Process
 
-1. **Create a branch** with a descriptive name:
-   - `feature/add-expression-parser`
-   - `fix/annotation-extraction-bug`
-   - `docs/update-contributing-guide`
+### 1. Branch Naming
 
-2. **Commit messages** should be clear and descriptive:
-   ```
-   Add expression parser for VB.NET LINQ queries
+```bash
+feature/add-expression-analysis    # New feature
+fix/annotation-extraction-bug      # Bug fix
+docs/update-api-examples           # Documentation
+refactor/simplify-parser-logic     # Refactoring
+```
 
-   - Implement LINQ detection in expressions
-   - Add tests for complex LINQ patterns
-   - Update documentation
+### 2. Commit Messages
 
-   Closes #123
-   ```
+```
+Add expression analysis for VB.NET LINQ queries
 
-3. **Run all tests** before submitting:
-   ```bash
-   # Python
-   cd python && uv run pytest tests/ -v
+- Implement LINQ pattern detection
+- Add tests for complex query expressions
+- Update documentation with examples
 
-   # Go
-   cd go && go test ./...
-   ```
+Closes #123
+```
 
-4. **Update CHANGELOG** (if applicable)
+### 3. Before Submitting
 
-5. **Request review** from maintainers
+```bash
+# Python
+cd python
+uv run pytest tests/ -v
+uv run black xaml_parser/ tests/
+uv run ruff check xaml_parser/
+uv run mypy xaml_parser/
 
-6. **Address feedback** promptly and professionally
+# Go
+cd go
+go test ./...
+go fmt ./...
+go vet ./...
+```
+
+### 4. PR Description
+
+Include:
+- What changed and why
+- How to test the changes
+- Any breaking changes
+- Related issues
+
+### 5. Review Process
+
+- Maintainers will review
+- Address feedback promptly
+- Update tests if requested
+- Squash commits if asked
 
 ## Release Process
 
-Releases are managed by maintainers:
+For maintainers:
 
-1. Update version numbers in:
-   - `python/pyproject.toml`
-   - `python/xaml_parser/__version__.py`
-   - `go/go.mod` (future)
+### 1. Version Bump
 
-2. Update CHANGELOG.md with release notes
+Update version in:
+- `python/pyproject.toml`
+- `python/xaml_parser/__version__.py`
+- `go/go.mod` (future)
 
-3. Create a git tag: `v0.2.0`
+### 2. Update CHANGELOG
 
-4. Build and publish packages:
-   - Python: PyPI
-   - Go: pkg.go.dev (automatic)
+```markdown
+## [0.2.0] - 2024-01-15
 
-5. Create GitHub release with notes
+### Added
+- Expression analysis for VB.NET LINQ
+- Support for nested workflow invocations
+
+### Fixed
+- Annotation extraction for deeply nested activities
+
+### Changed
+- Improved error messages for malformed XAML
+```
+
+### 3. Create Tag
+
+```bash
+git tag -a v0.2.0 -m "Release version 0.2.0"
+git push origin v0.2.0
+```
+
+### 4. Build and Publish
+
+**Python:**
+```bash
+cd python
+uv build
+twine upload dist/*
+```
+
+**Go:**
+Automatic via pkg.go.dev when tagged.
+
+### 5. GitHub Release
+
+Create release on GitHub with:
+- Tag version
+- Release notes from CHANGELOG
+- Links to documentation
 
 ## Questions?
 
 - **Issues**: https://github.com/rpapub/xaml-parser/issues
-- **Discussions**: https://github.com/rpapub/xaml-parser/discussions (if enabled)
+- **Discussions**: https://github.com/rpapub/xaml-parser/discussions
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the CC-BY 4.0 License.
+By contributing, you agree your contributions will be licensed under CC-BY 4.0.
 
-## Acknowledgments
+---
 
-Thank you for contributing to XAML Parser! Your contributions help make this project better for everyone.
+Thank you for contributing to XAML Parser!

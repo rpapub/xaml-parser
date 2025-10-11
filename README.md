@@ -1,251 +1,281 @@
 # XAML Parser
 
-Standalone XAML workflow parser for automation projects with multi-language implementations.
+Parse UiPath XAML workflow files and extract complete metadata - arguments, variables, activities, expressions, and annotations.
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
-## Overview
+## What is this?
 
-XAML Parser is a robust, zero-dependency parser for UiPath XAML workflow files, providing complete metadata extraction from automation projects. This monorepo supports implementations in multiple languages with a shared test corpus ensuring consistency across implementations.
+A zero-dependency parser for UiPath XAML workflow files. Extract all metadata from automation projects:
+- Workflow arguments (inputs/outputs)
+- Variables and their scopes
+- Activities and their configurations
+- Business logic annotations
+- VB.NET and C# expressions
 
-### Key Features
+**Available in**: Python (stable) | Go (planned)
 
-- **Complete metadata extraction** from XAML workflow files
-- **Arguments** with types, directions, and annotations
-- **Variables** from all workflow scopes
-- **Activities** with full property analysis (visible and invisible)
-- **Annotations** and documentation text
-- **Expressions** with language detection (VB.NET, C#)
-- **Zero dependencies** - uses only standard libraries
-- **Graceful error handling** with detailed diagnostics
-
-## Implementation Status
-
-| Language | Status | Location | Package |
-|----------|--------|----------|---------|
-| **Python** | ✅ Stable | [`python/`](python/) | `xaml-parser` |
-| **Go** | 🚧 Planned | [`go/`](go/) | `github.com/rpapub/xaml-parser/go` |
-
-## Quick Start
+## Installation
 
 ### Python
 
 ```bash
-# Install
 pip install xaml-parser
+```
 
-# Or for development
-cd python
+Or for development:
+```bash
+git clone https://github.com/rpapub/xaml-parser.git
+cd xaml-parser/python
 uv sync
 ```
+
+## Quick Examples by Use Case
+
+### 1. Extract Workflow Arguments
 
 ```python
 from pathlib import Path
 from xaml_parser import XamlParser
 
-# Parse a workflow file
 parser = XamlParser()
-result = parser.parse_file(Path("workflow.xaml"))
+result = parser.parse_file(Path("Main.xaml"))
 
 if result.success:
-    content = result.content
-    print(f"Workflow: {content.root_annotation}")
-    print(f"Arguments: {len(content.arguments)}")
-    print(f"Activities: {len(content.activities)}")
-
-    # Access arguments
-    for arg in content.arguments:
-        print(f"  {arg.direction} {arg.name}: {arg.type}")
-else:
-    print("Parsing failed:", result.errors)
+    for arg in result.content.arguments:
+        print(f"{arg.direction.upper()}: {arg.name} ({arg.type})")
+        if arg.annotation:
+            print(f"  → {arg.annotation}")
 ```
 
-See [Python README](python/README.md) for detailed documentation.
+**Output:**
+```
+IN: Config (System.Collections.Generic.Dictionary<String, Object>)
+  → Configuration dictionary from orchestrator
+OUT: TransactionData (System.Data.DataRow)
+  → Current transaction item
+```
 
-### Go (Coming Soon)
+### 2. List All Activities
 
-```go
-// Future API
-import "github.com/rpapub/xaml-parser/go/parser"
+```python
+result = parser.parse_file(Path("Process.xaml"))
 
-p := parser.New()
-result, err := p.ParseFile("workflow.xaml")
-if err != nil {
-    log.Fatal(err)
+for activity in result.content.activities:
+    indent = "  " * activity.depth_level
+    print(f"{indent}{activity.tag}: {activity.display_name or '(unnamed)'}")
+```
+
+**Output:**
+```
+Sequence: Process Transaction
+  TryCatch: Try Process
+    Assign: Set Transaction Data
+    InvokeWorkflowFile: Update System
+  LogMessage: Transaction Complete
+```
+
+### 3. Extract Business Logic Annotations
+
+```python
+result = parser.parse_file(Path("workflow.xaml"))
+
+# Root workflow annotation
+if result.content.root_annotation:
+    print(f"Workflow Purpose: {result.content.root_annotation}")
+
+# Activity annotations
+for activity in result.content.activities:
+    if activity.annotation:
+        print(f"\n{activity.display_name}:")
+        print(f"  {activity.annotation}")
+```
+
+### 4. Find All Expressions
+
+```python
+config = {'extract_expressions': True}
+parser = XamlParser(config)
+result = parser.parse_file(Path("workflow.xaml"))
+
+for activity in result.content.activities:
+    for expr in activity.expressions:
+        print(f"{activity.display_name}: {expr.content}")
+        print(f"  Language: {expr.language}")
+        print(f"  Type: {expr.expression_type}")
+```
+
+### 5. Generate Workflow Documentation
+
+```python
+import json
+
+result = parser.parse_file(Path("Main.xaml"))
+
+doc = {
+    'workflow': result.content.display_name or 'Main',
+    'description': result.content.root_annotation,
+    'arguments': [
+        {
+            'name': arg.name,
+            'type': arg.type,
+            'direction': arg.direction,
+            'description': arg.annotation
+        }
+        for arg in result.content.arguments
+    ],
+    'activity_count': len(result.content.activities),
+    'variable_count': len(result.content.variables)
 }
 
-fmt.Printf("Arguments: %d\n", len(result.Content.Arguments))
+print(json.dumps(doc, indent=2))
 ```
 
-## Repository Structure
+### 6. Validate Workflow Structure in CI/CD
 
-```
-xaml-parser/
-├── python/              # Python implementation
-│   ├── xaml_parser/     # Source package
-│   └── tests/           # Python tests
-├── go/                  # Go implementation (planned)
-│   └── parser/          # Go package
-├── testdata/            # Shared test corpus
-│   ├── golden/          # Golden freeze test pairs
-│   └── corpus/          # Structured test projects
-├── schemas/             # JSON schemas for output validation
-├── docs/                # Documentation
-│   ├── MIGRATION.md     # Migration plan and history
-│   └── ...
-└── README.md            # This file
-```
+```python
+import sys
 
-## Test Data
+result = parser.parse_file(Path("workflow.xaml"))
 
-The monorepo includes a comprehensive test corpus shared across all language implementations:
+if not result.success:
+    print(f"❌ Parsing failed: {', '.join(result.errors)}")
+    sys.exit(1)
 
-- **Golden Freeze Tests**: XAML files with expected JSON output for validation
-- **Corpus Tests**: Complete UiPath project structures for realistic testing
-- **Edge Cases**: Malformed files, empty workflows, encoding variations
+# Check for required arguments
+required = ['in_Config', 'out_Result']
+actual = {arg.name for arg in result.content.arguments}
 
-See [`testdata/README.md`](testdata/README.md) for details.
+if not all(req in actual for req in required):
+    print(f"❌ Missing required arguments")
+    sys.exit(1)
 
-## Data Models
-
-### WorkflowContent
-
-Main result containing all extracted metadata:
-- `arguments`: List of WorkflowArgument objects
-- `variables`: List of WorkflowVariable objects
-- `activities`: List of Activity objects
-- `root_annotation`: Main workflow description
-- `namespaces`: XML namespace mappings
-- `expression_language`: VB.NET or C#
-
-### WorkflowArgument
-
-Workflow parameter definition:
-- `name`: Argument name
-- `type`: Full .NET type signature
-- `direction`: 'in', 'out', or 'inout'
-- `annotation`: Documentation text
-- `default_value`: Default value expression
-
-### Activity
-
-Complete activity representation:
-- `tag`: Activity type (Sequence, LogMessage, etc.)
-- `display_name`: User-friendly name
-- `annotation`: Business logic description
-- `visible_attributes`: User-configured properties
-- `invisible_attributes`: Technical ViewState data
-- `configuration`: Nested element structure
-- `expressions`: All expressions in activity
-
-## Supported XAML Features
-
-- **Arguments**: InArgument, OutArgument, InOutArgument with annotations
-- **Variables**: All scoped variables with types and defaults
-- **Activities**: Complete activity tree with properties
-- **Annotations**: Business logic documentation on all elements
-- **Expressions**: VB.NET and C# expressions with LINQ, lambdas, method calls
-- **ViewState**: UI metadata for studio presentation
-- **Assembly References**: External library dependencies
-
-## Schema-Driven Validation
-
-The parser output conforms to strict JSON schemas defined in [`schemas/`](schemas/):
-
-- `parse_result.schema.json`: Top-level parse result structure
-- `workflow_content.schema.json`: Workflow content and nested objects
-
-These schemas serve as the contract between language implementations and guarantee consistent output.
-
-## Architecture
-
-The parser is designed for modularity and reusability:
-
-- **Parser**: Main parsing orchestration
-- **Models**: Data structures for workflow elements
-- **Extractors**: Specialized extraction logic for different XAML elements
-- **Validators**: Schema-based output validation
-- **Utils**: Helper functions and common operations
-
-See [Architecture Documentation](docs/architecture.md) for design details.
-
-## Contributing
-
-We welcome contributions in any supported language! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
-
-- Development setup for Python and Go
-- Test data contribution guidelines
-- Schema update process
-- Pull request guidelines
-
-## Development
-
-### Prerequisites
-
-**Python**:
-- Python 3.9+
-- [uv](https://github.com/astral-sh/uv) for dependency management
-
-**Go** (future):
-- Go 1.21+
-
-### Running Tests
-
-**Python**:
-```bash
-cd python
-uv run pytest tests/ -v
+print(f"✅ Workflow valid: {len(result.content.activities)} activities")
 ```
 
-**Go** (future):
-```bash
-cd go
-go test ./...
+### 7. Analyze Workflow Dependencies
+
+```python
+invocations = []
+
+for activity in result.content.activities:
+    if activity.tag == 'InvokeWorkflowFile':
+        workflow_path = activity.visible_attributes.get('WorkflowFileName', '')
+        invocations.append(workflow_path)
+
+print("Invoked workflows:")
+for path in invocations:
+    print(f"  - {path}")
 ```
 
-### Building
+## What Can You Extract?
 
-**Python**:
-```bash
-cd python
-uv build
+### Workflow Arguments
+- Name, type, direction (in/out/inout)
+- Default values
+- Documentation annotations
+
+### Variables
+- Name, type, scope
+- Default values
+- Scoped to workflow or activity
+
+### Activities
+- Activity type (Sequence, Assign, If, etc.)
+- Display name and annotations
+- All properties (visible and ViewState)
+- Nested configuration
+- Parent-child relationships
+- Depth level in tree
+
+### Expressions
+- VB.NET and C# expressions
+- Expression type (assignment, condition, etc.)
+- Variable and method references
+- LINQ query detection
+
+### Metadata
+- XML namespaces
+- Assembly references
+- Expression language (VB/C#)
+- Parse diagnostics and performance
+
+## Configuration Options
+
+```python
+config = {
+    'extract_arguments': True,      # Extract workflow arguments
+    'extract_variables': True,      # Extract variables
+    'extract_activities': True,     # Extract activities
+    'extract_expressions': True,    # Parse expressions (slower)
+    'extract_viewstate': False,     # Include ViewState data
+    'strict_mode': False,           # Fail on any error
+    'max_depth': 50,                # Max activity nesting depth
+}
+
+parser = XamlParser(config)
 ```
+
+## Error Handling
+
+The parser handles errors gracefully:
+
+```python
+result = parser.parse_file(Path("malformed.xaml"))
+
+if not result.success:
+    print("Errors:")
+    for error in result.errors:
+        print(f"  - {error}")
+
+    print("\nWarnings:")
+    for warning in result.warnings:
+        print(f"  - {warning}")
+
+# Partial results may still be available
+if result.content:
+    print(f"\nPartially parsed: {len(result.content.activities)} activities")
+```
+
+## Language Support
+
+| Language | Status | Package |
+|----------|--------|---------|
+| **Python** | ✅ Stable (3.9+) | `xaml-parser` |
+| **Go** | 🚧 Planned | `github.com/rpapub/xaml-parser/go` |
+
+## Documentation
+
+- **[Python API Documentation](python/README.md)** - Detailed Python usage
+- **[Contributing Guide](CONTRIBUTING.md)** - For developers
+- **[Architecture](docs/architecture.md)** - Design decisions
+- **[Schemas](schemas/)** - JSON output schemas
 
 ## Use Cases
 
-- **Static Analysis**: Extract workflow metadata for analysis tools
-- **Documentation Generation**: Auto-generate documentation from workflows
-- **Migration Tools**: Parse legacy workflows for migration to new platforms
-- **CI/CD Validation**: Validate workflow structure in automated pipelines
-- **Code Review**: Extract business logic for human review
-- **Dependency Analysis**: Map workflow dependencies and invocations
-
-## Project History
-
-This parser was originally developed as part of the [rpax](https://github.com/rpapub/rpax) project and has been extracted into a standalone monorepo to support multi-language implementations and broader reusability.
+- **Static Analysis** - Extract metadata for code quality tools
+- **Documentation** - Auto-generate workflow documentation
+- **Migration** - Parse workflows for platform migration
+- **CI/CD Validation** - Validate structure in pipelines
+- **Code Review** - Extract business logic for review
+- **Dependency Analysis** - Map workflow dependencies
 
 ## License
 
-This project is licensed under the [Creative Commons Attribution 4.0 International License (CC-BY 4.0)](LICENSE).
+[CC-BY 4.0](LICENSE) - Christian Prior-Mamulyan and contributors
 
-When using this package, please include the following attribution:
-
+**Attribution:**
 ```
-XAML Parser by Christian Prior-Mamulyan and contributors, licensed under CC-BY 4.0
+XAML Parser by Christian Prior-Mamulyan, licensed under CC-BY 4.0
 Source: https://github.com/rpapub/xaml-parser
 ```
 
-## Author
-
-Christian Prior-Mamulyan <cprior@gmail.com>
-
 ## Links
 
-- **Repository**: https://github.com/rpapub/xaml-parser
-- **Python Package**: https://pypi.org/project/xaml-parser/ (planned)
+- **GitHub**: https://github.com/rpapub/xaml-parser
 - **Issues**: https://github.com/rpapub/xaml-parser/issues
-- **Documentation**: [docs/](docs/)
+- **PyPI**: https://pypi.org/project/xaml-parser/ (planned)
 
-## Acknowledgments
+## History
 
-Originally developed as part of the rpax automation analysis project.
+Originally developed as part of the [rpax](https://github.com/rpapub/rpax) automation analysis project.
