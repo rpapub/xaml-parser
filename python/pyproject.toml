@@ -95,11 +95,25 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "--verbose --cov=xaml_parser --cov-report=term-missing --cov-report=html --cov-fail-under=90"
+# Deterministic test execution
+addopts = [
+    "--verbose",
+    "--cov=xaml_parser",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-fail-under=90",
+    "--strict-markers",
+    "--tb=short",
+    "-p", "no:randomly",  # Disable random test ordering
+]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "corpus: marks tests that use corpus data"
+]
+# Ensure deterministic behavior
+env = [
+    "PYTHONHASHSEED=0",  # Fixed hash seed for determinism
 ]
 
 [tool.coverage.run]

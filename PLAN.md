@@ -423,11 +423,11 @@ To ensure stable, reproducible output across runs, environments, and tool versio
 - This PLAN.md finalized
 
 **Tasks:**
-- [ ] Create `python/xaml_parser/dto.py` with all DTO dataclasses
-- [ ] Create `python/schemas/xaml-workflow-1.0.0.json` (JSON Schema)
-- [ ] Create `python/schemas/xaml-workflow-collection-1.0.0.json`
-- [ ] Document DTO design in `docs/ADR-DTO-DESIGN.md`
-- [ ] Update `docs/ARCHITECTURE.md` with new layer diagram
+- [x] Create `python/xaml_parser/dto.py` with all DTO dataclasses
+- [x] Create `python/schemas/xaml-workflow-1.0.0.json` (JSON Schema)
+- [x] Create `python/schemas/xaml-workflow-collection-1.0.0.json`
+- [x] Document DTO design in `docs/ADR-DTO-DESIGN.md`
+- [x] Update `docs/ARCHITECTURE.md` with new layer diagram
 
 **Validation:**
 - DTOs are well-typed (mypy passes)
@@ -448,8 +448,8 @@ To ensure stable, reproducible output across runs, environments, and tool versio
 **Tasks:**
 
 #### 1.1: Create ID Generator
-- [ ] Create `python/xaml_parser/id_generation.py`
-- [ ] Implement `IdGenerator` class
+- [x] Create `python/xaml_parser/id_generation.py`
+- [x] Implement `IdGenerator` class
   ```python
   class IdGenerator:
       def generate_workflow_id(self, xml_content: str) -> str:
@@ -482,8 +482,8 @@ To ensure stable, reproducible output across runs, environments, and tool versio
           # Implementation uses xml.etree or lxml with C14N support
           pass
   ```
-- [ ] Implement `_normalize_xml()` using W3C C14N (xml.etree or lxml)
-- [ ] Implement `_hash_xml_span()` - SHA-256 truncated to 16 chars
+- [x] Implement `_normalize_xml()` using W3C C14N (xml.etree with whitespace stripping)
+- [x] Implement `_hash_xml_span()` - SHA-256 truncated to 16 chars
 
 #### 1.2: Extract XML Spans
 - [ ] Update `XamlParser._extract_activities()` to capture XML span
@@ -1555,28 +1555,28 @@ To ensure stable, reproducible output across runs, environments, and tool versio
 ## Todo Checklist
 
 ### Phase 0: Foundation & Design
-- [ ] Create `python/xaml_parser/dto.py` with all DTOs
-- [ ] Create `python/schemas/xaml-workflow-1.0.0.json`
-- [ ] Create `python/schemas/xaml-workflow-collection-1.0.0.json`
-- [ ] Document DTO design in `docs/ADR-DTO-DESIGN.md`
-- [ ] Update `docs/ARCHITECTURE.md`
+- [x] Create `python/xaml_parser/dto.py` with all DTOs
+- [x] Create `python/schemas/xaml-workflow-1.0.0.json`
+- [x] Create `python/schemas/xaml-workflow-collection-1.0.0.json`
+- [x] Document DTO design in `docs/ADR-DTO-DESIGN.md`
+- [x] Update `docs/ARCHITECTURE.md`
 
 ### Phase 1: Stable ID Generation
-- [ ] Create `python/xaml_parser/id_generation.py`
-- [ ] Implement `IdGenerator` class
-- [ ] Implement `generate_workflow_id()`
-- [ ] Implement `generate_activity_id()`
-- [ ] Implement `_hash_xml_span()`
-- [ ] Implement `_normalize_xml()`
+- [x] Create `python/xaml_parser/id_generation.py`
+- [x] Implement `IdGenerator` class
+- [x] Implement `generate_workflow_id()`
+- [x] Implement `generate_activity_id()`
+- [x] Implement `_hash_xml_span()`
+- [x] Implement `_normalize_xml()`
 - [ ] Update `Activity` model with `xml_span` field
 - [ ] Update `XamlParser` to capture XML spans
 - [ ] Update `XamlParser` to generate stable IDs
 - [ ] Create `python/xaml_parser/ordering.py`
 - [ ] Implement `sort_by_id()`
-- [ ] Create `python/tests/test_id_generation.py`
-- [ ] Write ID generation tests
-- [ ] Write determinism tests
-- [ ] Run tests: `pytest python/tests/test_id_generation.py -v`
+- [x] Create `python/tests/test_id_generation.py`
+- [x] Write ID generation tests
+- [x] Write determinism tests
+- [x] Run tests: `pytest python/tests/test_id_generation.py -v` (21 tests pass)
 
 ### Phase 2: Control Flow Extraction
 - [ ] Define `EdgeDto` dataclass
