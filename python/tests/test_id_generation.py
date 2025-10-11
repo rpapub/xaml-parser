@@ -82,33 +82,25 @@ class TestIdGenerator:
         # All should produce the same ID after normalization
         assert id1 == id2 == id3
 
-    def test_attribute_order_affects_id(self):
-        """Test that attribute order affects ID.
+    def test_attribute_order_normalized(self):
+        """Test that attribute order is normalized by C14N.
 
-        Note: In practice, UiPath XAML files have consistent attribute ordering
-        (machine-generated), so this is not an issue for real workflows.
-        W3C C14N should normalize attribute order, but Python's implementation
-        may not fully handle this. For our use case (UiPath workflows), this
-        is acceptable since the designer generates consistent attribute ordering.
+        W3C C14N normalizes attribute order to ensure deterministic output.
+        Different attribute orders should produce the SAME ID.
         """
         gen = IdGenerator()
 
         # Different attribute orders
         xml1 = '<Assign DisplayName="Test" To="[var1]" Value="[expr]" />'
         xml2 = '<Assign Value="[expr]" To="[var1]" DisplayName="Test" />'
+        xml3 = '<Assign To="[var1]" Value="[expr]" DisplayName="Test" />'
 
         id1 = gen.generate_activity_id(xml1)
         id2 = gen.generate_activity_id(xml2)
-
-        # Note: These produce different IDs because attribute order isn't
-        # fully normalized by our C14N implementation. This is acceptable
-        # for UiPath workflows which have consistent ordering.
-        assert id1 != id2
-
-        # But same ordering should produce same ID
-        xml3 = '<Assign DisplayName="Test" To="[var1]" Value="[expr]" />'
         id3 = gen.generate_activity_id(xml3)
-        assert id1 == id3
+
+        # C14N normalizes attribute order - all produce same ID
+        assert id1 == id2 == id3
 
     def test_content_changes_affect_id(self):
         """Test that content changes produce different IDs."""
