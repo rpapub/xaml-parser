@@ -78,8 +78,12 @@ class MermaidEmitter(Emitter):
 
         # Add title as comment
         lines.append(f"    %% Workflow: {workflow.name}")
-        if workflow.metadata and workflow.metadata.get("annotation"):
-            annotation = workflow.metadata["annotation"]
+        if (
+            workflow.metadata
+            and hasattr(workflow.metadata, "annotation")
+            and workflow.metadata.annotation
+        ):
+            annotation = workflow.metadata.annotation
             # Truncate long annotations
             if len(annotation) > 100:
                 annotation = annotation[:97] + "..."
