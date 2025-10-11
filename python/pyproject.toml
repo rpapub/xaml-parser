@@ -60,6 +60,9 @@ Homepage = "https://github.com/rpapub/xaml-parser"
 Repository = "https://github.com/rpapub/xaml-parser"
 Issues = "https://github.com/rpapub/xaml-parser/issues"
 
+[project.scripts]
+xaml-parser = "xaml_parser.cli:main"
+
 [tool.setuptools]
 package-dir = {"" = "."}
 

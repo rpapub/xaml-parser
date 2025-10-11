@@ -26,6 +26,8 @@ pip install -e .
 
 ## Quick Start
 
+### Python API
+
 ```python
 from pathlib import Path
 from xaml_parser import XamlParser
@@ -49,10 +51,51 @@ if result.success:
     # Access activities with annotations
     for activity in content.activities:
         if activity.annotation:
-            print(f"{activity.tag}: {activity.annotation}")
+            print(f"{activity.activity_type}: {activity.annotation}")
 else:
     print("Parsing failed:", result.errors)
 ```
+
+### Command Line Interface
+
+```bash
+# Pretty print workflow summary
+xaml-parser Main.xaml
+
+# JSON output
+xaml-parser Main.xaml --json
+
+# List only arguments
+xaml-parser Main.xaml --arguments
+
+# Show activity tree
+xaml-parser Main.xaml --tree
+
+# Save output to file
+xaml-parser Main.xaml --json -o output.json
+
+# Process multiple files
+xaml-parser *.xaml --summary
+
+# Recursive search
+xaml-parser **/*.xaml --summary
+```
+
+**Using with uv (development):**
+```bash
+uv run xaml-parser workflow.xaml
+```
+
+**CLI Options:**
+- `--json` - Output as JSON
+- `--arguments` - Show only arguments
+- `--activities` - Show only activities
+- `--tree` - Show activity tree with nesting
+- `--summary` - Summary for multiple files
+- `-o FILE` - Write output to file
+- `--no-expressions` - Skip expression extraction (faster)
+- `--strict` - Fail on any error
+- `--help` - Show all options
 
 ## Features
 
