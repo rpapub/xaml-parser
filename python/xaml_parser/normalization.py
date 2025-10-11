@@ -15,6 +15,7 @@ from .dto import (
     ActivityDto,
     ArgumentDto,
     DependencyDto,
+    InvocationDto,
     IssueDto,
     LocationInfo,
     SourceInfo,
@@ -57,6 +58,7 @@ class Normalizer:
         parse_result: ParseResult,
         workflow_name: str | None = None,
         collected_at: str | None = None,
+        workflow_id_map: dict[str, str] | None = None,
     ) -> WorkflowDto:
         """Transform ParseResult to WorkflowDto.
 
@@ -64,6 +66,7 @@ class Normalizer:
             parse_result: Parsing result from XamlParser
             workflow_name: Workflow name (derived from file if None)
             collected_at: Collection timestamp (ISO 8601 UTC, uses current time if None)
+            workflow_id_map: Optional mapping of workflow paths to stable IDs for invocations
 
         Returns:
             WorkflowDto with stable IDs, edges, and metadata
@@ -172,7 +175,7 @@ class Normalizer:
             dependencies=dependencies,
             activities=activities,
             edges=edges,
-            invocations=[],  # TODO: Extract invocations in Phase 2.5
+            invocations=self._extract_invocations(content.activities, workflow_id_map or {}),
             issues=issues,
         )
 
@@ -309,3 +312,87 @@ class Normalizer:
             ISO 8601 timestamp string (e.g., "2025-10-11T07:15:00Z")
         """
         return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    def _extract_invocations(
+        self, activities: list[Activity], workflow_id_map: dict[str, str]
+    ) -> list[InvocationDto]:
+        """Extract workflow invocations from InvokeWorkflowFile activities.
+
+        Args:
+            activities: List of activities to scan
+            workflow_id_map: Map of workflow paths to stable workflow IDs
+
+        Returns:
+            List of InvocationDto objects
+        """
+        invocations = []
+
+        for activity in activities:
+            # Check if this is an InvokeWorkflowFile activity
+            if "InvokeWorkflowFile" not in activity.activity_type:
+                continue
+
+            # Extract WorkflowFileName from various sources
+            callee_path = (
+                activity.arguments.get("WorkflowFileName")
+                or activity.properties.get("WorkflowFileName")
+                or activity.visible_attributes.get("WorkflowFileName")
+            )
+
+            if not callee_path:
+                continue
+
+            # Clean up path (remove quotes, expression syntax)
+            callee_path_str = str(callee_path).strip('"').strip("'")
+
+            # Normalize path separators
+            callee_path_str = callee_path_str.replace("\\", "/")
+
+            # Lookup stable ID from map (or use placeholder)
+            callee_id = workflow_id_map.get(callee_path_str, f"wf:unresolved:{callee_path_str}")
+
+            # Extract argument mappings
+            arguments_passed = self._extract_argument_mappings(activity)
+
+            invocation = InvocationDto(
+                callee_id=callee_id,
+                callee_path=callee_path_str,
+                via_activity_id=activity.activity_id,
+                arguments_passed=arguments_passed,
+            )
+            invocations.append(invocation)
+
+        return invocations
+
+    def _extract_argument_mappings(self, activity: Activity) -> dict[str, str]:
+        """Extract argument mappings from InvokeWorkflowFile activity.
+
+        Args:
+            activity: InvokeWorkflowFile activity
+
+        Returns:
+            Dictionary mapping argument names to expressions
+        """
+        mappings = {}
+
+        # Look for argument bindings in arguments dict
+        # Arguments are typically in format: argumentName: expression
+        for key, value in activity.arguments.items():
+            # Skip the WorkflowFileName itself
+            if key == "WorkflowFileName":
+                continue
+
+            # Add argument mapping
+            if value is not None:
+                mappings[key] = str(value)
+
+        # Also check properties for argument bindings
+        # Some UiPath versions store them differently
+        if "Arguments" in activity.properties:
+            args_config = activity.properties["Arguments"]
+            if isinstance(args_config, dict):
+                for arg_name, arg_value in args_config.items():
+                    if arg_value is not None:
+                        mappings[arg_name] = str(arg_value)
+
+        return mappings

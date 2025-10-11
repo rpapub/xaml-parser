@@ -9,16 +9,22 @@ This module provides functionality to parse entire UiPath projects by:
 
 import json
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from .control_flow import ControlFlowExtractor
+from .dto import WorkflowCollectionDto
+from .id_generation import IdGenerator
 from .models import ParseResult, WorkflowContent
+from .normalization import Normalizer
 from .parser import XamlParser
 
 
 @dataclass
 class ProjectConfig:
     """Configuration loaded from project.json."""
+
     name: str
     main: str | None = None
     description: str | None = None
@@ -33,6 +39,7 @@ class ProjectConfig:
 @dataclass
 class WorkflowResult:
     """Result of parsing a single workflow in a project context."""
+
     file_path: Path
     relative_path: str
     parse_result: ParseResult
@@ -43,6 +50,7 @@ class WorkflowResult:
 @dataclass
 class ProjectResult:
     """Result of parsing an entire project."""
+
     project_dir: Path
     project_config: ProjectConfig
     workflows: list[WorkflowResult] = field(default_factory=list)
@@ -76,7 +84,7 @@ class ProjectParser:
     entry points defined in project.json.
     """
 
-    def __init__(self, parser_config: dict[str, Any] | None = None):
+    def __init__(self, parser_config: dict[str, Any] | None = None) -> None:
         """Initialize project parser.
 
         Args:
@@ -86,10 +94,7 @@ class ProjectParser:
         self.xaml_parser = XamlParser(parser_config)
 
     def parse_project(
-        self,
-        project_dir: Path,
-        recursive: bool = True,
-        entry_points_only: bool = False
+        self, project_dir: Path, recursive: bool = True, entry_points_only: bool = False
     ) -> ProjectResult:
         """Parse entire UiPath project.
 
@@ -113,7 +118,7 @@ class ProjectParser:
                 project_dir=project_dir,
                 project_config=None,
                 success=False,
-                errors=[f"Failed to load project.json: {str(e)}"]
+                errors=[f"Failed to load project.json: {str(e)}"],
             )
 
         # Determine workflows to parse
@@ -124,9 +129,7 @@ class ProjectParser:
         else:
             # Discover all workflows recursively
             workflows_to_parse, discovered_workflows = self._discover_workflows(
-                project_config,
-                project_dir,
-                recursive=recursive
+                project_config, project_dir, recursive=recursive
             )
 
         # Parse all workflows
@@ -152,7 +155,7 @@ class ProjectParser:
                 relative_path=relative_path,
                 parse_result=parse_result,
                 invoked_workflows=invoked,
-                is_entry_point=is_entry
+                is_entry_point=is_entry,
             )
             workflow_results.append(workflow_result)
 
@@ -173,7 +176,7 @@ class ProjectParser:
             errors=errors,
             warnings=warnings,
             total_workflows=len(workflow_results),
-            total_parse_time_ms=total_parse_time
+            total_parse_time_ms=total_parse_time,
         )
 
     def _load_project_json(self, project_dir: Path) -> ProjectConfig:
@@ -194,25 +197,23 @@ class ProjectParser:
         if not project_json_path.exists():
             raise FileNotFoundError(f"project.json not found at {project_json_path}")
 
-        with open(project_json_path, encoding='utf-8') as f:
+        with open(project_json_path, encoding="utf-8") as f:
             data = json.load(f)
 
         return ProjectConfig(
-            name=data.get('name', 'Unknown'),
-            main=data.get('main'),
-            description=data.get('description'),
-            expression_language=data.get('expressionLanguage', 'VisualBasic'),
-            entry_points=data.get('entryPoints', []),
-            dependencies=data.get('dependencies', {}),
-            schema_version=data.get('schemaVersion'),
-            project_version=data.get('projectVersion'),
-            raw_data=data
+            name=data.get("name", "Unknown"),
+            main=data.get("main"),
+            description=data.get("description"),
+            expression_language=data.get("expressionLanguage", "VisualBasic"),
+            entry_points=data.get("entryPoints", []),
+            dependencies=data.get("dependencies", {}),
+            schema_version=data.get("schemaVersion"),
+            project_version=data.get("projectVersion"),
+            raw_data=data,
         )
 
     def _get_entry_point_paths(
-        self,
-        project_config: ProjectConfig,
-        project_dir: Path
+        self, project_config: ProjectConfig, project_dir: Path
     ) -> list[Path]:
         """Get entry point file paths from project config.
 
@@ -233,7 +234,7 @@ class ProjectParser:
 
         # Add explicit entry points
         for entry_point in project_config.entry_points:
-            file_path = entry_point.get('filePath')
+            file_path = entry_point.get("filePath")
             if file_path:
                 full_path = project_dir / file_path
                 if full_path.exists() and full_path not in entry_paths:
@@ -242,10 +243,7 @@ class ProjectParser:
         return entry_paths
 
     def _discover_workflows(
-        self,
-        project_config: ProjectConfig,
-        project_dir: Path,
-        recursive: bool = True
+        self, project_config: ProjectConfig, project_dir: Path, recursive: bool = True
     ) -> tuple[list[Path], set[str]]:
         """Discover all workflows starting from entry points.
 
@@ -293,11 +291,7 @@ class ProjectParser:
 
             for invoked_path in invoked:
                 # Resolve relative path
-                full_path = self._resolve_workflow_path(
-                    invoked_path,
-                    current_path,
-                    project_dir
-                )
+                full_path = self._resolve_workflow_path(invoked_path, current_path, project_dir)
 
                 if full_path and full_path.exists():
                     rel = self._make_relative_path(full_path, project_dir)
@@ -314,10 +308,7 @@ class ProjectParser:
 
         return all_paths, discovered
 
-    def _extract_invoke_workflow_files(
-        self,
-        content: WorkflowContent
-    ) -> list[str]:
+    def _extract_invoke_workflow_files(self, content: WorkflowContent) -> list[str]:
         """Extract InvokeWorkflowFile references from workflow.
 
         Args:
@@ -330,21 +321,21 @@ class ProjectParser:
 
         for activity in content.activities:
             # Check if this is InvokeWorkflowFile activity
-            if 'InvokeWorkflowFile' in activity.activity_type:
+            if "InvokeWorkflowFile" in activity.activity_type:
                 # Look for WorkflowFileName in arguments or properties
                 workflow_file = None
 
                 # Check arguments
-                if 'WorkflowFileName' in activity.arguments:
-                    workflow_file = activity.arguments['WorkflowFileName']
+                if "WorkflowFileName" in activity.arguments:
+                    workflow_file = activity.arguments["WorkflowFileName"]
 
                 # Check properties
-                if not workflow_file and 'WorkflowFileName' in activity.properties:
-                    workflow_file = activity.properties['WorkflowFileName']
+                if not workflow_file and "WorkflowFileName" in activity.properties:
+                    workflow_file = activity.properties["WorkflowFileName"]
 
                 # Check visible attributes (legacy)
-                if not workflow_file and 'WorkflowFileName' in activity.visible_attributes:
-                    workflow_file = activity.visible_attributes['WorkflowFileName']
+                if not workflow_file and "WorkflowFileName" in activity.visible_attributes:
+                    workflow_file = activity.visible_attributes["WorkflowFileName"]
 
                 if workflow_file:
                     # Clean up expression syntax if present
@@ -355,10 +346,7 @@ class ProjectParser:
         return invoked
 
     def _resolve_workflow_path(
-        self,
-        workflow_ref: str,
-        current_workflow: Path,
-        project_dir: Path
+        self, workflow_ref: str, current_workflow: Path, project_dir: Path
     ) -> Path | None:
         """Resolve workflow reference to absolute path.
 
@@ -381,11 +369,9 @@ class ProjectParser:
             return path2
 
         # Try with .xaml extension if missing
-        if not workflow_ref.endswith('.xaml'):
+        if not workflow_ref.endswith(".xaml"):
             return self._resolve_workflow_path(
-                workflow_ref + '.xaml',
-                current_workflow,
-                project_dir
+                workflow_ref + ".xaml", current_workflow, project_dir
             )
 
         return None
@@ -402,16 +388,12 @@ class ProjectParser:
         """
         try:
             rel = file_path.relative_to(project_dir)
-            return str(rel).replace('\\', '/')
+            return str(rel).replace("\\", "/")
         except ValueError:
             # File is outside project dir
             return str(file_path)
 
-    def _is_entry_point(
-        self,
-        relative_path: str,
-        project_config: ProjectConfig
-    ) -> bool:
+    def _is_entry_point(self, relative_path: str, project_config: ProjectConfig) -> bool:
         """Check if workflow is an entry point.
 
         Args:
@@ -422,25 +404,24 @@ class ProjectParser:
             True if workflow is an entry point
         """
         # Normalize path format
-        rel_normalized = relative_path.replace('\\', '/')
+        rel_normalized = relative_path.replace("\\", "/")
 
         # Check main workflow
         if project_config.main:
-            main_normalized = project_config.main.replace('\\', '/')
+            main_normalized = project_config.main.replace("\\", "/")
             if rel_normalized == main_normalized:
                 return True
 
         # Check explicit entry points
         for entry_point in project_config.entry_points:
-            ep_path = entry_point.get('filePath', '').replace('\\', '/')
+            ep_path = entry_point.get("filePath", "").replace("\\", "/")
             if rel_normalized == ep_path:
                 return True
 
         return False
 
     def _build_dependency_graph(
-        self,
-        workflow_results: list[WorkflowResult]
+        self, workflow_results: list[WorkflowResult]
     ) -> dict[str, list[str]]:
         """Build workflow dependency graph.
 
@@ -456,3 +437,84 @@ class ProjectParser:
             graph[workflow.relative_path] = workflow.invoked_workflows
 
         return graph
+
+
+def project_result_to_dto(
+    project_result: ProjectResult,
+    normalizer: Normalizer | None = None,
+) -> WorkflowCollectionDto:
+    """Convert ProjectResult to WorkflowCollectionDto with stable IDs and invocations.
+
+    This function performs a two-pass conversion:
+    1. First pass: Normalize all workflows to get stable IDs
+    2. Second pass: Link invocations using the stable ID map
+
+    Args:
+        project_result: Result from ProjectParser.parse_project()
+        normalizer: Optional Normalizer instance (creates new if None)
+
+    Returns:
+        WorkflowCollectionDto with all workflows and linked invocations
+    """
+    # Create normalizer with shared ID generator for stability
+    if normalizer is None:
+        id_generator = IdGenerator()
+        flow_extractor = ControlFlowExtractor(id_generator)
+        normalizer = Normalizer(id_generator, flow_extractor)
+
+    # First pass: Normalize all workflows and build path→ID map
+    workflow_dtos = []
+    path_to_id_map = {}
+
+    for wf_result in project_result.workflows:
+        # Skip failed parses
+        if not wf_result.parse_result.success:
+            continue
+
+        # Derive workflow name from file path
+        workflow_name = Path(wf_result.file_path).stem
+
+        # Normalize to DTO (invocations will be empty for now)
+        workflow_dto = normalizer.normalize(
+            parse_result=wf_result.parse_result,
+            workflow_name=workflow_name,
+            workflow_id_map={},  # Empty for first pass
+        )
+
+        workflow_dtos.append(workflow_dto)
+
+        # Map all path variations to this workflow's stable ID
+        # Store both original and normalized paths
+        path_to_id_map[wf_result.relative_path] = workflow_dto.id
+        normalized_path = wf_result.relative_path.replace("\\", "/")
+        path_to_id_map[normalized_path] = workflow_dto.id
+
+    # Second pass: Re-extract invocations with stable ID map
+    for wf_result in project_result.workflows:
+        if not wf_result.parse_result.success or not wf_result.parse_result.content:
+            continue
+
+        # Extract invocations using the complete path→ID map
+        invocations = normalizer._extract_invocations(
+            activities=wf_result.parse_result.content.activities,
+            workflow_id_map=path_to_id_map,
+        )
+
+        # Update the workflow DTO with linked invocations
+        # Find the corresponding DTO (accounting for skipped failures)
+        dto_index = sum(
+            1
+            for w in project_result.workflows[: project_result.workflows.index(wf_result)]
+            if w.parse_result.success
+        )
+        if dto_index < len(workflow_dtos):
+            workflow_dtos[dto_index].invocations = invocations
+
+    # Create workflow collection DTO
+    return WorkflowCollectionDto(
+        schema_id="https://rpax.io/schemas/xaml-workflow-collection.json",
+        schema_version="1.0.0",
+        collected_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        workflows=workflow_dtos,
+        issues=[],  # Project-level issues could be added here
+    )

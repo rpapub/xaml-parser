@@ -462,7 +462,53 @@ Examples:
         )
 
         # Format project output
-        if args.graph:
+        if args.dto:
+            # DTO mode for projects: convert to WorkflowCollectionDto
+            from .control_flow import ControlFlowExtractor
+            from .emitters import EmitterConfig
+            from .emitters.json_emitter import JsonEmitter
+            from .id_generation import IdGenerator
+            from .normalization import Normalizer
+            from .project import project_result_to_dto
+
+            # Convert project result to DTO
+            id_generator = IdGenerator()
+            flow_extractor = ControlFlowExtractor(id_generator)
+            normalizer = Normalizer(id_generator, flow_extractor)
+
+            workflow_collection_dto = project_result_to_dto(project_result, normalizer=normalizer)
+
+            # Emit using JSON emitter
+            emitter = JsonEmitter()
+            emitter_config = EmitterConfig(
+                field_profile=args.profile,
+                combine=True,  # Project mode always combines into collection
+                pretty=True,
+                exclude_none=True,
+            )
+
+            # Determine output path
+            if args.output:
+                output_path = Path(args.output)
+            else:
+                output_path = Path("workflows.json")
+
+            # Emit
+            result = emitter.emit(workflow_collection_dto.workflows, output_path, emitter_config)
+
+            if result.success:
+                print(
+                    f"✓ Wrote {len(workflow_collection_dto.workflows)} "
+                    f"workflows to {result.files_written[0]}"
+                )
+                sys.exit(0)
+            else:
+                print("✗ Emission failed:", file=sys.stderr)
+                for error in result.errors:
+                    print(f"  - {error}", file=sys.stderr)
+                sys.exit(1)
+
+        elif args.graph:
             output = format_dependency_graph(project_result)
         elif args.json:
             # TODO: Implement JSON output for projects
@@ -479,7 +525,7 @@ Examples:
         else:
             output = format_project_summary(project_result)
 
-        # Write output
+        # Write output (only for non-DTO modes)
         if args.output:
             Path(args.output).write_text(output, encoding="utf-8")
             print(f"Output written to: {args.output}")
