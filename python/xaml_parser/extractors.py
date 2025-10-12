@@ -251,7 +251,6 @@ class ActivityExtractor:
             "parent_activity_id": parent_id,
             "child_activities": [],
             "depth_level": depth,
-            "xpath_location": self._get_xpath_location(elem),
         }
 
     def _categorize_attributes(
@@ -414,12 +413,6 @@ class ActivityExtractor:
             return "timeout"
         else:
             return "general"
-
-    def _get_xpath_location(self, elem: ET.Element) -> str:
-        """Generate XPath-like location string for debugging."""
-        # Simplified approach - just use the tag name
-        tag = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
-        return f"/{tag}"
 
     def _update_parent_child_relationships(
         self, activities: list[dict[str, Any]], parent_id: str | None, child_id: str
@@ -601,8 +594,6 @@ class ActivityExtractor:
             variables=[],  # Will be populated by workflow-level variable extraction
             child_activities=[],  # Will be populated by hierarchy analysis
             expression_objects=[],  # Legacy detailed expression objects
-            xpath_location=self._get_xpath_location(element),
-            source_line=None,  # Could be implemented with line number tracking
         )
 
     def _extract_activity_arguments(self, element: ET.Element) -> dict[str, Any]:
@@ -831,7 +822,7 @@ class MetadataExtractor:
 
     @staticmethod
     def extract_namespaces(root: ET.Element) -> dict[str, str]:
-        """Extract all XML namespaces."""
+        """Extract all XML namespaces (xmlns declarations)."""
         namespaces = {}
 
         for key, value in root.attrib.items():
@@ -844,31 +835,80 @@ class MetadataExtractor:
         return namespaces
 
     @staticmethod
+    def extract_xaml_class(root: ET.Element, namespaces: dict[str, str]) -> str | None:
+        """Extract x:Class attribute from root Activity element.
+
+        Args:
+            root: Root XML element
+            namespaces: Namespace prefix mappings
+
+        Returns:
+            XAML class name (e.g., "Main") or None
+        """
+        # Try to find x:Class attribute with namespace
+        x_ns = namespaces.get("x", "")
+        if x_ns:
+            class_attr = root.get(f"{{{x_ns}}}Class")
+            if class_attr:
+                return class_attr
+
+        # Fallback: try common namespace URIs
+        common_x_namespaces = [
+            "http://schemas.microsoft.com/winfx/2006/xaml",
+            "http://schemas.microsoft.com/winfx/2009/xaml",
+        ]
+        for ns_uri in common_x_namespaces:
+            class_attr = root.get(f"{{{ns_uri}}}Class")
+            if class_attr:
+                return class_attr
+
+        return None
+
+    @staticmethod
+    def extract_imported_namespaces(root: ET.Element) -> list[str]:
+        """Extract .NET namespaces from TextExpression.NamespacesForImplementation.
+
+        Returns:
+            List of .NET namespace strings (e.g., "System.Activities", "UiPath.Core")
+        """
+        namespaces = []
+
+        for elem in root.iter():
+            # Look for TextExpression.NamespacesForImplementation element
+            if "NamespacesForImplementation" in elem.tag:
+                # Find Collection child
+                for collection in elem:
+                    # Find all x:String children containing namespace names
+                    for ns_elem in collection:
+                        if ns_elem.text and ns_elem.text.strip():
+                            namespaces.append(ns_elem.text.strip())
+
+        return namespaces
+
+    @staticmethod
     def extract_assembly_references(root: ET.Element) -> list[str]:
-        """Extract assembly references."""
+        """Extract assembly references from TextExpression.ReferencesForImplementation.
+
+        Returns:
+            List of assembly names (e.g., "UiPath.System.Activities", "System.Core")
+        """
         references = []
 
         for elem in root.iter():
+            # Look for TextExpression.ReferencesForImplementation element
+            if "ReferencesForImplementation" in elem.tag:
+                # Find Collection child
+                for collection in elem:
+                    # Find all AssemblyReference children
+                    for ref_elem in collection:
+                        if ref_elem.text and ref_elem.text.strip():
+                            references.append(ref_elem.text.strip())
+
+        # Also check for old-style AssemblyReference elements (legacy)
+        for elem in root.iter():
             if elem.tag.endswith("AssemblyReference"):
                 ref = elem.text or elem.get("Assembly")
-                if ref:
-                    references.append(ref)
+                if ref and ref.strip() and ref.strip() not in references:
+                    references.append(ref.strip())
 
         return references
-
-    @staticmethod
-    def extract_expression_language(root: ET.Element, default: str = "VisualBasic") -> str:
-        """Extract expression language setting."""
-        # Check root attributes
-        lang = root.get("ExpressionActivityEditor")
-        if lang:
-            return "CSharp" if "CSharp" in lang else "VisualBasic"
-
-        # Check for language-specific elements
-        for elem in root.iter():
-            if "VisualBasic" in elem.tag:
-                return "VisualBasic"
-            elif "CSharp" in elem.tag:
-                return "CSharp"
-
-        return default

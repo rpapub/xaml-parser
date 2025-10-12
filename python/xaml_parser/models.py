@@ -34,7 +34,6 @@ class WorkflowContent:
     imported_namespaces: list[str] = field(default_factory=list)
     # TextExpression.ReferencesForImplementation
     assembly_references: list[str] = field(default_factory=list)
-    expression_language: str = "VisualBasic"
 
     # Raw metadata for future extensions
     metadata: dict[str, Any] = field(default_factory=dict)

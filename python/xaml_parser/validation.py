@@ -122,10 +122,6 @@ class OutputValidator:
                 act_errors = self._validate_activity(activity, activity_ids)
                 errors.extend([f"activities[{i}].{err}" for err in act_errors])
 
-        # Validate expression language
-        if content.expression_language not in ["VisualBasic", "CSharp"]:
-            errors.append("expression_language must be 'VisualBasic' or 'CSharp'")
-
         # Validate counts
         if not isinstance(content.total_activities, int) or content.total_activities < 0:
             errors.append("total_activities must be non-negative integer")

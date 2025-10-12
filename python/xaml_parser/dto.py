@@ -37,36 +37,26 @@ class SourceInfo:
 
 
 @dataclass
-class LocationInfo:
-    """Location information for an element in source XAML.
-
-    Attributes:
-        line: Line number (1-indexed)
-        column: Column number (1-indexed)
-        xpath: XPath location in document
-    """
-
-    line: int | None = None
-    column: int | None = None
-    xpath: str | None = None
-
-
-@dataclass
 class WorkflowMetadata:
-    """Workflow-level metadata.
+    """Workflow-level XAML metadata.
+
+    Captures XAML Workflow Foundation structure metadata, not business logic.
+    Business logic (arguments, variables, activities) is stored separately.
 
     Attributes:
-        project_name: Name of containing project
-        namespace: .NET namespace
-        expression_language: Expression language (VisualBasic or CSharp)
+        xaml_class: XAML class name from x:Class attribute (e.g., "Main")
+        xmlns_declarations: XML namespace prefix → URI mappings
+        imported_namespaces: .NET namespaces from TextExpression.NamespacesForImplementation
+        assembly_references: Assembly names from TextExpression.ReferencesForImplementation
         annotation: Root workflow annotation
         display_name: User-visible workflow name
         description: Workflow description
     """
 
-    project_name: str | None = None
-    namespace: str | None = None
-    expression_language: str = "VisualBasic"
+    xaml_class: str | None = None
+    xmlns_declarations: dict[str, str] = field(default_factory=dict)
+    imported_namespaces: list[str] = field(default_factory=list)
+    assembly_references: list[str] = field(default_factory=list)
     annotation: str | None = None
     display_name: str | None = None
     description: str | None = None
@@ -134,10 +124,11 @@ class ActivityDto:
 
     Attributes:
         id: Stable content-hash based ID (act:sha256:...)
-        type: Fully-qualified type name
-        type_short: Short type name
+        type: Fully-qualified type name with namespace ({http://...}LocalName or prefix:LocalName)
+        type_short: Short type name (LocalName only)
+        type_namespace: Namespace URI (e.g., http://schemas.uipath.com/workflow/activities)
+        type_prefix: Namespace prefix if any (e.g., ui, s)
         display_name: User-visible name
-        location: Source location information
         parent_id: Parent activity ID
         children: Child activity IDs
         depth: Nesting depth level
@@ -151,12 +142,11 @@ class ActivityDto:
     """
 
     id: str  # act:sha256:abc123...
-    type: str  # System.Activities.Statements.Sequence
-    type_short: str  # Sequence
+    type: str  # {http://schemas.uipath.com/workflow/activities}LogMessage or ui:LogMessage
+    type_short: str  # LogMessage
+    type_namespace: str | None = None  # http://schemas.uipath.com/workflow/activities
+    type_prefix: str | None = None  # ui
     display_name: str | None = None
-
-    # Location
-    location: LocationInfo | None = None
 
     # Hierarchy
     parent_id: str | None = None
@@ -287,18 +277,51 @@ class WorkflowDto:
 
 
 @dataclass
+class EntryPointInfo:
+    """Entry point workflow information.
+
+    Attributes:
+        workflow_id: Stable workflow ID (wf:sha256:...)
+        file_path: Relative file path
+        unique_id: Original UUID from project.json
+    """
+
+    workflow_id: str
+    file_path: str
+    unique_id: str | None = None
+
+
+@dataclass
 class ProjectInfo:
-    """Project-level information.
+    """Project-level information from project.json.
 
     Attributes:
         name: Project name
-        path: Project path
-        main_workflow: Main workflow ID
+        path: Project directory path
+        project_id: UUID from project.json
+        description: Project description
+        project_version: Semantic version (e.g., "1.0.0")
+        schema_version: Project schema version (e.g., "4.0")
+        studio_version: UiPath Studio version (e.g., "25.0.167.0")
+        expression_language: Expression language (VisualBasic or CSharp)
+        target_framework: Target framework (Windows or Cross-platform)
+        main_workflow_id: Stable main workflow ID (wf:sha256:...)
+        entry_points: List of entry point workflows
+        dependencies: Package dependencies (package → version)
     """
 
     name: str
     path: str
-    main_workflow: str | None = None
+    project_id: str | None = None
+    description: str | None = None
+    project_version: str | None = None
+    schema_version: str | None = None
+    studio_version: str | None = None
+    expression_language: str = "VisualBasic"
+    target_framework: str | None = None
+    main_workflow_id: str | None = None
+    entry_points: list[EntryPointInfo] = field(default_factory=list)
+    dependencies: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -309,14 +332,14 @@ class WorkflowCollectionDto:
         schema_id: JSON Schema URL for collection
         schema_version: Schema version
         collected_at: Collection timestamp (ISO 8601 UTC)
-        project: Project information
+        project_info: Project information (from project.json)
         workflows: List of workflows
         issues: Collection-level issues
     """
 
     schema_id: str = "https://rpax.io/schemas/xaml-workflow-collection.json"
-    schema_version: str = "1.0.0"
+    schema_version: str = "1.1.0"
     collected_at: str = ""
-    project: ProjectInfo | None = None
+    project_info: ProjectInfo | None = None
     workflows: list[WorkflowDto] = field(default_factory=list)
     issues: list[IssueDto] = field(default_factory=list)

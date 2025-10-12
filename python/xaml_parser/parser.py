@@ -28,6 +28,7 @@ from .constants import (
     STANDARD_NAMESPACES,
     VIEWSTATE_PROPERTIES,
 )
+from .extractors import MetadataExtractor
 from .id_generation import IdGenerator
 from .models import (
     Activity,
@@ -229,10 +230,24 @@ class XamlParser:
         get_depth(root)
         self._diagnostics.xml_depth = max_depth
 
-        # Extract namespaces
+        # Extract namespaces (xmlns declarations)
         content.namespaces = self._extract_namespaces(root)
+        content.xmlns_declarations = content.namespaces.copy()  # Alias
         self._diagnostics.namespaces_detected = len(content.namespaces)
         self._diagnostics.processing_steps.append("namespaces_extracted")
+
+        # Extract XAML class name (x:Class attribute)
+        content.xaml_class = self._extract_xaml_class(root, content.namespaces)
+        self._diagnostics.processing_steps.append("xaml_class_extracted")
+
+        # Extract imported .NET namespaces (TextExpression.NamespacesForImplementation)
+        content.imported_namespaces = self._extract_imported_namespaces(root)
+        self._diagnostics.processing_steps.append("imported_namespaces_extracted")
+
+        # Extract assembly references (TextExpression.ReferencesForImplementation)
+        if self.config["extract_assembly_references"]:
+            content.assembly_references = self._extract_assembly_references(root)
+            self._diagnostics.processing_steps.append("assembly_references_extracted")
 
         # Extract arguments from x:Members
         if self.config["extract_arguments"]:
@@ -263,15 +278,6 @@ class XamlParser:
         if content.root_annotation:
             self._diagnostics.annotations_found += 1
         self._diagnostics.processing_steps.append("root_annotation_extracted")
-
-        # Extract assembly references
-        if self.config["extract_assembly_references"]:
-            content.assembly_references = self._extract_assembly_references(root)
-            self._diagnostics.processing_steps.append("assembly_references_extracted")
-
-        # Extract expression language
-        content.expression_language = self._extract_expression_language(root)
-        self._diagnostics.processing_steps.append("expression_language_detected")
 
         # Calculate statistics
         content.total_activities = len(content.activities)
@@ -405,6 +411,11 @@ class XamlParser:
                 # Generate stable activity ID from XML span
                 activity_id = self._id_generator.generate_activity_id(xml_span)
 
+                # Extract namespace information from tag
+                activity_type_full, activity_type_short, activity_ns, activity_prefix = (
+                    self._extract_type_info(elem, namespaces)
+                )
+
                 # Extract all attributes
                 visible_attrs, invisible_attrs = self._categorize_attributes(elem.attrib)
 
@@ -440,7 +451,10 @@ class XamlParser:
                 activity = Activity(
                     activity_id=activity_id,
                     workflow_id=workflow_id,
-                    activity_type=tag_name,
+                    activity_type=activity_type_full,  # Full type with namespace
+                    activity_type_short=activity_type_short,  # Short local name
+                    activity_namespace=activity_ns,  # Namespace URI
+                    activity_prefix=activity_prefix,  # Namespace prefix
                     display_name=elem.get("DisplayName"),
                     node_id=activity_id,  # Use activity_id as node_id
                     parent_activity_id=parent_id,
@@ -459,7 +473,6 @@ class XamlParser:
                     invisible_attributes=invisible_attrs,
                     variables=activity_variables,
                     expression_objects=expressions,
-                    xpath_location=self._get_xpath_location(elem, root),
                     xml_span=xml_span,  # Store XML span for stable ID generation
                 )
 
@@ -506,33 +519,53 @@ class XamlParser:
 
         return None
 
+    def _extract_xaml_class(self, root: ET.Element, namespaces: dict[str, str]) -> str | None:
+        """Extract x:Class attribute from root Activity element."""
+        return MetadataExtractor.extract_xaml_class(root, namespaces)
+
+    def _extract_imported_namespaces(self, root: ET.Element) -> list[str]:
+        """Extract .NET namespaces from TextExpression.NamespacesForImplementation."""
+        return MetadataExtractor.extract_imported_namespaces(root)
+
     def _extract_assembly_references(self, root: ET.Element) -> list[str]:
-        """Extract assembly references from workflow."""
-        references = []
+        """Extract assembly references from TextExpression.ReferencesForImplementation."""
+        return MetadataExtractor.extract_assembly_references(root)
 
-        for elem in root.iter():
-            if elem.tag.endswith("AssemblyReference"):
-                ref = elem.text or elem.get("Assembly")
-                if ref:
-                    references.append(ref)
+    def _extract_type_info(
+        self, element: ET.Element, namespaces: dict[str, str]
+    ) -> tuple[str, str, str | None, str | None]:
+        """Extract full type information with namespace for activity.
 
-        return references
+        Args:
+            element: XML element
+            namespaces: Namespace prefix → URI mappings
 
-    def _extract_expression_language(self, root: ET.Element) -> str:
-        """Extract expression language from workflow metadata."""
-        # Check for ExpressionActivityEditor attribute
-        lang = root.get("ExpressionActivityEditor")
-        if lang:
-            return "CSharp" if "CSharp" in lang else "VisualBasic"
+        Returns:
+            Tuple of (full_type, short_type, namespace_uri, prefix)
+            - full_type: Full XML tag ({http://...}LocalName)
+            - short_type: Local name only (LocalName)
+            - namespace_uri: Namespace URI or None
+            - prefix: Namespace prefix (ui, s, etc.) or None
+        """
+        tag = element.tag
 
-        # Check for VisualBasic elements
-        for elem in root.iter():
-            if "VisualBasic" in elem.tag:
-                return "VisualBasic"
-            elif "CSharp" in elem.tag:
-                return "CSharp"
+        if "}" in tag:
+            # Has namespace: "{http://...}LocalName"
+            namespace_uri, local_name = tag.split("}", 1)
+            namespace_uri = namespace_uri[1:]  # Remove leading '{'
 
-        return str(self.config.get("expression_language", "VisualBasic"))
+            # Find prefix for this namespace URI
+            prefix = None
+            for ns_prefix, ns_uri in namespaces.items():
+                if ns_uri == namespace_uri and ns_prefix:  # Skip default namespace ("")
+                    prefix = ns_prefix
+                    break
+
+            return tag, local_name, namespace_uri, prefix
+        else:
+            # No namespace - use default namespace if available
+            default_ns = namespaces.get("")
+            return tag, tag, default_ns, None
 
     def _determine_variable_scope(self, var_element: ET.Element) -> str:
         """Determine the scope context for a variable."""
@@ -674,18 +707,3 @@ class XamlParser:
             return "message"
         else:
             return "general"
-
-    def _get_xpath_location(self, elem: ET.Element, root: ET.Element) -> str:
-        """Generate XPath location for debugging."""
-        # Simple XPath generation - could be enhanced
-        path_parts: list[str] = []
-        current: ET.Element | None = elem
-
-        # Walk up the tree to build path
-        while current is not None and current != root:
-            tag = current.tag.split("}")[-1] if "}" in current.tag else current.tag
-            path_parts.insert(0, tag)
-            # Note: getparent() is lxml-specific, standard lib ET doesn't have parent tracking
-            current = current.getparent() if hasattr(current, "getparent") else None
-
-        return "/" + "/".join(path_parts) if path_parts else "/root"

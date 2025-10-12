@@ -17,7 +17,6 @@ from .dto import (
     DependencyDto,
     InvocationDto,
     IssueDto,
-    LocationInfo,
     SourceInfo,
     VariableDto,
     WorkflowDto,
@@ -145,11 +144,12 @@ class Normalizer:
             encoding="utf-8",
         )
 
-        # Create metadata
+        # Create metadata with XAML-specific fields
         metadata = WorkflowMetadata(
-            project_name=None,  # TODO: Pass from project context
-            namespace=None,
-            expression_language=content.expression_language,
+            xaml_class=content.xaml_class,
+            xmlns_declarations=content.xmlns_declarations,
+            imported_namespaces=content.imported_namespaces,
+            assembly_references=content.assembly_references,
             annotation=content.root_annotation,
             display_name=content.display_name,
             description=content.description,
@@ -203,17 +203,16 @@ class Normalizer:
         Returns:
             ActivityDto with all fields mapped
         """
-        # Extract short type name (last component after '.')
-        type_short = activity.activity_type.split(".")[-1]
-
-        # Create location info
-        location = None
-        if activity.source_line is not None or activity.xpath_location:
-            location = LocationInfo(
-                line=activity.source_line,
-                column=None,  # Column info not currently extracted
-                xpath=activity.xpath_location,
-            )
+        # Use already-extracted namespace information from Activity model
+        # If not available, fallback to extracting short type
+        type_full = activity.activity_type
+        type_short = (
+            activity.activity_type_short
+            if activity.activity_type_short
+            else activity.activity_type.split(".")[-1]
+        )
+        type_namespace = activity.activity_namespace
+        type_prefix = activity.activity_prefix
 
         # Extract input/output arguments from arguments dict
         in_args: dict[str, str] = {}
@@ -230,10 +229,11 @@ class Normalizer:
 
         return ActivityDto(
             id=activity.activity_id,
-            type=activity.activity_type,
+            type=type_full,
             type_short=type_short,
+            type_namespace=type_namespace,
+            type_prefix=type_prefix,
             display_name=activity.display_name,
-            location=location,
             parent_id=activity.parent_activity_id,
             children=activity.child_activities,
             depth=activity.depth,
