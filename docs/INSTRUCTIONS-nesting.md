@@ -90,7 +90,7 @@ The XAML parser currently outputs activities in a **flat list** structure. Here'
 
 ### What We Want
 
-**Nested output** that mirrors the original XAML structure:
+**Nested output** that mirrors the original XAML structure AND traverses the call graph:
 
 ```json
 {
@@ -105,41 +105,135 @@ The XAML parser currently outputs activities in a **flat list** structure. Here'
         {
           "id": "act:sha256:540341343fd80059",
           "type": "LogMessage",
-          "type_short": "LogMessage",
           "display_name": "Log Message INFO begin",
-          "depth": 2,
+          "properties": {
+            "Message": "Going to process myEntrypointOne"
+          },
           "children": []
         },
         {
           "id": "act:sha256:a0a18f98fe8a22b4",
           "type": "InvokeWorkflowFile",
-          "type_short": "InvokeWorkflowFile",
           "display_name": "InitAllSettings - Invoke Workflow File",
-          "depth": 2,
-          "children": [],
           "properties": {
             "WorkflowFileName": "Framework\\InitAllSettings.xaml"
-          }
+          },
+          "children": [
+            {
+              "id": "act:sha256:...",
+              "type": "Sequence",
+              "display_name": "Initialize All Settings",
+              "children": [
+                {
+                  "type": "LogMessage",
+                  "display_name": "Log Message (Initialize All Settings)",
+                  "properties": {"Message": "Initializing settings..."},
+                  "children": []
+                },
+                {
+                  "type": "Assign",
+                  "display_name": "Assign out_Config (initialization)",
+                  "children": []
+                },
+                {
+                  "type": "ForEach",
+                  "display_name": "For each configuration sheet",
+                  "children": [
+                    {
+                      "type": "Sequence",
+                      "display_name": "Get local settings and constants",
+                      "children": [
+                        {
+                          "type": "ReadRange",
+                          "display_name": "Read range (Settings and Constants sheets)",
+                          "children": []
+                        },
+                        {
+                          "type": "ForEachRow",
+                          "display_name": "For each configuration row",
+                          "children": [
+                            {
+                              "type": "If",
+                              "display_name": "If configuration row is not empty",
+                              "children": [
+                                {
+                                  "type": "Assign",
+                                  "display_name": "Add Config key/value pair",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "TryCatch",
+                  "display_name": "Try initializing assets",
+                  "children": [
+                    {
+                      "type": "Sequence",
+                      "display_name": "Get Orchestrator assets",
+                      "children": [
+                        {"type": "ReadRange", "display_name": "Read range (Assets sheet)", "children": []},
+                        {
+                          "type": "ForEachRow",
+                          "display_name": "For each asset row",
+                          "children": [
+                            {
+                              "type": "TryCatch",
+                              "children": [
+                                {
+                                  "type": "Sequence",
+                                  "display_name": "Get asset from Orchestrator",
+                                  "children": [
+                                    {"type": "GetRobotAsset", "children": []},
+                                    {"type": "Assign", "display_name": "Assign asset value in Config", "children": []}
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "act:sha256:a1012431753af1c4",
           "type": "Sequence",
-          "type_short": "Sequence",
-          "display_name": null,
-          "depth": 2,
           "children": [
             {
               "id": "act:sha256:89235c3ef581d644",
               "type": "Comment",
-              "type_short": "Comment",
-              "display_name": null,
-              "depth": 3,
-              "children": [],
               "properties": {
                 "Text": "This sequence intentionally left blank"
-              }
+              },
+              "children": []
             }
           ]
+        },
+        {
+          "type": "InvokeWorkflowFile",
+          "display_name": "myEmptyWorkflow - Invoke Workflow File",
+          "properties": {
+            "WorkflowFileName": "Foo\\myEmptyWorkflow.xaml"
+          },
+          "children": []
+        },
+        {
+          "type": "LogMessage",
+          "display_name": "Log Message TRACE end",
+          "properties": {
+            "Message": "Finished processing myEntrypointOne"
+          },
+          "children": []
         }
       ]
     }
@@ -148,11 +242,12 @@ The XAML parser currently outputs activities in a **flat list** structure. Here'
 ```
 
 **Benefits:**
-- Mirrors XAML structure (exact representation)
-- More human/LLM readable
-- Less verbose (no redundant parent_id)
+- Shows FULL call graph traversal (InvokeWorkflowFile expanded with invoked workflow content)
+- Mirrors actual execution flow
+- More human/LLM readable - see the entire process at once
+- Less verbose - no need to manually chase InvokeWorkflowFile references
 - Only root activities at top level
-- Clear visual hierarchy matches original XAML nesting
+- Clear visual hierarchy that matches actual XAML + call graph structure
 
 ### Why Not Change DTOs?
 
@@ -176,8 +271,9 @@ The XAML parser currently outputs activities in a **flat list** structure. Here'
                                 |
                                 v
                       +-------------------+
-                      |   WorkflowDto     |
-                      |   activities: []  |  <--- Flat list (canonical)
+                      | WorkflowCollection|
+                      | (multiple files)  |  <--- All workflows parsed
+                      | + invocations     |      (flat lists)
                       +---------+---------+
                                 |
                                 v
@@ -190,19 +286,22 @@ The XAML parser currently outputs activities in a **flat list** structure. Here'
                 v                               v
     +-----------------+             +---------------------+
     |   Flat Mode     |             |   Nested Mode       |
-    |   (existing)    |             |   (NEW - build)     |
+    |   (existing)    |             |   (NEW)             |
     |                 |             |                     |
-    | Return dict     |             | build_activity_     |
-    | as-is           |             | tree()              |
+    | Return dict     |             | 1. build_activity_  |
+    | as-is           |             |    tree() per file  |
+    |                 |             | 2. traverse_call_   |
+    |                 |             |    graph()          |
+    |                 |             | 3. expand_invoked_  |
+    |                 |             |    workflows()      |
     +---------+-------+             +-----------+---------+
               |                                 |
               |                                 v
               |                     +-----------------------+
-              |                     | Reconstruct tree      |
-              |                     | children: list[str]   |
-              |                     |     |                 |
-              |                     |     v                 |
-              |                     | children: list[dict]  |
+              |                     | For each Invoke:      |
+              |                     | 1. Find callee by ID  |
+              |                     | 2. Get callee tree    |
+              |                     | 3. Set as children[]  |
               |                     +-----------+-----------+
               |                                 |
               +---------------+-----------------+
@@ -210,7 +309,8 @@ The XAML parser currently outputs activities in a **flat list** structure. Here'
                               v
                   +------------------------+
                   |    JSON output         |
-                  |  (flat or nested)      |
+                  |  (flat or nested with  |
+                  |   call graph)          |
                   +------------------------+
 ```
 
@@ -220,19 +320,46 @@ The XAML parser currently outputs activities in a **flat list** structure. Here'
    - Avoids recursive dataclass type issues
    - Easier to manipulate JSON structure
 
-2. **Single source of truth**: Flat DTOs are canonical
+2. **Single source of truth**: Flat DTOs + invocations are canonical
    - Nesting is derived transformation
-   - No duplicate data in memory
+   - Call graph traversal done at serialization time
 
-3. **Opt-in feature**: `--nested` flag
+3. **Use existing invocations data**
+   - WorkflowDto already has `invocations: list[InvocationDto]`
+   - Maps caller activity ID -> callee workflow ID
+   - No need to re-parse to find calls
+
+4. **Opt-in feature**: `--nested` flag
    - Backward compatible (default: flat)
    - Users choose based on use case
+
+5. **Two-phase nesting**:
+   - Phase 1: Nest activities within each file (parent/child)
+   - Phase 2: Expand InvokeWorkflowFile with callee content (call graph)
 
 ---
 
 ## Implementation Guide
 
-### Phase 1: Tree Builder Module
+**IMPORTANT: Two-Phase Nesting Approach**
+
+This implementation has TWO distinct phases:
+
+1. **Phase 1: Local Nesting** - Nest activities within each workflow file
+   - Input: Flat list with parent_id/children references
+   - Output: Nested tree per workflow
+   - Complexity: Straightforward tree reconstruction
+
+2. **Phase 2: Call Graph Expansion** - Expand InvokeWorkflowFile with callee content
+   - Input: Nested trees + invocations data
+   - Output: Nested tree with invoked workflows as children
+   - Complexity: Requires workflow lookup, invocation matching, circular detection
+
+**Recommendation:** Start with Phase 1 (local nesting) to get working nested output. Then add Phase 2 (call graph) as enhancement.
+
+---
+
+### Phase 1: Tree Builder Module (Local Nesting)
 
 **File to create:** `python/xaml_parser/tree_builder.py`
 
@@ -502,7 +629,236 @@ uv run pytest tests/test_tree_builder.py -v
 
 ---
 
-### Phase 2: Configuration Extension
+### Phase 2: Call Graph Expansion Module
+
+**File to modify:** `python/xaml_parser/tree_builder.py` (add new function)
+
+This phase implements the SECOND level of nesting: expanding `InvokeWorkflowFile` activities with the content of the invoked workflows.
+
+#### Step 2.1: Understand the Data
+
+The parser already tracks invocations:
+
+```python
+@dataclass
+class InvocationDto:
+    """Workflow invocation (call graph edge)."""
+    caller_activity_id: str      # ID of InvokeWorkflowFile activity
+    caller_workflow_id: str      # ID of workflow containing the call
+    callee_workflow_id: str      # ID of invoked workflow
+    callee_path: str             # Relative path to invoked file
+    arguments: dict[str, str]    # Arguments passed
+```
+
+**Strategy:**
+1. Build workflow ID -> workflow dict lookup
+2. Build caller activity ID -> callee workflow lookup (from invocations)
+3. For each InvokeWorkflowFile activity, find its callee workflow
+4. Replace empty children[] with callee's root activities
+5. Detect circular invocations to avoid infinite recursion
+
+#### Step 2.2: Add Call Graph Expansion Function
+
+Add to `python/xaml_parser/tree_builder.py`:
+
+```python
+def expand_call_graph(
+    workflows_dict: dict[str, Any],
+    invocations: list[dict[str, Any]],
+    max_depth: int = 10,
+) -> dict[str, Any]:
+    """Expand InvokeWorkflowFile activities with invoked workflow content.
+
+    Args:
+        workflows_dict: Dict with "workflows" list (from WorkflowCollectionDto)
+        invocations: List of invocation dicts
+        max_depth: Maximum recursion depth to prevent infinite loops
+
+    Returns:
+        Modified workflows_dict with expanded call graph
+
+    Example:
+        After local nesting, you have:
+        - myEntrypointOne with InvokeWorkflowFile (children=[])
+        - InitAllSettings with Sequence -> activities
+
+        After call graph expansion:
+        - myEntrypointOne with InvokeWorkflowFile (children=[Sequence from InitAllSettings])
+    """
+    if not workflows_dict.get("workflows"):
+        return workflows_dict
+
+    # Build lookups
+    workflow_by_id: dict[str, dict[str, Any]] = {}
+    for wf in workflows_dict["workflows"]:
+        if wf.get("id"):
+            workflow_by_id[wf["id"]] = wf
+
+    # Build invocation map: caller_activity_id -> callee_workflow_id
+    invocation_map: dict[str, str] = {}
+    for inv in invocations:
+        caller_act_id = inv.get("caller_activity_id")
+        callee_wf_id = inv.get("callee_workflow_id")
+        if caller_act_id and callee_wf_id:
+            invocation_map[caller_act_id] = callee_wf_id
+
+    # Expand each workflow
+    for workflow in workflows_dict["workflows"]:
+        if workflow.get("activities"):
+            _expand_invocations_recursive(
+                workflow["activities"],
+                workflow_by_id,
+                invocation_map,
+                visited_workflows=set(),
+                depth=0,
+                max_depth=max_depth,
+            )
+
+    return workflows_dict
+
+
+def _expand_invocations_recursive(
+    activities: list[dict[str, Any]],
+    workflow_by_id: dict[str, dict[str, Any]],
+    invocation_map: dict[str, str],
+    visited_workflows: set[str],
+    depth: int,
+    max_depth: int,
+) -> None:
+    """Recursively expand InvokeWorkflowFile activities.
+
+    Modifies activities in-place.
+    """
+    if depth > max_depth:
+        # Prevent infinite recursion
+        return
+
+    for activity in activities:
+        # Check if this is an InvokeWorkflowFile activity
+        is_invoke = activity.get("type") == "InvokeWorkflowFile" or \
+                   activity.get("type_short") == "InvokeWorkflowFile"
+
+        if is_invoke:
+            # Find the callee workflow
+            activity_id = activity.get("id")
+            callee_wf_id = invocation_map.get(activity_id)
+
+            if callee_wf_id and callee_wf_id not in visited_workflows:
+                callee_workflow = workflow_by_id.get(callee_wf_id)
+
+                if callee_workflow and callee_workflow.get("activities"):
+                    # Prevent circular calls
+                    new_visited = visited_workflows | {callee_wf_id}
+
+                    # Get root activities from callee
+                    callee_roots = callee_workflow["activities"]
+
+                    # Deep copy to avoid modifying original
+                    callee_copy = [dict(act) for act in callee_roots]
+
+                    # Recursively expand the callee's activities
+                    _expand_invocations_recursive(
+                        callee_copy,
+                        workflow_by_id,
+                        invocation_map,
+                        new_visited,
+                        depth + 1,
+                        max_depth,
+                    )
+
+                    # Set callee activities as children of InvokeWorkflowFile
+                    activity["children"] = callee_copy
+
+        # Recursively process children
+        if activity.get("children"):
+            _expand_invocations_recursive(
+                activity["children"],
+                workflow_by_id,
+                invocation_map,
+                visited_workflows,
+                depth,
+                max_depth,
+            )
+```
+
+#### Step 2.3: Test Call Graph Expansion
+
+Create tests in `python/tests/test_tree_builder.py`:
+
+```python
+def test_expand_call_graph_simple():
+    """Test expanding a simple InvokeWorkflowFile."""
+    workflows = {
+        "workflows": [
+            {
+                "id": "wf:main",
+                "activities": [
+                    {
+                        "id": "act:1",
+                        "type": "InvokeWorkflowFile",
+                        "children": [],
+                    }
+                ],
+            },
+            {
+                "id": "wf:callee",
+                "activities": [
+                    {
+                        "id": "act:2",
+                        "type": "LogMessage",
+                        "children": [],
+                    }
+                ],
+            },
+        ]
+    }
+    invocations = [
+        {
+            "caller_activity_id": "act:1",
+            "callee_workflow_id": "wf:callee",
+        }
+    ]
+
+    result = expand_call_graph(workflows, invocations)
+
+    # InvokeWorkflowFile should now have LogMessage as child
+    invoke_act = result["workflows"][0]["activities"][0]
+    assert len(invoke_act["children"]) == 1
+    assert invoke_act["children"][0]["type"] == "LogMessage"
+
+
+def test_expand_call_graph_circular():
+    """Test that circular invocations are detected."""
+    # wf:a calls wf:b, wf:b calls wf:a
+    workflows = {
+        "workflows": [
+            {
+                "id": "wf:a",
+                "activities": [
+                    {"id": "act:1", "type": "InvokeWorkflowFile", "children": []}
+                ],
+            },
+            {
+                "id": "wf:b",
+                "activities": [
+                    {"id": "act:2", "type": "InvokeWorkflowFile", "children": []}
+                ],
+            },
+        ]
+    }
+    invocations = [
+        {"caller_activity_id": "act:1", "callee_workflow_id": "wf:b"},
+        {"caller_activity_id": "act:2", "callee_workflow_id": "wf:a"},
+    ]
+
+    # Should not raise, should handle gracefully
+    result = expand_call_graph(workflows, invocations, max_depth=3)
+    assert result is not None
+```
+
+---
+
+### Phase 3: Configuration Extension
 
 **Files to modify:** `python/xaml_parser/emitters/__init__.py`
 
@@ -524,13 +880,13 @@ class EmitterConfig:
 
 ---
 
-### Phase 3: Emitter Integration
+### Phase 4: Emitter Integration
 
 **Files to modify:** `python/xaml_parser/emitters/json_emitter.py`
 
-1. Import tree builder:
+1. Import tree builder functions:
 ```python
-from ..tree_builder import build_activity_tree
+from ..tree_builder import build_activity_tree, expand_call_graph
 ```
 
 2. Modify `_to_dict()` method to apply nesting:
@@ -555,17 +911,26 @@ def _to_dict(self, dto: Any, config: EmitterConfig) -> dict[str, Any]:
     return data
 ```
 
-3. Add `_apply_nesting()` method:
+3. Add `_apply_nesting()` method with TWO-PHASE nesting:
 ```python
 def _apply_nesting(self, data: dict[str, Any]) -> dict[str, Any]:
-    """Apply nested structure to activities."""
+    """Apply nested structure to activities (two-phase).
+
+    Phase 1: Local nesting (parent/child within each file)
+    Phase 2: Call graph expansion (InvokeWorkflowFile -> callee content)
+    """
     # Handle WorkflowCollectionDto
     if "workflows" in data and isinstance(data["workflows"], list):
+        # Phase 1: Nest activities within each workflow
         for workflow in data["workflows"]:
             if "activities" in workflow and isinstance(workflow["activities"], list):
                 workflow["activities"] = build_activity_tree(workflow["activities"])
 
-    # Handle WorkflowDto
+        # Phase 2: Expand call graph
+        if "invocations" in data and isinstance(data["invocations"], list):
+            data = expand_call_graph(data, data["invocations"])
+
+    # Handle single WorkflowDto (no call graph expansion possible)
     elif "activities" in data and isinstance(data["activities"], list):
         data["activities"] = build_activity_tree(data["activities"])
 
@@ -574,7 +939,7 @@ def _apply_nesting(self, data: dict[str, Any]) -> dict[str, Any]:
 
 ---
 
-### Phase 4: CLI Support
+### Phase 5: CLI Support
 
 **Files to modify:** `python/xaml_parser/cli.py`
 
@@ -604,7 +969,7 @@ emitter_config = EmitterConfig(
 
 ---
 
-### Phase 5: End-to-End Testing
+### Phase 6: End-to-End Testing
 
 #### Manual Testing
 
@@ -631,7 +996,7 @@ Create `python/tests/test_nested_output.py` with tests for:
 
 ---
 
-### Phase 6: Documentation Updates
+### Phase 7: Documentation Updates
 
 1. **ADR-DTO-DESIGN.md**: Add section on flat vs nested output trade-offs
 2. **CLAUDE.md**: Add examples of nested vs flat output
