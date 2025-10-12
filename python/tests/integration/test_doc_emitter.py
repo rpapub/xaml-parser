@@ -27,7 +27,7 @@ class TestDocEmitter:
         """Test emitting documentation for a single workflow."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:abc123",
             name="TestWorkflow",
@@ -96,7 +96,7 @@ class TestDocEmitter:
         workflows = [
             WorkflowDto(
                 schema_id="https://rpax.io/schemas/xaml-workflow.json",
-                schema_version="1.0.0",
+                schema_version="0.4.0",
                 collected_at="2025-10-11T10:00:00Z",
                 id=f"wf:sha256:abc{i}",
                 name=f"Workflow{i}",
@@ -137,7 +137,7 @@ class TestDocEmitter:
         """Test documentation includes arguments."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:test",
             name="TestArgs",
@@ -192,7 +192,7 @@ class TestDocEmitter:
         """Test documentation includes variables."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:test",
             name="TestVars",
@@ -246,7 +246,7 @@ class TestDocEmitter:
         """Test documentation includes control flow edges."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:test",
             name="TestEdges",
@@ -325,7 +325,7 @@ class TestDocEmitter:
         """Test documentation includes issues."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:test",
             name="TestIssues",
@@ -372,7 +372,7 @@ class TestDocEmitter:
         workflows = [
             WorkflowDto(
                 schema_id="https://rpax.io/schemas/xaml-workflow.json",
-                schema_version="1.0.0",
+                schema_version="0.4.0",
                 collected_at="2025-10-11T10:00:00Z",
                 id=f"wf:sha256:abc{i}",
                 name=f"Workflow{i}",
@@ -460,7 +460,7 @@ class TestDocEmitter:
         # Create workflow
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:test",
             name="TestCustom",

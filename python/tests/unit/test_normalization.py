@@ -77,7 +77,7 @@ class TestNormalizer:
 
         # Verify DTO structure
         assert workflow_dto.schema_id == "https://rpax.io/schemas/xaml-workflow.json"
-        assert workflow_dto.schema_version == "1.0.0"
+        assert workflow_dto.schema_version == "0.4.0"
         assert workflow_dto.name == "Main"
         assert workflow_dto.collected_at  # Should have timestamp
 

@@ -3,7 +3,7 @@
   "$id": "https://github.com/rpapub/xaml-parser/schemas/xaml-workflow-execution.schema.json",
   "title": "XAML Workflow Execution View",
   "description": "Execution view showing call graph traversal from entry point with nested activities",
-  "version": "2.0.0",
+  "version": "0.4.0",
   "type": "object",
   "properties": {
     "schema_id": {
@@ -13,7 +13,7 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "2.0.0",
+      "const": "0.4.0",
       "description": "Schema version"
     },
     "collected_at": {
@@ -181,7 +181,7 @@
   "examples": [
     {
       "schema_id": "https://rpax.io/schemas/xaml-workflow-execution.json",
-      "schema_version": "2.0.0",
+      "schema_version": "0.4.0",
       "collected_at": "2025-10-12T18:30:00Z",
       "entry_point": "wf:sha256:abc123def456",
       "max_depth": 10,

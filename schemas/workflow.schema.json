@@ -3,7 +3,7 @@
   "$id": "https://github.com/rpapub/xaml-parser/schemas/workflow.schema.json",
   "title": "Workflow DTO",
   "description": "Self-describing workflow with stable content-hash based IDs",
-  "version": "1.0.0",
+  "version": "0.4.0",
   "type": "object",
   "properties": {
     "schema_id": {
@@ -190,7 +190,7 @@
   "examples": [
     {
       "schema_id": "https://rpax.io/schemas/xaml-workflow.json",
-      "schema_version": "1.0.0",
+      "schema_version": "0.4.0",
       "collected_at": "2025-10-12T18:30:00Z",
       "id": "wf:sha256:abc123def456",
       "name": "Main",

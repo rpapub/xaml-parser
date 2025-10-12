@@ -3,7 +3,7 @@
   "$id": "https://github.com/rpapub/xaml-parser/schemas/xaml-activity-slice.schema.json",
   "title": "XAML Activity Slice View",
   "description": "Focused context extraction around a specific activity (LLM-optimized)",
-  "version": "2.1.0",
+  "version": "0.4.0",
   "type": "object",
   "properties": {
     "schema_id": {
@@ -13,7 +13,7 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "2.1.0",
+      "const": "0.4.0",
       "description": "Schema version"
     },
     "collected_at": {
@@ -103,7 +103,7 @@
   "examples": [
     {
       "schema_id": "https://rpax.io/schemas/xaml-activity-slice.json",
-      "schema_version": "2.1.0",
+      "schema_version": "0.4.0",
       "collected_at": "2025-10-12T18:30:00Z",
       "focus": "act:sha256:focal123abc",
       "radius": 2,

@@ -3,7 +3,7 @@
   "$id": "https://github.com/rpapub/xaml-parser/schemas/xaml-workflow-collection.schema.json",
   "title": "XAML Workflow Collection",
   "description": "Collection of workflows (FlatView output - backward compatible)",
-  "version": "1.0.0",
+  "version": "0.4.0",
   "type": "object",
   "properties": {
     "schema_id": {
@@ -13,7 +13,7 @@
     },
     "schema_version": {
       "type": "string",
-      "const": "1.0.0",
+      "const": "0.4.0",
       "description": "Schema version"
     },
     "collected_at": {
@@ -95,7 +95,7 @@
   "examples": [
     {
       "schema_id": "https://rpax.io/schemas/xaml-workflow-collection.json",
-      "schema_version": "1.0.0",
+      "schema_version": "0.4.0",
       "collected_at": "2025-10-12T18:30:00Z",
       "project": {
         "name": "MyRPAProject",
@@ -105,7 +105,7 @@
       "workflows": [
         {
           "schema_id": "https://rpax.io/schemas/xaml-workflow.json",
-          "schema_version": "1.0.0",
+          "schema_version": "0.4.0",
           "collected_at": "2025-10-12T18:30:00Z",
           "id": "wf:sha256:abc123def456",
           "name": "Main",

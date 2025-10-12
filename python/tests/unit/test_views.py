@@ -14,7 +14,7 @@ def test_nested_view_empty():
     result = view.render(index)
 
     assert result["schema_id"] == "https://rpax.io/schemas/xaml-nested-workflow-graph.json"
-    assert result["schema_version"] == "2.0.0"
+    assert result["schema_version"] == "0.4.0"
     assert "collected_at" in result
     assert result["workflows"] == []
     assert result["issues"] == []
@@ -99,7 +99,7 @@ def test_execution_view_single_workflow():
     result = view.render(index)
 
     assert result["schema_id"] == "https://rpax.io/schemas/xaml-workflow-execution.json"
-    assert result["schema_version"] == "2.0.0"
+    assert result["schema_version"] == "0.4.0"
     assert result["entry_point"] == "wf:main"
     assert result["max_depth"] == 10
     assert len(result["workflows"]) == 1
@@ -300,7 +300,7 @@ def test_slice_view_single_activity():
     result = view.render(index)
 
     assert result["schema_id"] == "https://rpax.io/schemas/xaml-activity-slice.json"
-    assert result["schema_version"] == "2.1.0"
+    assert result["schema_version"] == "0.4.0"
     assert result["focus"] == "act:focal"
     assert result["radius"] == 2
     assert result["workflow"]["id"] == "wf:test"

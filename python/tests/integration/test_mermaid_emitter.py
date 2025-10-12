@@ -19,7 +19,7 @@ class TestMermaidEmitter:
         """Test emitting a single workflow to a file."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:abc123",
             name="TestWorkflow",
@@ -77,7 +77,7 @@ class TestMermaidEmitter:
         workflows = [
             WorkflowDto(
                 schema_id="https://rpax.io/schemas/xaml-workflow.json",
-                schema_version="1.0.0",
+                schema_version="0.4.0",
                 collected_at="2025-10-11T10:00:00Z",
                 id=f"wf:sha256:abc{i}",
                 name=f"Workflow{i}",
@@ -119,7 +119,7 @@ class TestMermaidEmitter:
         """Test different node shapes based on activity type."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:abc123",
             name="ShapeTest",
@@ -206,7 +206,7 @@ class TestMermaidEmitter:
         """Test edge generation with different kinds."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:abc123",
             name="EdgeTest",
@@ -309,7 +309,7 @@ class TestMermaidEmitter:
         """Test filtering activities by max depth."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:abc123",
             name="DepthTest",
@@ -418,7 +418,7 @@ class TestMermaidEmitter:
         # For now, we'll just verify the emitter handles workflows properly
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:test",
             name="Test",
@@ -503,7 +503,7 @@ class TestMermaidFormatting:
         """Test that workflow annotations appear as comments."""
         workflow = WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at="2025-10-11T10:00:00Z",
             id="wf:sha256:annotated",
             name="AnnotatedWorkflow",

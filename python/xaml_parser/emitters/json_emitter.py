@@ -86,11 +86,12 @@ class JsonEmitter(Emitter):
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Create collection DTO
+        # Note: project_info should be set by the caller (views or project parser)
         collection = WorkflowCollectionDto(
             schema_id="https://rpax.io/schemas/xaml-workflow-collection.json",
-            schema_version="1.0.0",
+            schema_version="0.4.0",
             collected_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            project_info=None,  # TODO: Pass project info from context
+            project_info=None,
             workflows=workflows,
             issues=[],
         )
