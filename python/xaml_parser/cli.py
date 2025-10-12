@@ -388,6 +388,14 @@ Examples:
         action="store_true",
         help="Combine multiple workflows into single file [requires --dto]",
     )
+    parser.add_argument(
+        "--sort",
+        action="store_true",
+        help=(
+            "Sort all collections deterministically "
+            "(default: preserve source order) [requires --dto]"
+        ),
+    )
 
     # Parser configuration
     parser.add_argument(
@@ -476,7 +484,9 @@ Examples:
             flow_extractor = ControlFlowExtractor(id_generator)
             normalizer = Normalizer(id_generator, flow_extractor)
 
-            workflow_collection_dto = project_result_to_dto(project_result, normalizer=normalizer)
+            workflow_collection_dto = project_result_to_dto(
+                project_result, normalizer=normalizer, sort_output=args.sort
+            )
 
             # Emit using JSON emitter
             emitter = JsonEmitter()
@@ -560,7 +570,9 @@ Examples:
         for file_path, parse_result in results:
             if parse_result.success:
                 workflow_name = Path(file_path).stem
-                workflow_dto = normalizer.normalize(parse_result, workflow_name=workflow_name)
+                workflow_dto = normalizer.normalize(
+                    parse_result, workflow_name=workflow_name, sort_output=args.sort
+                )
                 workflows.append(workflow_dto)
 
         if not workflows:

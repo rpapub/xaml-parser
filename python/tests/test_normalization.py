@@ -310,7 +310,7 @@ class TestNormalizer:
         assert "Parse failed" in workflow_dto.issues[0].message
 
     def test_deterministic_sorting(self):
-        """Test that collections are sorted deterministically."""
+        """Test that collections are sorted deterministically when sort_output=True."""
         content = WorkflowContent(
             arguments=[
                 WorkflowArgument(name="zed", type="System.String", direction="in"),
@@ -347,7 +347,7 @@ class TestNormalizer:
         parse_result = ParseResult(content=content, success=True)
 
         normalizer = Normalizer()
-        workflow_dto = normalizer.normalize(parse_result)
+        workflow_dto = normalizer.normalize(parse_result, sort_output=True)
 
         # Verify arguments sorted by name
         assert workflow_dto.arguments[0].name == "alfa"
@@ -363,6 +363,59 @@ class TestNormalizer:
         assert workflow_dto.activities[0].id == "act:sha256:aaa"
         assert workflow_dto.activities[1].id == "act:sha256:bbb"
         assert workflow_dto.activities[2].id == "act:sha256:zzz"
+
+    def test_source_order_preservation(self):
+        """Test that source order is preserved by default (sort_output=False)."""
+        content = WorkflowContent(
+            arguments=[
+                WorkflowArgument(name="zed", type="System.String", direction="in"),
+                WorkflowArgument(name="alfa", type="System.String", direction="in"),
+                WorkflowArgument(name="bravo", type="System.String", direction="in"),
+            ],
+            variables=[
+                WorkflowVariable(name="varZ", type="System.Int32"),
+                WorkflowVariable(name="varA", type="System.Int32"),
+                WorkflowVariable(name="varB", type="System.Int32"),
+            ],
+            activities=[
+                Activity(
+                    activity_id="act:sha256:zzz",
+                    workflow_id="wf:sha256:test",
+                    activity_type="Assign",
+                    node_id="act3",
+                ),
+                Activity(
+                    activity_id="act:sha256:aaa",
+                    workflow_id="wf:sha256:test",
+                    activity_type="Assign",
+                    node_id="act1",
+                ),
+                Activity(
+                    activity_id="act:sha256:bbb",
+                    workflow_id="wf:sha256:test",
+                    activity_type="Assign",
+                    node_id="act2",
+                ),
+            ],
+        )
+
+        parse_result = ParseResult(content=content, success=True)
+
+        normalizer = Normalizer()
+        workflow_dto = normalizer.normalize(parse_result)  # sort_output=False by default
+
+        # Verify source order preserved (NOT sorted)
+        assert workflow_dto.arguments[0].name == "zed"
+        assert workflow_dto.arguments[1].name == "alfa"
+        assert workflow_dto.arguments[2].name == "bravo"
+
+        assert workflow_dto.variables[0].name == "varZ"
+        assert workflow_dto.variables[1].name == "varA"
+        assert workflow_dto.variables[2].name == "varB"
+
+        assert workflow_dto.activities[0].id == "act:sha256:zzz"
+        assert workflow_dto.activities[1].id == "act:sha256:aaa"
+        assert workflow_dto.activities[2].id == "act:sha256:bbb"
 
     def test_normalize_metadata(self):
         """Test that metadata is properly populated."""

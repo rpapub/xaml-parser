@@ -35,7 +35,7 @@ class Normalizer:
     1. Generate stable IDs for all entities
     2. Extract control flow edges
     3. Transform models to DTOs
-    4. Sort deterministically
+    4. Optionally sort deterministically (explicit request only)
     5. Add self-describing metadata
     """
 
@@ -59,6 +59,7 @@ class Normalizer:
         workflow_name: str | None = None,
         collected_at: str | None = None,
         workflow_id_map: dict[str, str] | None = None,
+        sort_output: bool = False,
     ) -> WorkflowDto:
         """Transform ParseResult to WorkflowDto.
 
@@ -67,6 +68,8 @@ class Normalizer:
             workflow_name: Workflow name (derived from file if None)
             collected_at: Collection timestamp (ISO 8601 UTC, uses current time if None)
             workflow_id_map: Optional mapping of workflow paths to stable IDs for invocations
+            sort_output: If True, sort all collections deterministically. If False (default),
+                        preserve source file order for activities and other collections.
 
         Returns:
             WorkflowDto with stable IDs, edges, and metadata
@@ -114,12 +117,13 @@ class Normalizer:
         # Transform dependencies
         dependencies = self._transform_dependencies(content.assembly_references)
 
-        # Sort all collections deterministically
-        activities = sort_by_id(activities)
-        edges = sort_by_id(edges)
-        arguments = sort_by_name(arguments)
-        variables = sort_by_name(variables)
-        dependencies = sorted(dependencies, key=lambda d: (d.package, d.version))
+        # Sort all collections deterministically (only if explicitly requested)
+        if sort_output:
+            activities = sort_by_id(activities)
+            edges = sort_by_id(edges)
+            arguments = sort_by_name(arguments)
+            variables = sort_by_name(variables)
+            dependencies = sorted(dependencies, key=lambda d: (d.package, d.version))
 
         # Create source info
         source = SourceInfo(

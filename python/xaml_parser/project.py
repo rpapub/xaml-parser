@@ -442,6 +442,7 @@ class ProjectParser:
 def project_result_to_dto(
     project_result: ProjectResult,
     normalizer: Normalizer | None = None,
+    sort_output: bool = False,
 ) -> WorkflowCollectionDto:
     """Convert ProjectResult to WorkflowCollectionDto with stable IDs and invocations.
 
@@ -452,6 +453,8 @@ def project_result_to_dto(
     Args:
         project_result: Result from ProjectParser.parse_project()
         normalizer: Optional Normalizer instance (creates new if None)
+        sort_output: If True, sort all collections deterministically. If False (default),
+                    preserve source file order.
 
     Returns:
         WorkflowCollectionDto with all workflows and linked invocations
@@ -479,6 +482,7 @@ def project_result_to_dto(
             parse_result=wf_result.parse_result,
             workflow_name=workflow_name,
             workflow_id_map={},  # Empty for first pass
+            sort_output=sort_output,
         )
 
         workflow_dtos.append(workflow_dto)
