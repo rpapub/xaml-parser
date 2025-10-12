@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rpapub/xaml-parser/schemas/argument.schema.json",
+  "title": "Workflow Argument",
+  "description": "Workflow argument definition with stable ID",
+  "version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^arg:sha256:[a-f0-9]{16}$",
+      "description": "Stable content-hash based argument ID"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Argument name"
+    },
+    "direction": {
+      "type": "string",
+      "enum": ["in", "out", "inout"],
+      "description": "Argument direction"
+    },
+    "type": {
+      "type": "string",
+      "description": ".NET type name (e.g., System.String)"
+    },
+    "annotation": {
+      "type": ["string", "null"],
+      "description": "Human-readable description"
+    },
+    "default_value": {
+      "type": ["string", "null"],
+      "description": "Default value expression"
+    }
+  },
+  "required": ["id", "name", "direction", "type"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "arg:sha256:abc123def456",
+      "name": "in_Config",
+      "direction": "in",
+      "type": "System.Collections.Generic.Dictionary<String, Object>",
+      "annotation": "Configuration dictionary from Orchestrator",
+      "default_value": null
+    },
+    {
+      "id": "arg:sha256:def456abc123",
+      "name": "out_TransactionData",
+      "direction": "out",
+      "type": "System.Data.DataRow",
+      "annotation": "Current transaction item",
+      "default_value": null
+    }
+  ]
+}

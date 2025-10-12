@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rpapub/xaml-parser/schemas/xaml-workflow-collection.schema.json",
+  "title": "XAML Workflow Collection",
+  "description": "Collection of workflows (FlatView output - backward compatible)",
+  "version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "const": "https://rpax.io/schemas/xaml-workflow-collection.json",
+      "description": "JSON Schema URL for collection"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version"
+    },
+    "collected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Collection timestamp (ISO 8601 UTC)"
+    },
+    "project": {
+      "oneOf": [
+        {"$ref": "#/$defs/ProjectInfo"},
+        {"type": "null"}
+      ],
+      "description": "Project information"
+    },
+    "workflows": {
+      "type": "array",
+      "items": {"$ref": "workflow.schema.json"},
+      "description": "List of workflows"
+    },
+    "issues": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/IssueDto"},
+      "description": "Collection-level issues"
+    }
+  },
+  "required": ["schema_id", "schema_version", "collected_at", "workflows"],
+  "additionalProperties": false,
+  "$defs": {
+    "ProjectInfo": {
+      "type": "object",
+      "description": "Project-level information",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Project name"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Project path"
+        },
+        "main_workflow": {
+          "type": ["string", "null"],
+          "pattern": "^(wf:sha256:[a-f0-9]{16})?$",
+          "description": "Main workflow ID"
+        }
+      },
+      "required": ["name", "path"],
+      "additionalProperties": false
+    },
+    "IssueDto": {
+      "type": "object",
+      "description": "Parsing or validation issue",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["error", "warning", "info"],
+          "description": "Issue severity"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable message"
+        },
+        "path": {
+          "type": ["string", "null"],
+          "description": "Location path"
+        },
+        "code": {
+          "type": ["string", "null"],
+          "description": "Issue code for programmatic handling"
+        }
+      },
+      "required": ["level", "message"],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "schema_id": "https://rpax.io/schemas/xaml-workflow-collection.json",
+      "schema_version": "1.0.0",
+      "collected_at": "2025-10-12T18:30:00Z",
+      "project": {
+        "name": "MyRPAProject",
+        "path": "D:/Projects/MyRPAProject",
+        "main_workflow": "wf:sha256:abc123def456"
+      },
+      "workflows": [
+        {
+          "schema_id": "https://rpax.io/schemas/xaml-workflow.json",
+          "schema_version": "1.0.0",
+          "collected_at": "2025-10-12T18:30:00Z",
+          "id": "wf:sha256:abc123def456",
+          "name": "Main",
+          "source": {
+            "path": "Main.xaml",
+            "path_aliases": [],
+            "hash": "sha256:abc123def456789012345678901234567890123456789012345678901234",
+            "size_bytes": 15234,
+            "encoding": "utf-8"
+          },
+          "metadata": {
+            "project_name": "MyRPAProject",
+            "namespace": "MyRPAProject",
+            "expression_language": "VisualBasic",
+            "annotation": "Main workflow",
+            "display_name": "Main Workflow",
+            "description": null
+          },
+          "variables": [],
+          "arguments": [],
+          "dependencies": [],
+          "activities": [],
+          "edges": [],
+          "invocations": [],
+          "issues": []
+        }
+      ],
+      "issues": []
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rpapub/xaml-parser/schemas/activity.schema.json",
+  "title": "Activity",
+  "description": "Activity instance with complete business logic",
+  "version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^act:sha256:[a-f0-9]{16}$",
+      "description": "Stable content-hash based activity ID"
+    },
+    "type": {
+      "type": "string",
+      "description": "Fully-qualified type name (e.g., System.Activities.Statements.Sequence)"
+    },
+    "type_short": {
+      "type": "string",
+      "description": "Short type name (e.g., Sequence)"
+    },
+    "display_name": {
+      "type": ["string", "null"],
+      "description": "User-visible activity name"
+    },
+    "location": {
+      "oneOf": [
+        {"$ref": "#/$defs/LocationInfo"},
+        {"type": "null"}
+      ],
+      "description": "Source location information"
+    },
+    "parent_id": {
+      "type": ["string", "null"],
+      "pattern": "^(act:sha256:[a-f0-9]{16})?$",
+      "description": "Parent activity ID"
+    },
+    "children": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^act:sha256:[a-f0-9]{16}$"
+      },
+      "description": "Child activity IDs"
+    },
+    "depth": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Nesting depth level"
+    },
+    "properties": {
+      "type": "object",
+      "description": "All activity properties (key-value pairs)",
+      "additionalProperties": true
+    },
+    "in_args": {
+      "type": "object",
+      "description": "Input arguments (name → value/variable reference)",
+      "additionalProperties": {"type": "string"}
+    },
+    "out_args": {
+      "type": "object",
+      "description": "Output arguments (name → variable reference)",
+      "additionalProperties": {"type": "string"}
+    },
+    "annotation": {
+      "type": ["string", "null"],
+      "description": "Activity annotation text"
+    },
+    "expressions": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "List of expressions found in activity"
+    },
+    "variables_referenced": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Variable names referenced by this activity"
+    },
+    "selectors": {
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "UI selectors for UI automation activities",
+          "additionalProperties": {"type": "string"}
+        },
+        {"type": "null"}
+      ]
+    }
+  },
+  "required": ["id", "type", "type_short"],
+  "additionalProperties": false,
+  "$defs": {
+    "LocationInfo": {
+      "type": "object",
+      "description": "Source location information",
+      "properties": {
+        "line": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Line number (1-indexed)"
+        },
+        "column": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "description": "Column number (1-indexed)"
+        },
+        "xpath": {
+          "type": ["string", "null"],
+          "description": "XPath location in document"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "id": "act:sha256:abc123def456",
+      "type": "System.Activities.Statements.Sequence",
+      "type_short": "Sequence",
+      "display_name": "Process Transaction",
+      "location": {
+        "line": 42,
+        "column": 8,
+        "xpath": "/Activity/Sequence[1]"
+      },
+      "parent_id": null,
+      "children": ["act:sha256:child1aaa", "act:sha256:child2bbb"],
+      "depth": 0,
+      "properties": {
+        "DisplayName": "Process Transaction"
+      },
+      "in_args": {},
+      "out_args": {},
+      "annotation": "Main transaction processing sequence",
+      "expressions": [],
+      "variables_referenced": ["TransactionItem", "RetryCount"],
+      "selectors": null
+    },
+    {
+      "id": "act:sha256:def456abc123",
+      "type": "UiPath.Core.Activities.Click",
+      "type_short": "Click",
+      "display_name": "Click Submit Button",
+      "location": {
+        "line": 128,
+        "column": 12,
+        "xpath": "/Activity/Sequence[1]/Click[1]"
+      },
+      "parent_id": "act:sha256:abc123def456",
+      "children": [],
+      "depth": 1,
+      "properties": {
+        "DisplayName": "Click Submit Button",
+        "ClickType": "Single",
+        "MouseButton": "Left"
+      },
+      "in_args": {},
+      "out_args": {},
+      "annotation": null,
+      "expressions": [],
+      "variables_referenced": [],
+      "selectors": {
+        "Selector": "<html app='chrome.exe' title='Application Form' /><webctrl tag='BUTTON' aaname='Submit' />"
+      }
+    }
+  ]
+}

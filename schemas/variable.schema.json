@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rpapub/xaml-parser/schemas/variable.schema.json",
+  "title": "Workflow Variable",
+  "description": "Variable definition with stable ID",
+  "version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^var:sha256:[a-f0-9]{16}$",
+      "description": "Stable content-hash based variable ID"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Variable name"
+    },
+    "type": {
+      "type": "string",
+      "description": ".NET type name (e.g., System.String)"
+    },
+    "scope": {
+      "type": ["string", "null"],
+      "description": "Variable scope (workflow-level or activity-level)"
+    },
+    "default_value": {
+      "type": ["string", "null"],
+      "description": "Default value expression"
+    }
+  },
+  "required": ["id", "name", "type"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "var:sha256:abc123def456",
+      "name": "TransactionItem",
+      "type": "System.Data.DataRow",
+      "scope": "Sequence_Main",
+      "default_value": null
+    },
+    {
+      "id": "var:sha256:def456abc123",
+      "name": "RetryCount",
+      "type": "System.Int32",
+      "scope": null,
+      "default_value": "0"
+    }
+  ]
+}

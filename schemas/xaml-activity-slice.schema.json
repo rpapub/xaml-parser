@@ -1,0 +1,225 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rpapub/xaml-parser/schemas/xaml-activity-slice.schema.json",
+  "title": "XAML Activity Slice View",
+  "description": "Focused context extraction around a specific activity (LLM-optimized)",
+  "version": "2.1.0",
+  "type": "object",
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "const": "https://rpax.io/schemas/xaml-activity-slice.json",
+      "description": "JSON Schema URL for slice view"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "2.1.0",
+      "description": "Schema version"
+    },
+    "collected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Collection timestamp (ISO 8601 UTC)"
+    },
+    "focus": {
+      "type": "string",
+      "pattern": "^act:sha256:[a-f0-9]{16}$",
+      "description": "Focal activity ID"
+    },
+    "radius": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Context radius (levels up/down from focal activity)"
+    },
+    "workflow": {
+      "$ref": "#/$defs/WorkflowContext",
+      "description": "Containing workflow information"
+    },
+    "focal_activity": {
+      "$ref": "activity.schema.json",
+      "description": "The focal activity"
+    },
+    "parent_chain": {
+      "type": "array",
+      "items": {"$ref": "activity.schema.json"},
+      "description": "Parent chain from root to focal activity (ordered: root → parent)"
+    },
+    "siblings": {
+      "type": "array",
+      "items": {"$ref": "activity.schema.json"},
+      "description": "Sibling activities (same parent as focal)"
+    },
+    "context_activities": {
+      "type": "array",
+      "items": {"$ref": "activity.schema.json"},
+      "description": "All activities within radius of focal activity"
+    },
+    "edges": {
+      "type": "array",
+      "items": {"$ref": "edge.schema.json"},
+      "description": "Control flow edges between context activities"
+    }
+  },
+  "required": [
+    "schema_id",
+    "schema_version",
+    "collected_at",
+    "focus",
+    "radius",
+    "workflow",
+    "focal_activity",
+    "parent_chain",
+    "siblings",
+    "context_activities"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "WorkflowContext": {
+      "type": "object",
+      "description": "Minimal workflow context information",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^wf:sha256:[a-f0-9]{16}$",
+          "description": "Workflow ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Workflow name"
+        },
+        "path": {
+          "type": "string",
+          "description": "Workflow file path"
+        },
+        "annotation": {
+          "type": ["string", "null"],
+          "description": "Workflow annotation"
+        }
+      },
+      "required": ["id", "name", "path"],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "schema_id": "https://rpax.io/schemas/xaml-activity-slice.json",
+      "schema_version": "2.1.0",
+      "collected_at": "2025-10-12T18:30:00Z",
+      "focus": "act:sha256:focal123abc",
+      "radius": 2,
+      "workflow": {
+        "id": "wf:sha256:main123abc",
+        "name": "Main",
+        "path": "Main.xaml",
+        "annotation": "Main workflow for transaction processing"
+      },
+      "focal_activity": {
+        "id": "act:sha256:focal123abc",
+        "type": "System.Activities.Statements.Assign",
+        "type_short": "Assign",
+        "display_name": "Set Transaction Data",
+        "location": {
+          "line": 128,
+          "column": 12,
+          "xpath": "/Activity/Sequence[1]/Assign[1]"
+        },
+        "parent_id": "act:sha256:parent123abc",
+        "children": [],
+        "depth": 2,
+        "properties": {
+          "To": "TransactionData",
+          "Value": "in_Config(\"TransactionData\")"
+        },
+        "in_args": {},
+        "out_args": {},
+        "annotation": "Extract transaction data from config",
+        "expressions": ["in_Config(\"TransactionData\")"],
+        "variables_referenced": ["TransactionData", "in_Config"],
+        "selectors": null
+      },
+      "parent_chain": [
+        {
+          "id": "act:sha256:root123abc",
+          "type": "System.Activities.Statements.Sequence",
+          "type_short": "Sequence",
+          "display_name": "Main Sequence",
+          "location": {"line": 10, "column": 4, "xpath": "/Activity/Sequence[1]"},
+          "parent_id": null,
+          "children": ["act:sha256:parent123abc"],
+          "depth": 0,
+          "properties": {},
+          "in_args": {},
+          "out_args": {},
+          "annotation": "Main processing sequence",
+          "expressions": [],
+          "variables_referenced": [],
+          "selectors": null
+        },
+        {
+          "id": "act:sha256:parent123abc",
+          "type": "System.Activities.Statements.TryCatch",
+          "type_short": "TryCatch",
+          "display_name": "Try Process",
+          "location": {"line": 42, "column": 8, "xpath": "/Activity/Sequence[1]/TryCatch[1]"},
+          "parent_id": "act:sha256:root123abc",
+          "children": ["act:sha256:focal123abc"],
+          "depth": 1,
+          "properties": {},
+          "in_args": {},
+          "out_args": {},
+          "annotation": null,
+          "expressions": [],
+          "variables_referenced": [],
+          "selectors": null
+        }
+      ],
+      "siblings": [
+        {
+          "id": "act:sha256:sibling1abc",
+          "type": "UiPath.Core.Activities.LogMessage",
+          "type_short": "LogMessage",
+          "display_name": "Log Start",
+          "location": {"line": 126, "column": 12, "xpath": "/Activity/Sequence[1]/TryCatch[1]/LogMessage[1]"},
+          "parent_id": "act:sha256:parent123abc",
+          "children": [],
+          "depth": 2,
+          "properties": {"Level": "Info", "Message": "\"Processing started\""},
+          "in_args": {},
+          "out_args": {},
+          "annotation": null,
+          "expressions": ["\"Processing started\""],
+          "variables_referenced": [],
+          "selectors": null
+        }
+      ],
+      "context_activities": [
+        {
+          "id": "act:sha256:context1abc",
+          "type": "System.Activities.Statements.If",
+          "type_short": "If",
+          "display_name": "Check Data",
+          "location": {"line": 135, "column": 12, "xpath": "/Activity/Sequence[1]/TryCatch[1]/If[1]"},
+          "parent_id": "act:sha256:parent123abc",
+          "children": [],
+          "depth": 2,
+          "properties": {"Condition": "TransactionData IsNot Nothing"},
+          "in_args": {},
+          "out_args": {},
+          "annotation": null,
+          "expressions": ["TransactionData IsNot Nothing"],
+          "variables_referenced": ["TransactionData"],
+          "selectors": null
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge:sha256:edge1abc",
+          "from_id": "act:sha256:focal123abc",
+          "to_id": "act:sha256:context1abc",
+          "kind": "Next",
+          "label": null
+        }
+      ]
+    }
+  ]
+}

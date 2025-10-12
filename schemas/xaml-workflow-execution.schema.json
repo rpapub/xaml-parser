@@ -1,0 +1,248 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rpapub/xaml-parser/schemas/xaml-workflow-execution.schema.json",
+  "title": "XAML Workflow Execution View",
+  "description": "Execution view showing call graph traversal from entry point with nested activities",
+  "version": "2.0.0",
+  "type": "object",
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "const": "https://rpax.io/schemas/xaml-workflow-execution.json",
+      "description": "JSON Schema URL for execution view"
+    },
+    "schema_version": {
+      "type": "string",
+      "const": "2.0.0",
+      "description": "Schema version"
+    },
+    "collected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Collection timestamp (ISO 8601 UTC)"
+    },
+    "entry_point": {
+      "type": "string",
+      "pattern": "^wf:sha256:[a-f0-9]{16}$",
+      "description": "Entry point workflow ID"
+    },
+    "max_depth": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Maximum call depth traversed"
+    },
+    "workflows": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/ExecutionWorkflow"},
+      "description": "Workflows in execution order with nested activities"
+    },
+    "issues": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/IssueDto"},
+      "description": "Execution-level issues"
+    }
+  },
+  "required": ["schema_id", "schema_version", "collected_at", "entry_point", "workflows"],
+  "additionalProperties": false,
+  "$defs": {
+    "ExecutionWorkflow": {
+      "type": "object",
+      "description": "Workflow in execution view with call depth and nested activities",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^wf:sha256:[a-f0-9]{16}$",
+          "description": "Workflow ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Workflow name"
+        },
+        "call_depth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Call depth from entry point (0 = entry point)"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceInfo",
+          "description": "Source file information"
+        },
+        "metadata": {
+          "$ref": "#/$defs/WorkflowMetadata",
+          "description": "Workflow metadata"
+        },
+        "arguments": {
+          "type": "array",
+          "items": {"$ref": "argument.schema.json"},
+          "description": "Argument definitions"
+        },
+        "variables": {
+          "type": "array",
+          "items": {"$ref": "variable.schema.json"},
+          "description": "Variable definitions"
+        },
+        "activities": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/NestedActivity"},
+          "description": "Activities with nested structure"
+        },
+        "issues": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/IssueDto"},
+          "description": "Workflow-level issues"
+        }
+      },
+      "required": ["id", "name", "call_depth", "source", "metadata", "activities"],
+      "additionalProperties": false
+    },
+    "NestedActivity": {
+      "type": "object",
+      "description": "Activity with nested children (no parent_id, children are inline)",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^act:sha256:[a-f0-9]{16}$",
+          "description": "Activity ID"
+        },
+        "type": {
+          "type": "string",
+          "description": "Fully-qualified type name"
+        },
+        "type_short": {
+          "type": "string",
+          "description": "Short type name"
+        },
+        "display_name": {
+          "type": ["string", "null"],
+          "description": "User-visible activity name"
+        },
+        "children": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/NestedActivity"},
+          "description": "Nested child activities (recursive)"
+        },
+        "properties": {
+          "type": "object",
+          "description": "Activity properties",
+          "additionalProperties": true
+        },
+        "annotation": {
+          "type": ["string", "null"],
+          "description": "Activity annotation"
+        },
+        "expanded_from": {
+          "type": ["string", "null"],
+          "pattern": "^(wf:sha256:[a-f0-9]{16})?$",
+          "description": "For InvokeWorkflowFile: callee workflow ID that was expanded"
+        }
+      },
+      "required": ["id", "type", "type_short", "children"],
+      "additionalProperties": false
+    },
+    "SourceInfo": {
+      "type": "object",
+      "properties": {
+        "path": {"type": "string"},
+        "hash": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "size_bytes": {"type": "integer", "minimum": 0},
+        "encoding": {"type": "string"}
+      },
+      "required": ["path", "hash"],
+      "additionalProperties": false
+    },
+    "WorkflowMetadata": {
+      "type": "object",
+      "properties": {
+        "expression_language": {
+          "type": "string",
+          "enum": ["VisualBasic", "CSharp"]
+        },
+        "annotation": {"type": ["string", "null"]},
+        "display_name": {"type": ["string", "null"]}
+      },
+      "required": ["expression_language"],
+      "additionalProperties": false
+    },
+    "IssueDto": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["error", "warning", "info"]
+        },
+        "message": {"type": "string", "minLength": 1},
+        "path": {"type": ["string", "null"]},
+        "code": {"type": ["string", "null"]}
+      },
+      "required": ["level", "message"],
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "schema_id": "https://rpax.io/schemas/xaml-workflow-execution.json",
+      "schema_version": "2.0.0",
+      "collected_at": "2025-10-12T18:30:00Z",
+      "entry_point": "wf:sha256:abc123def456",
+      "max_depth": 10,
+      "workflows": [
+        {
+          "id": "wf:sha256:abc123def456",
+          "name": "Main",
+          "call_depth": 0,
+          "source": {
+            "path": "Main.xaml",
+            "hash": "sha256:abc123def456789012345678901234567890123456789012345678901234",
+            "size_bytes": 15234,
+            "encoding": "utf-8"
+          },
+          "metadata": {
+            "expression_language": "VisualBasic",
+            "annotation": "Main workflow",
+            "display_name": "Main Workflow"
+          },
+          "arguments": [],
+          "variables": [],
+          "activities": [
+            {
+              "id": "act:sha256:seq1aaabbbccc",
+              "type": "System.Activities.Statements.Sequence",
+              "type_short": "Sequence",
+              "display_name": "Main Sequence",
+              "children": [
+                {
+                  "id": "act:sha256:invoke1dddeeefff",
+                  "type": "UiPath.Core.Activities.InvokeWorkflowFile",
+                  "type_short": "InvokeWorkflowFile",
+                  "display_name": "Invoke Helper",
+                  "children": [
+                    {
+                      "id": "act:sha256:helper1ggghhh",
+                      "type": "System.Activities.Statements.WriteLine",
+                      "type_short": "WriteLine",
+                      "display_name": "Write Message",
+                      "children": [],
+                      "properties": {},
+                      "annotation": null,
+                      "expanded_from": null
+                    }
+                  ],
+                  "properties": {
+                    "WorkflowFileName": "Helper.xaml"
+                  },
+                  "annotation": null,
+                  "expanded_from": "wf:sha256:helper123abc"
+                }
+              ],
+              "properties": {},
+              "annotation": null,
+              "expanded_from": null
+            }
+          ],
+          "issues": []
+        }
+      ],
+      "issues": []
+    }
+  ]
+}

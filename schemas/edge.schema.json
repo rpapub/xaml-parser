@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rpapub/xaml-parser/schemas/edge.schema.json",
+  "title": "Control Flow Edge",
+  "description": "Explicit control flow edge between activities",
+  "version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^edge:sha256:[a-f0-9]{16}$",
+      "description": "Stable content-hash based edge ID"
+    },
+    "from_id": {
+      "type": "string",
+      "pattern": "^act:sha256:[a-f0-9]{16}$",
+      "description": "Source activity ID"
+    },
+    "to_id": {
+      "type": "string",
+      "pattern": "^act:sha256:[a-f0-9]{16}$",
+      "description": "Target activity ID"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "Then", "Else", "Next", "True", "False",
+        "Case", "Default", "Catch", "Finally",
+        "Link", "Transition", "Branch", "Retry",
+        "Timeout", "Done", "Trigger"
+      ],
+      "description": "Edge type indicating control flow semantics"
+    },
+    "label": {
+      "type": ["string", "null"],
+      "description": "Optional edge label (e.g., case value)"
+    }
+  },
+  "required": ["id", "from_id", "to_id", "kind"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "id": "edge:sha256:abc123def456",
+      "from_id": "act:sha256:aaa111bbb222",
+      "to_id": "act:sha256:ccc333ddd444",
+      "kind": "Then",
+      "label": null
+    },
+    {
+      "id": "edge:sha256:def456abc123",
+      "from_id": "act:sha256:eee555fff666",
+      "to_id": "act:sha256:ggg777hhh888",
+      "kind": "Case",
+      "label": "Success"
+    }
+  ]
+}

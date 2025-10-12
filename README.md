@@ -168,6 +168,156 @@ for path in invocations:
     print(f"  - {path}")
 ```
 
+## Advanced: Graph-Based Analysis & Multi-View Output
+
+**New in v2.0**: Transform parsed workflows into queryable graph structures with multiple output views.
+
+### Project-Level Analysis
+
+Parse entire UiPath projects and analyze call graphs, control flow, and activity relationships:
+
+```python
+from pathlib import Path
+from xaml_parser import ProjectParser, analyze_project
+
+# Parse entire project
+parser = ProjectParser()
+project_result = parser.parse_project(Path("MyProject"), recursive=True)
+
+# Build queryable graph structures
+index = analyze_project(project_result)
+
+# Query the project
+print(f"Total workflows: {index.total_workflows}")
+print(f"Total activities: {index.activities.node_count()}")
+print(f"Entry points: {len(index.entry_points)}")
+
+# Find circular dependencies
+cycles = index.find_call_cycles()
+if cycles:
+    print(f"Warning: Found {len(cycles)} circular call chains")
+```
+
+### Multi-View Output
+
+Generate different representations of the same project:
+
+#### 1. Flat View (Default, Backward Compatible)
+
+```python
+from xaml_parser.views import FlatView
+
+view = FlatView()
+output = view.render(index)
+# Returns traditional flat list of workflows
+```
+
+#### 2. Execution View (Call Graph Traversal)
+
+Follow the execution path from an entry point, showing nested invocations:
+
+```python
+from xaml_parser.views import ExecutionView
+
+# Start from entry point workflow
+entry_workflow_id = index.entry_points[0]
+view = ExecutionView(entry_point=entry_workflow_id, max_depth=10)
+output = view.render(index)
+
+# Output shows:
+# - Call depth for each workflow
+# - Nested activities (callee activities under InvokeWorkflowFile)
+# - Execution order from entry to leaves
+```
+
+**Use case**: Understand what actually runs when you start from Main.xaml
+
+#### 3. Slice View (Context Window for LLM)
+
+Extract focused context around a specific activity:
+
+```python
+from xaml_parser.views import SliceView
+
+# Focus on a specific activity
+focal_activity_id = "act:sha256:abc123def456"
+view = SliceView(focus=focal_activity_id, radius=2)
+output = view.render(index)
+
+# Output includes:
+# - The focal activity
+# - Parent chain (root to focal)
+# - Siblings (same parent)
+# - Context activities within radius
+```
+
+**Use case**: Provide relevant context to LLMs without overwhelming token limits
+
+### CLI Usage with Views
+
+```bash
+# Parse project with flat view (default)
+uv run xaml-parser project.json --dto --json
+
+# Execution view from entry point
+uv run xaml-parser project.json --dto --json \
+  --view execution \
+  --entry "wf:sha256:abc123def456"
+
+# Slice view around specific activity
+uv run xaml-parser project.json --dto --json \
+  --view slice \
+  --focus "act:sha256:abc123def456" \
+  --radius 3
+```
+
+### Graph Query Methods
+
+The ProjectIndex provides powerful query methods:
+
+```python
+# Get workflow by ID or path
+workflow = index.get_workflow("wf:sha256:abc123")
+workflow = index.get_workflow_by_path("Workflows/Process.xaml")
+
+# Get activity and its containing workflow
+activity = index.get_activity("act:sha256:def456")
+parent_workflow = index.get_workflow_for_activity("act:sha256:def456")
+
+# Get all workflows reachable from entry point
+reachable = index.workflows.reachable_from(entry_workflow_id)
+
+# Topological sort of workflow call graph
+execution_order = index.get_execution_order()
+
+# Extract context around activity
+context = index.slice_context("act:sha256:abc123", radius=2)
+```
+
+### Architecture
+
+```
+XAML Files → Parse → Normalize → Analyze → ProjectIndex (IR)
+                                              ↓
+                          Views (Flat, Execution, Slice)
+                                              ↓
+                              Emitters (JSON, Mermaid, Docs)
+```
+
+**ProjectIndex** is an Intermediate Representation (IR) with 4 graph layers:
+- **Workflows Graph**: All workflows with metadata
+- **Activities Graph**: All activities across all workflows
+- **Call Graph**: Workflow invocation relationships
+- **Control Flow Graph**: Activity execution edges
+
+**Benefits**:
+- Single parse, multiple output formats
+- Queryable structure for analysis tools
+- Optimized for LLM context extraction
+- 100% backward compatible (FlatView produces same output as v1.x)
+
+See [docs/ADR-GRAPH-ARCHITECTURE.md](docs/ADR-GRAPH-ARCHITECTURE.md) for design decisions.
+
 ## What Can You Extract?
 
 ### Workflow Arguments
