@@ -18,6 +18,7 @@ Basic usage:
 from pathlib import Path
 
 from .__version__ import __author__, __description__, __version__
+from .analyzer import ProjectAnalyzer, ProjectIndex
 from .constants import CORE_VISUAL_ACTIVITIES, DEFAULT_CONFIG, SKIP_ELEMENTS, STANDARD_NAMESPACES
 from .extractors import (
     ActivityExtractor,
@@ -41,6 +42,7 @@ from .parser import XamlParser
 from .project import ProjectConfig, ProjectParser, ProjectResult, WorkflowResult
 from .utils import DataUtils, DebugUtils, TextUtils, ValidationUtils, XmlUtils
 from .validation import OutputValidator, ValidationError, get_validator, validate_output
+from .views import ExecutionView, FlatView, SliceView, View
 
 # Public API
 __all__ = [
@@ -61,6 +63,14 @@ __all__ = [
     "ParseDiagnostics",
     # Graph data structure
     "Graph",
+    # Analysis
+    "ProjectIndex",
+    "ProjectAnalyzer",
+    # Views
+    "View",
+    "FlatView",
+    "ExecutionView",
+    "SliceView",
     # Specialized extractors
     "ArgumentExtractor",
     "VariableExtractor",
