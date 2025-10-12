@@ -343,6 +343,12 @@ Examples:
   xaml-parser project.json --graph         # Show dependency graph
   xaml-parser project.json --entry-points-only  # Parse only entry points
 
+  # Project with views (graph-based output)
+  xaml-parser project.json --dto --view flat         # Flat view (default, backward compatible)
+  xaml-parser project.json --dto --view execution    # Call graph traversal from main
+  xaml-parser project.json --dto --view execution --entry Main.xaml  # Custom entry point
+  xaml-parser project.json --dto --view slice --focus act:sha256:abc123  # Activity context
+
   # Single workflow file parsing
   xaml-parser Main.xaml                    # Pretty print summary
   xaml-parser Main.xaml --json             # JSON output
@@ -409,6 +415,31 @@ Examples:
             "Sort all collections deterministically "
             "(default: preserve source order) [requires --dto]"
         ),
+    )
+
+    # View options (Phase 6)
+    parser.add_argument(
+        "--view",
+        choices=["flat", "execution", "slice"],
+        default="flat",
+        help=(
+            "View type: flat (default), execution (call graph), "
+            "or slice (context) [requires --dto]"
+        ),
+    )
+    parser.add_argument(
+        "--entry",
+        help="Entry point workflow for execution view (path or ID) [requires --view=execution]",
+    )
+    parser.add_argument(
+        "--focus",
+        help="Focal activity ID for slice view [requires --view=slice]",
+    )
+    parser.add_argument(
+        "--radius",
+        type=int,
+        default=2,
+        help="Context radius for slice view (default: 2) [requires --view=slice]",
     )
 
     # Parser configuration
@@ -489,52 +520,57 @@ Examples:
 
         # Format project output
         if args.dto:
-            # DTO mode for projects: convert to WorkflowCollectionDto
-            from .control_flow import ControlFlowExtractor
-            from .emitters import EmitterConfig
-            from .emitters.json_emitter import JsonEmitter
-            from .id_generation import IdGenerator
-            from .normalization import Normalizer
-            from .project import project_result_to_dto
+            # DTO mode for projects: use views if requested
+            from .project import analyze_project
 
-            # Convert project result to DTO
-            id_generator = IdGenerator()
-            flow_extractor = ControlFlowExtractor(id_generator)
-            normalizer = Normalizer(id_generator, flow_extractor)
+            # Build ProjectIndex
+            index = analyze_project(project_result)
 
-            workflow_collection_dto = project_result_to_dto(
-                project_result, normalizer=normalizer, sort_output=args.sort
-            )
+            # Render view
+            if args.view == "execution":
+                # Validate entry point
+                if not args.entry:
+                    # Use main workflow from project config as default
+                    if project_result.project_config and project_result.project_config.main:
+                        entry_point = project_result.project_config.main
+                    else:
+                        print("Error: --entry required for execution view", file=sys.stderr)
+                        sys.exit(1)
+                else:
+                    entry_point = args.entry
 
-            # Emit using JSON emitter
-            emitter = JsonEmitter()
-            emitter_config = EmitterConfig(
-                field_profile=args.profile,
-                combine=True,  # Project mode always combines into collection
-                pretty=True,
-                exclude_none=True,
-            )
+                from .views import ExecutionView
 
-            # Determine output path
+                view = ExecutionView(entry_point=entry_point, max_depth=args.max_depth)
+                view_output = view.render(index)
+
+            elif args.view == "slice":
+                # Validate focus
+                if not args.focus:
+                    print("Error: --focus required for slice view", file=sys.stderr)
+                    sys.exit(1)
+
+                from .views import SliceView
+
+                view = SliceView(focus=args.focus, radius=args.radius)
+                view_output = view.render(index)
+
+            else:  # flat view (default)
+                from .views import FlatView
+
+                view = FlatView()
+                view_output = view.render(index)
+
+            # Write output
             if args.output:
                 output_path = Path(args.output)
             else:
                 output_path = Path("workflows.json")
 
-            # Emit
-            result = emitter.emit(workflow_collection_dto.workflows, output_path, emitter_config)
-
-            if result.success:
-                print(
-                    f"✓ Wrote {len(workflow_collection_dto.workflows)} "
-                    f"workflows to {result.files_written[0]}"
-                )
-                sys.exit(0)
-            else:
-                print("✗ Emission failed:", file=sys.stderr)
-                for error in result.errors:
-                    print(f"  - {error}", file=sys.stderr)
-                sys.exit(1)
+            # Write JSON
+            output_path.write_text(json.dumps(view_output, indent=2), encoding="utf-8")
+            print(f"[OK] Wrote {args.view} view to {output_path}")
+            sys.exit(0)
 
         elif args.graph:
             output = format_dependency_graph(project_result)
