@@ -27,7 +27,12 @@ class WorkflowContent:
     description: str | None = None
 
     # XAML technical metadata
-    namespaces: dict[str, str] = field(default_factory=dict)
+    xaml_class: str | None = None  # x:Class attribute from root Activity element
+    xmlns_declarations: dict[str, str] = field(default_factory=dict)  # xmlns prefix → URI
+    namespaces: dict[str, str] = field(default_factory=dict)  # Alias for xmlns_declarations
+    # TextExpression.NamespacesForImplementation
+    imported_namespaces: list[str] = field(default_factory=list)
+    # TextExpression.ReferencesForImplementation
     assembly_references: list[str] = field(default_factory=list)
     expression_language: str = "VisualBasic"
 
@@ -72,7 +77,10 @@ class Activity:
     # Core identification (ActivityInstance requirements)
     activity_id: str  # Unique activity identifier
     workflow_id: str  # Parent workflow
-    activity_type: str  # e.g., "uix:NClick"
+    activity_type: str  # Full type with namespace: {http://...}LocalName
+    activity_type_short: str = ""  # LocalName only
+    activity_namespace: str | None = None  # Namespace URI
+    activity_prefix: str | None = None  # Namespace prefix (ui, s, etc.)
     display_name: str | None = None  # User-visible name
     node_id: str = ""  # Hierarchical path
     parent_activity_id: str | None = None  # Parent in hierarchy
@@ -105,10 +113,6 @@ class Activity:
     expression_objects: list["Expression"] = field(
         default_factory=list
     )  # Detailed expression objects (legacy)
-
-    # Position context
-    xpath_location: str | None = None  # XPath for debugging
-    source_line: int | None = None  # Line number in XAML
 
     # XML span for stable ID generation (Phase 1)
     xml_span: str | None = None  # Raw XML substring for this activity
