@@ -17,6 +17,7 @@ from typing import Any, Protocol
 
 from .analyzer import ProjectIndex
 from .dto import ActivityDto
+from .provenance import create_provenance
 
 __all__ = ["View", "NestedView", "ExecutionView", "SliceView"]
 
@@ -43,16 +44,22 @@ class NestedView:
     2. All workflows with no callers (roots of call graph)
     """
 
-    def __init__(self, max_depth: int = 10) -> None:
+    def __init__(self, max_depth: int = 10, author: str | None = None) -> None:
         """Initialize nested view.
 
         Args:
             max_depth: Maximum call depth (cycle protection)
+            author: Author name for provenance (will load from config if None)
         """
         self.max_depth = max_depth
+        self.author = author
 
     def render(self, index: ProjectIndex) -> dict[str, Any]:
         """Render nested hierarchical view."""
+        # Generate timestamp and provenance
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        provenance = create_provenance(author=self.author, timestamp=timestamp)
+
         # Determine starting workflows
         starting_workflows = self._find_starting_workflows(index)
 
@@ -81,8 +88,9 @@ class NestedView:
 
         return {
             "schema_id": "https://rpax.io/schemas/xaml-nested-workflow-graph.json",
-            "schema_version": "2.0.0",
-            "collected_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "schema_version": "0.4.0",
+            "collected_at": timestamp,
+            "provenance": dataclasses.asdict(provenance),
             "project_info": project_info_dict,
             "max_depth": self.max_depth,
             "workflows": workflows,
@@ -211,18 +219,24 @@ class ExecutionView:
     showing "what actually runs" from entry to leaves.
     """
 
-    def __init__(self, entry_point: str, max_depth: int = 10) -> None:
+    def __init__(self, entry_point: str, max_depth: int = 10, author: str | None = None) -> None:
         """Initialize execution view.
 
         Args:
             entry_point: Entry point workflow ID or path
             max_depth: Maximum call depth (cycle protection)
+            author: Author name for provenance (will load from config if None)
         """
         self.entry_point = entry_point
         self.max_depth = max_depth
+        self.author = author
 
     def render(self, index: ProjectIndex) -> dict[str, Any]:
         """Render execution view (call graph traversal)."""
+        # Generate timestamp and provenance
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        provenance = create_provenance(author=self.author, timestamp=timestamp)
+
         # Resolve entry point
         entry_wf_id = self._resolve_entry_point(index, self.entry_point)
         if not entry_wf_id:
@@ -261,7 +275,9 @@ class ExecutionView:
 
         return {
             "schema_id": "https://rpax.io/schemas/xaml-workflow-execution.json",
-            "schema_version": "2.0.0",
+            "schema_version": "0.4.0",
+            "collected_at": timestamp,
+            "provenance": dataclasses.asdict(provenance),
             "entry_point": entry_wf_id,
             "project_info": project_info_dict,
             "max_depth": self.max_depth,
@@ -353,18 +369,24 @@ class SliceView:
     Extracts activities within radius (up/down) including parent chain.
     """
 
-    def __init__(self, focus: str, radius: int = 2) -> None:
+    def __init__(self, focus: str, radius: int = 2, author: str | None = None) -> None:
         """Initialize slice view.
 
         Args:
             focus: Focal activity ID
             radius: Number of levels to include (up and down)
+            author: Author name for provenance (will load from config if None)
         """
         self.focus = focus
         self.radius = radius
+        self.author = author
 
     def render(self, index: ProjectIndex) -> dict[str, Any]:
         """Render slice view (context window)."""
+        # Generate timestamp and provenance
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+        provenance = create_provenance(author=self.author, timestamp=timestamp)
+
         # Get context activities
         context = index.slice_context(self.focus, self.radius)
 
@@ -387,7 +409,9 @@ class SliceView:
 
         return {
             "schema_id": "https://rpax.io/schemas/xaml-activity-slice.json",
-            "schema_version": "2.1.0",
+            "schema_version": "0.4.0",
+            "collected_at": timestamp,
+            "provenance": dataclasses.asdict(provenance),
             "focus": self.focus,
             "radius": self.radius,
             "workflow": {

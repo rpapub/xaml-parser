@@ -9,7 +9,7 @@ Design: docs/INSTRUCTIONS-nesting.md Part 4
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .dto import ActivityDto, EdgeDto, WorkflowDto
+from .dto import ActivityDto, EdgeDto, IssueDto, ProjectInfo, WorkflowDto
 from .graph import Graph
 
 __all__ = ["ProjectIndex", "ProjectAnalyzer"]
@@ -49,6 +49,8 @@ class ProjectIndex:
 
     # Metadata
     project_dir: Path | None = None
+    project_info: ProjectInfo | None = None
+    collection_issues: list[IssueDto] = field(default_factory=list)
     total_workflows: int = 0
     total_activities: int = 0
 
@@ -123,13 +125,19 @@ class ProjectAnalyzer:
     """
 
     def analyze(
-        self, workflows: list[WorkflowDto], project_dir: Path | None = None
+        self,
+        workflows: list[WorkflowDto],
+        project_dir: Path | None = None,
+        project_info: ProjectInfo | None = None,
+        collection_issues: list[IssueDto] | None = None,
     ) -> ProjectIndex:
         """Analyze workflows and build graph structures.
 
         Args:
             workflows: List of WorkflowDto objects
             project_dir: Optional project directory
+            project_info: Optional project information from project.json
+            collection_issues: Optional collection-level issues
 
         Returns:
             ProjectIndex with queryable graphs
@@ -190,6 +198,8 @@ class ProjectAnalyzer:
             activity_to_workflow=activity_to_workflow,
             entry_points=entry_points,
             project_dir=project_dir,
+            project_info=project_info,
+            collection_issues=collection_issues or [],
             total_workflows=len(workflows),
             total_activities=total_activities,
         )

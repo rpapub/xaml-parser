@@ -116,7 +116,7 @@ class TestJsonEmitter:
             id="wf:sha256:test123",
             name="TestWorkflow",
             collected_at="2025-10-11T12:00:00Z",
-            metadata=WorkflowMetadata(expression_language="VisualBasic"),
+            metadata=WorkflowMetadata(),
             activities=[
                 ActivityDto(
                     id="act:sha256:abc",
@@ -197,7 +197,6 @@ class TestJsonEmitter:
             name="TestWorkflow",
             collected_at="2025-10-11T12:00:00Z",
             metadata=WorkflowMetadata(
-                expression_language="VisualBasic",
                 annotation="Test annotation",
             ),
             activities=[

@@ -25,6 +25,7 @@ from .dto import (
 from .id_generation import IdGenerator, generate_stable_id
 from .models import Activity, ParseResult, WorkflowArgument, WorkflowVariable
 from .ordering import sort_by_id, sort_by_name
+from .provenance import create_provenance
 
 
 class Normalizer:
@@ -60,6 +61,7 @@ class Normalizer:
         workflow_id_map: dict[str, str] | None = None,
         sort_output: bool = False,
         project_dependencies: dict[str, str] | None = None,
+        author: str | None = None,
     ) -> WorkflowDto:
         """Transform ParseResult to WorkflowDto.
 
@@ -73,6 +75,7 @@ class Normalizer:
             project_dependencies: Optional dict of package dependencies from project.json.
                                 Format: {"PackageName": "[version_constraint]", ...}
                                 Example: {"UiPath.Excel.Activities": "[3.0.1]"}
+            author: Author name for provenance metadata (will load from config if None)
 
         Returns:
             WorkflowDto with stable IDs, edges, and metadata
@@ -135,6 +138,10 @@ class Normalizer:
             variables = sort_by_name(variables)
             dependencies = sorted(dependencies, key=lambda d: (d.package, d.version))
 
+        # Generate timestamp and provenance
+        timestamp = collected_at or self._current_timestamp()
+        provenance = create_provenance(author=author, timestamp=timestamp)
+
         # Create source info
         source = SourceInfo(
             path=parse_result.file_path or "",
@@ -179,8 +186,9 @@ class Normalizer:
         # Create workflow DTO
         return WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
-            schema_version="1.0.0",
-            collected_at=collected_at or self._current_timestamp(),
+            schema_version="0.4.0",
+            collected_at=timestamp,
+            provenance=provenance,
             id=workflow_id,
             name=workflow_name,
             source=source,

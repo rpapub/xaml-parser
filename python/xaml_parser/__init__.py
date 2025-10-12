@@ -41,9 +41,10 @@ from .models import (
 )
 from .parser import XamlParser
 from .project import ProjectConfig, ProjectParser, ProjectResult, WorkflowResult, analyze_project
+from .provenance import create_provenance, get_author_from_config, get_parser_version, load_config
 from .utils import DataUtils, DebugUtils, TextUtils, ValidationUtils, XmlUtils
 from .validation import OutputValidator, ValidationError, get_validator, validate_output
-from .views import ExecutionView, FlatView, SliceView, View
+from .views import ExecutionView, NestedView, SliceView, View
 
 # Public API
 __all__ = [
@@ -69,7 +70,7 @@ __all__ = [
     "ProjectAnalyzer",
     # Views
     "View",
-    "FlatView",
+    "NestedView",
     "ExecutionView",
     "SliceView",
     # Specialized extractors
@@ -100,6 +101,11 @@ __all__ = [
     "ProjectResult",
     "WorkflowResult",
     "analyze_project",
+    # Provenance
+    "create_provenance",
+    "get_parser_version",
+    "get_author_from_config",
+    "load_config",
 ]
 
 

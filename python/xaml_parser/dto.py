@@ -37,6 +37,29 @@ class SourceInfo:
 
 
 @dataclass
+class ProvenanceInfo:
+    """Provenance metadata for generated outputs.
+
+    Captures authorship and generation information for CC-BY attribution.
+
+    Attributes:
+        generated_by: Tool name and version (e.g., "xaml-parser/0.5.0")
+        generated_at: ISO 8601 timestamp (UTC)
+        generator_url: Tool URL
+        authors: List of authors (primary author + co-authors)
+        license: License identifier (SPDX format, e.g., "CC-BY-4.0")
+        license_url: License URL
+    """
+
+    generated_by: str
+    generated_at: str  # ISO 8601
+    generator_url: str = "https://github.com/rpapub/xaml-parser"
+    authors: list[str] = field(default_factory=list)
+    license: str = "CC-BY-4.0"
+    license_url: str = "https://creativecommons.org/licenses/by/4.0/"
+
+
+@dataclass
 class WorkflowMetadata:
     """Workflow-level XAML metadata.
 
@@ -253,8 +276,11 @@ class WorkflowDto:
 
     # Schema metadata
     schema_id: str = "https://rpax.io/schemas/xaml-workflow.json"
-    schema_version: str = "1.0.0"
+    schema_version: str = "0.4.0"
     collected_at: str = ""  # ISO 8601
+
+    # Provenance (authorship/generation)
+    provenance: ProvenanceInfo | None = None
 
     # Identity
     id: str = ""  # wf:sha256:abc123...
@@ -338,8 +364,9 @@ class WorkflowCollectionDto:
     """
 
     schema_id: str = "https://rpax.io/schemas/xaml-workflow-collection.json"
-    schema_version: str = "1.1.0"
+    schema_version: str = "0.4.0"
     collected_at: str = ""
+    provenance: ProvenanceInfo | None = None
     project_info: ProjectInfo | None = None
     workflows: list[WorkflowDto] = field(default_factory=list)
     issues: list[IssueDto] = field(default_factory=list)
