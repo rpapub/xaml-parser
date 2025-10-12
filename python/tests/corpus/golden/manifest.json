@@ -1,0 +1,17 @@
+{
+  "generated_at": "2025-10-12T11:42:45Z",
+  "baselines": [
+    {
+      "project": "CORE_00000001",
+      "workflows": 5,
+      "file": "CORE_00000001.json.gz",
+      "size_bytes": 7068
+    },
+    {
+      "project": "CORE_00000010",
+      "workflows": 10,
+      "file": "CORE_00000010.json.gz",
+      "size_bytes": 31843
+    }
+  ]
+}
