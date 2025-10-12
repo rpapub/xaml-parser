@@ -52,7 +52,7 @@ class ProjectResult:
     """Result of parsing an entire project."""
 
     project_dir: Path
-    project_config: ProjectConfig
+    project_config: ProjectConfig | None
     workflows: list[WorkflowResult] = field(default_factory=list)
     dependency_graph: dict[str, list[str]] = field(default_factory=dict)
     success: bool = True
@@ -125,7 +125,7 @@ class ProjectParser:
         if entry_points_only:
             # Only parse entry points from project.json
             workflows_to_parse = self._get_entry_point_paths(project_config, project_dir)
-            discovered_workflows = set()
+            discovered_workflows: set[str] = set()
         else:
             # Discover all workflows recursively
             workflows_to_parse, discovered_workflows = self._discover_workflows(

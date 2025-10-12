@@ -39,6 +39,8 @@ def format_pretty(result: ParseResult, file_path: str | None = None) -> str:
         return "\n".join(lines)
 
     content = result.content
+    if not content:
+        return "\n".join(lines)
 
     lines.append("[OK] Parsing succeeded")
     lines.append("")
@@ -82,7 +84,7 @@ def format_pretty(result: ParseResult, file_path: str | None = None) -> str:
     if content.activities:
         lines.append("")
         lines.append(f"Activities: ({len(content.activities)} total)")
-        activity_types = {}
+        activity_types: dict[str, int] = {}
         for activity in content.activities:
             activity_types[activity.activity_type] = (
                 activity_types.get(activity.activity_type, 0) + 1
@@ -104,8 +106,8 @@ def format_pretty(result: ParseResult, file_path: str | None = None) -> str:
 
 def format_arguments(result: ParseResult) -> str:
     """Format only arguments."""
-    if not result.success:
-        return f"Error: {', '.join(result.errors)}"
+    if not result.success or not result.content:
+        return f"Error: {', '.join(result.errors)}" if result.errors else "No content"
 
     lines = []
     for arg in result.content.arguments:
@@ -121,8 +123,8 @@ def format_arguments(result: ParseResult) -> str:
 
 def format_activities(result: ParseResult) -> str:
     """Format only activities."""
-    if not result.success:
-        return f"Error: {', '.join(result.errors)}"
+    if not result.success or not result.content:
+        return f"Error: {', '.join(result.errors)}" if result.errors else "No content"
 
     lines = []
     for activity in result.content.activities:
@@ -136,8 +138,8 @@ def format_activities(result: ParseResult) -> str:
 
 def format_tree(result: ParseResult) -> str:
     """Format activities as a tree."""
-    if not result.success:
-        return f"Error: {', '.join(result.errors)}"
+    if not result.success or not result.content:
+        return f"Error: {', '.join(result.errors)}" if result.errors else "No content"
 
     lines = []
     for activity in result.content.activities:
@@ -167,7 +169,7 @@ def format_summary(results: list[tuple[str, ParseResult]]) -> str:
         status = "[OK]" if result.success else "[!]"
         lines.append(f"{status} {file_path}")
 
-        if result.success:
+        if result.success and result.content:
             content = result.content
             lines.append(
                 f"    Arguments: {len(content.arguments)}, "
@@ -183,6 +185,15 @@ def format_summary(results: list[tuple[str, ParseResult]]) -> str:
 def format_project_summary(project_result: ProjectResult) -> str:
     """Format project parsing summary."""
     lines = []
+
+    if not project_result.project_config:
+        lines.append("Project: (config not loaded)")
+        lines.append(f"Directory: {project_result.project_dir}")
+        lines.append("")
+        lines.append("[!] Project parsing FAILED")
+        for error in project_result.errors:
+            lines.append(f"  • {error}")
+        return "\n".join(lines)
 
     lines.append(f"Project: {project_result.project_config.name}")
     lines.append(f"Directory: {project_result.project_dir}")
@@ -258,7 +269,8 @@ def format_dependency_graph(project_result: ProjectResult) -> str:
     """Format project dependency graph."""
     lines = []
 
-    lines.append(f"Project: {project_result.project_config.name}")
+    project_name = project_result.project_config.name if project_result.project_config else "(unknown)"
+    lines.append(f"Project: {project_name}")
     lines.append("Dependency Graph:")
     lines.append("")
 
@@ -462,6 +474,10 @@ Examples:
             print("Error: Cannot specify multiple inputs in project mode", file=sys.stderr)
             sys.exit(1)
 
+        if not project_dir:
+            print("Error: Could not determine project directory", file=sys.stderr)
+            sys.exit(1)
+
         project_parser = ProjectParser(config)
         project_result = project_parser.parse_project(
             project_dir,
@@ -524,7 +540,7 @@ Examples:
             # TODO: Implement JSON output for projects
             output = json.dumps(
                 {
-                    "project_name": project_result.project_config.name,
+                    "project_name": project_result.project_config.name if project_result.project_config else "(unknown)",
                     "project_dir": str(project_result.project_dir),
                     "success": project_result.success,
                     "total_workflows": project_result.total_workflows,
@@ -597,18 +613,18 @@ Examples:
             output_path = Path(".")
 
         # Emit
-        result = emitter.emit(workflows, output_path, emitter_config)
+        emit_result = emitter.emit(workflows, output_path, emitter_config)
 
-        if result.success:
+        if emit_result.success:
             if args.output:
-                print(f"✓ Wrote {len(result.files_written)} file(s) to {args.output}")
+                print(f"✓ Wrote {len(emit_result.files_written)} file(s) to {args.output}")
             else:
-                for file_path in result.files_written:
-                    print(f"✓ Wrote: {file_path}")
+                for written_path in emit_result.files_written:
+                    print(f"✓ Wrote: {written_path}")
             sys.exit(0)
         else:
             print("✗ Emission failed:", file=sys.stderr)
-            for error in result.errors:
+            for error in emit_result.errors:
                 print(f"  - {error}", file=sys.stderr)
             sys.exit(1)
 
@@ -616,19 +632,19 @@ Examples:
     if args.summary or len(results) > 1:
         output = format_summary(results)
     elif len(results) == 1:
-        file_path, result = results[0]
+        file_path, parse_result = results[0]
 
         if args.json:
             # Convert result to dict for JSON serialization
             output_dict = {
                 "file_path": file_path,
-                "success": result.success,
-                "errors": result.errors,
-                "warnings": result.warnings,
-                "parse_time_ms": result.parse_time_ms,
+                "success": parse_result.success,
+                "errors": parse_result.errors,
+                "warnings": parse_result.warnings,
+                "parse_time_ms": parse_result.parse_time_ms,
             }
 
-            if result.success and result.content:
+            if parse_result.success and parse_result.content:
                 output_dict["content"] = {
                     "arguments": [
                         {
@@ -638,7 +654,7 @@ Examples:
                             "annotation": arg.annotation,
                             "default_value": arg.default_value,
                         }
-                        for arg in result.content.arguments
+                        for arg in parse_result.content.arguments
                     ],
                     "variables": [
                         {
@@ -647,7 +663,7 @@ Examples:
                             "scope": var.scope,
                             "default_value": var.default_value,
                         }
-                        for var in result.content.variables
+                        for var in parse_result.content.variables
                     ],
                     "activities": [
                         {
@@ -657,25 +673,25 @@ Examples:
                             "annotation": act.annotation,
                             "depth": act.depth,
                         }
-                        for act in result.content.activities
+                        for act in parse_result.content.activities
                     ],
-                    "display_name": result.content.display_name,
-                    "root_annotation": result.content.root_annotation,
-                    "expression_language": result.content.expression_language,
-                    "total_arguments": result.content.total_arguments,
-                    "total_variables": result.content.total_variables,
-                    "total_activities": result.content.total_activities,
+                    "display_name": parse_result.content.display_name,
+                    "root_annotation": parse_result.content.root_annotation,
+                    "expression_language": parse_result.content.expression_language,
+                    "total_arguments": parse_result.content.total_arguments,
+                    "total_variables": parse_result.content.total_variables,
+                    "total_activities": parse_result.content.total_activities,
                 }
 
             output = json.dumps(output_dict, indent=2)
         elif args.arguments:
-            output = format_arguments(result)
+            output = format_arguments(parse_result)
         elif args.activities:
-            output = format_activities(result)
+            output = format_activities(parse_result)
         elif args.tree:
-            output = format_tree(result)
+            output = format_tree(parse_result)
         else:
-            output = format_pretty(result, file_path)
+            output = format_pretty(parse_result, file_path)
     else:
         output = ""
 

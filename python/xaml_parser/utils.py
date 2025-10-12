@@ -50,7 +50,7 @@ class XmlUtils:
         return elem.text.strip() if elem.text else default
     
     @staticmethod
-    def find_elements_by_attribute(root: ET.Element, attr_name: str, attr_value: str = None) -> list[ET.Element]:
+    def find_elements_by_attribute(root: ET.Element, attr_name: str, attr_value: str | None = None) -> list[ET.Element]:
         """Find all elements with specific attribute.
         
         Args:
@@ -326,15 +326,15 @@ class DataUtils:
             Flattened dictionary
         """
         def _flatten(obj: Any, parent_key: str = '') -> dict[str, Any]:
-            items = []
-            
+            items: list[tuple[str, Any]] = []
+
             if isinstance(obj, dict):
                 for key, value in obj.items():
                     new_key = f"{parent_key}{separator}{key}" if parent_key else key
                     items.extend(_flatten(value, new_key).items())
             else:
                 return {parent_key: obj}
-            
+
             return dict(items)
         
         return _flatten(nested_dict)
@@ -342,15 +342,15 @@ class DataUtils:
     @staticmethod
     def extract_unique_values(data: list[dict[str, Any]], field: str) -> set[str]:
         """Extract unique values for a field from list of dictionaries.
-        
+
         Args:
             data: List of dictionaries
             field: Field name to extract
-            
+
         Returns:
             Set of unique values
         """
-        values = set()
+        values: set[str] = set()
         for item in data:
             if field in item and item[field]:
                 if isinstance(item[field], (list, tuple)):
@@ -362,15 +362,15 @@ class DataUtils:
     @staticmethod
     def group_by_field(data: list[dict[str, Any]], field: str) -> dict[str, list[dict[str, Any]]]:
         """Group list of dictionaries by field value.
-        
+
         Args:
             data: List of dictionaries
             field: Field to group by
-            
+
         Returns:
             Dictionary with field values as keys and lists as values
         """
-        groups = {}
+        groups: dict[str, list[dict[str, Any]]] = {}
         for item in data:
             key = str(item.get(field, 'unknown'))
             if key not in groups:
@@ -424,7 +424,7 @@ class DebugUtils:
         # Activity type distribution
         activities = content.get('activities', [])
         if activities:
-            activity_types = {}
+            activity_types: dict[str, int] = {}
             for activity in activities:
                 tag = activity.get('tag', 'Unknown')
                 activity_types[tag] = activity_types.get(tag, 0) + 1
@@ -433,7 +433,7 @@ class DebugUtils:
         # Argument directions
         arguments = content.get('arguments', [])
         if arguments:
-            directions = {}
+            directions: dict[str, int] = {}
             for arg in arguments:
                 direction = arg.get('direction', 'unknown')
                 directions[direction] = directions.get(direction, 0) + 1

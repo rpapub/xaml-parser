@@ -25,7 +25,7 @@ class ArgumentExtractor:
     @staticmethod
     def extract_arguments(root: ET.Element, namespaces: dict[str, str]) -> list[WorkflowArgument]:
         """Extract all workflow arguments with complete metadata."""
-        arguments = []
+        arguments: list[WorkflowArgument] = []
         
         # Find x:Members element
         x_ns = namespaces.get('x', '')
@@ -150,8 +150,8 @@ class ActivityExtractor:
         """Initialize with parser configuration."""
         self.config = config
         self._activity_counter = 0
-        self._activity_cache = {}  # Cache for repeated element processing
-        self._expression_cache = {}  # Cache for expression extraction
+        self._activity_cache: dict[tuple[int, str, str, str | None, int, str], Activity | None] = {}  # Cache for repeated element processing
+        self._expression_cache: dict[str, list[str]] = {}  # Cache for expression extraction
         self._max_depth = config.get('max_depth', 50)  # Prevent deep recursion
         self._batch_size = config.get('batch_size', 100)  # Process activities in batches
     
@@ -667,33 +667,7 @@ class ActivityExtractor:
                     configuration[child_tag] = child.text
         
         return configuration
-    
-    def _extract_nested_element(self, elem: ET.Element) -> Any:
-        """Recursively extract nested element structure."""
-        if len(elem) == 0:
-            # Leaf node
-            if elem.attrib and elem.text:
-                return {'attributes': elem.attrib, 'text': elem.text}
-            elif elem.attrib:
-                return elem.attrib
-            else:
-                return elem.text
-        
-        # Has children
-        result = {}
-        if elem.attrib:
-            result['attributes'] = elem.attrib
-        
-        children = {}
-        for child in elem:
-            child_tag = get_local_tag(child)
-            children[child_tag] = self._extract_nested_element(child)
-        
-        if children:
-            result['children'] = children
-        
-        return result
-    
+
     def _extract_business_logic_expressions(self, element: ET.Element) -> list[str]:
         """Extract UiPath expressions containing business logic."""
         expressions = []
@@ -796,7 +770,7 @@ class AnnotationExtractor:
     @staticmethod
     def extract_all_annotations(root: ET.Element, namespaces: dict[str, str]) -> dict[str, str]:
         """Extract all annotations mapped by element ID or path."""
-        annotations = {}
+        annotations: dict[str, str] = {}
         sap2010_ns = namespaces.get('sap2010', '')
         
         if not sap2010_ns:

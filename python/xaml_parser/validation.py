@@ -14,7 +14,7 @@ from .models import ParseDiagnostics, ParseResult, WorkflowContent
 class ValidationError(Exception):
     """Raised when output validation fails."""
     
-    def __init__(self, message: str, field_path: str = "", schema_violations: list[str] = None):
+    def __init__(self, message: str, field_path: str = "", schema_violations: list[str] | None = None):
         self.field_path = field_path
         self.schema_violations = schema_violations or []
         super().__init__(message)
@@ -32,7 +32,7 @@ class OutputValidator:
         if schemas_dir is None:
             schemas_dir = Path(__file__).parent / "schemas"
         self.schemas_dir = schemas_dir
-        self._schemas_cache = {}
+        self._schemas_cache: dict[str, Any] = {}
     
     def validate_parse_result(self, result: ParseResult) -> list[str]:
         """Validate complete parse result against schema.
@@ -108,7 +108,7 @@ class OutputValidator:
         if not isinstance(content.activities, list):
             errors.append("activities must be list")
         else:
-            activity_ids = set()
+            activity_ids: set[str] = set()
             for i, activity in enumerate(content.activities):
                 act_errors = self._validate_activity(activity, activity_ids)
                 errors.extend([f"activities[{i}].{err}" for err in act_errors])
@@ -240,7 +240,7 @@ class OutputValidator:
         
         return errors
     
-    def _validate_activity(self, activity: Any, activity_ids: set) -> list[str]:
+    def _validate_activity(self, activity: Any, activity_ids: set[str]) -> list[str]:
         """Validate single activity."""
         errors = []
         
