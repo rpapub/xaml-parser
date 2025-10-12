@@ -1,0 +1,5 @@
+# Developer test outputs (gitignored for manual inspection only)
+output/
+*.pyc
+__pycache__/
+.pytest_cache/
