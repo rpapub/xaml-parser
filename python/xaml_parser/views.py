@@ -188,7 +188,7 @@ class ExecutionView:
         """Find callee workflow ID for InvokeWorkflowFile activity."""
         for invocation in workflow_dto.invocations:
             if invocation.via_activity_id == activity_id:
-                return invocation.callee_id
+                return str(invocation.callee_id)
         return None
 
 
@@ -267,7 +267,7 @@ class SliceView:
 
     def _get_siblings(self, activity_id: str, index: ProjectIndex) -> list[ActivityDto]:
         """Get sibling activities (same parent)."""
-        siblings = []
+        siblings: list[ActivityDto] = []
 
         preds = index.activities.predecessors(activity_id)
         if not preds:

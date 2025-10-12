@@ -592,7 +592,7 @@ class ControlFlowExtractor:
         elif isinstance(config, dict):
             # Check for IdRef or other ID fields
             if "IdRef" in config:
-                return config["IdRef"]
+                return str(config["IdRef"])
             # Check for nested activity
             if "Activity" in config:
                 return self._extract_activity_id_from_config(config["Activity"])

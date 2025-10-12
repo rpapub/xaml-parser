@@ -5,7 +5,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 try:
-    from jinja2 import Environment, PackageLoader, select_autoescape
+    from jinja2 import (  # type: ignore[import-not-found]
+        Environment,
+        PackageLoader,
+        select_autoescape,
+    )
 
     JINJA2_AVAILABLE = True
 except ImportError:
@@ -116,7 +120,7 @@ class DocEmitter(Emitter):
             Markdown documentation as string
         """
         template = self.env.get_template("workflow.md.j2")
-        return template.render(workflow=workflow)
+        return str(template.render(workflow=workflow))
 
     def _generate_index(self, workflows: list[WorkflowDto], config: EmitterConfig) -> str:
         """Generate index documentation for all workflows.
@@ -147,17 +151,19 @@ class DocEmitter(Emitter):
         # Get current timestamp
         collected_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-        return template.render(
-            workflows=workflows,
-            project_name=project_name,
-            project_path=project_path,
-            main_workflow=main_workflow,
-            total_activities=total_activities,
-            total_variables=total_variables,
-            total_arguments=total_arguments,
-            has_invocations=has_invocations,
-            has_issues=has_issues,
-            collected_at=collected_at,
+        return str(
+            template.render(
+                workflows=workflows,
+                project_name=project_name,
+                project_path=project_path,
+                main_workflow=main_workflow,
+                total_activities=total_activities,
+                total_variables=total_variables,
+                total_arguments=total_arguments,
+                has_invocations=has_invocations,
+                has_issues=has_issues,
+                collected_at=collected_at,
+            )
         )
 
     def _sanitize_filename(self, name: str) -> str:

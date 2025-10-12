@@ -6,6 +6,7 @@ import io
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from .models import ParseResult
 from .parser import XamlParser
@@ -292,7 +293,7 @@ def format_dependency_graph(project_result: ProjectResult) -> str:
     return "\n".join(lines)
 
 
-def parse_files(patterns: list[str], config: dict) -> list[tuple[str, ParseResult]]:
+def parse_files(patterns: list[str], config: dict[str, Any]) -> list[tuple[str, ParseResult]]:
     """Parse multiple files from glob patterns."""
     parser = XamlParser(config)
     results = []
@@ -527,6 +528,9 @@ Examples:
             index = analyze_project(project_result)
 
             # Render view
+            from .views import ExecutionView, FlatView, SliceView, View
+
+            view: View
             if args.view == "execution":
                 # Validate entry point
                 if not args.entry:
@@ -539,8 +543,6 @@ Examples:
                 else:
                     entry_point = args.entry
 
-                from .views import ExecutionView
-
                 view = ExecutionView(entry_point=entry_point, max_depth=args.max_depth)
                 view_output = view.render(index)
 
@@ -550,14 +552,10 @@ Examples:
                     print("Error: --focus required for slice view", file=sys.stderr)
                     sys.exit(1)
 
-                from .views import SliceView
-
                 view = SliceView(focus=args.focus, radius=args.radius)
                 view_output = view.render(index)
 
             else:  # flat view (default)
-                from .views import FlatView
-
                 view = FlatView()
                 view_output = view.render(index)
 

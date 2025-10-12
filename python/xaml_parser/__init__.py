@@ -16,6 +16,7 @@ Basic usage:
 """
 
 from pathlib import Path
+from typing import Any
 
 from .__version__ import __author__, __description__, __version__
 from .analyzer import ProjectAnalyzer, ProjectIndex
@@ -102,7 +103,7 @@ __all__ = [
 ]
 
 
-def create_parser(config: dict | None = None) -> XamlParser:
+def create_parser(config: dict[str, Any] | None = None) -> XamlParser:
     """Convenience function to create parser with configuration.
 
     Args:
@@ -114,7 +115,7 @@ def create_parser(config: dict | None = None) -> XamlParser:
     return XamlParser(config)
 
 
-def parse_xaml_file(file_path: str | Path, config: dict | None = None) -> ParseResult:
+def parse_xaml_file(file_path: str | Path, config: dict[str, Any] | None = None) -> ParseResult:
     """Convenience function to parse XAML file directly.
 
     Args:
@@ -130,7 +131,7 @@ def parse_xaml_file(file_path: str | Path, config: dict | None = None) -> ParseR
     return parser.parse_file(Path(file_path))
 
 
-def parse_xaml_content(content: str, config: dict | None = None) -> ParseResult:
+def parse_xaml_content(content: str, config: dict[str, Any] | None = None) -> ParseResult:
     """Convenience function to parse XAML content string.
 
     Args:
@@ -145,7 +146,7 @@ def parse_xaml_content(content: str, config: dict | None = None) -> ParseResult:
 
 
 # Package metadata for potential PyPI publishing
-def get_package_info() -> dict:
+def get_package_info() -> dict[str, Any]:
     """Get package information dictionary."""
     return {
         "name": "xaml_parser",

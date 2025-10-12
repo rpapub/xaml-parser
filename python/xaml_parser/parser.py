@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from defusedxml.ElementTree import fromstring as defused_fromstring
+    from defusedxml.ElementTree import fromstring as defused_fromstring  # type: ignore[assignment]
 except ImportError:
     # Fallback to standard library if defusedxml not available
     from xml.etree.ElementTree import fromstring as defused_fromstring
@@ -48,7 +48,7 @@ class XamlParser:
     annotations, and expressions from XAML workflow files.
     """
 
-    def __init__(self, config: dict[str, Any] | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize parser with configuration.
 
         Args:
@@ -56,7 +56,9 @@ class XamlParser:
         """
         self.config = {**DEFAULT_CONFIG, **(config or {})}
         self._id_generator = IdGenerator()
-        self._diagnostics: ParseDiagnostics = ParseDiagnostics()  # Re-initialized per parse operation
+        self._diagnostics: ParseDiagnostics = (
+            ParseDiagnostics()
+        )  # Re-initialized per parse operation
         self._workflow_xml_content = ""  # Store original XML for workflow ID generation
 
     def parse_file(self, file_path: Path) -> ParseResult:
@@ -534,7 +536,7 @@ class XamlParser:
 
     def _determine_variable_scope(self, var_element: ET.Element) -> str:
         """Determine the scope context for a variable."""
-        parent = var_element.getparent() if hasattr(var_element, "getparent") else None  # type: ignore[attr-defined]
+        parent = var_element.getparent() if hasattr(var_element, "getparent") else None
         if parent is not None:
             parent_tag: str = parent.tag.split("}")[-1] if "}" in parent.tag else parent.tag
             if parent_tag in CORE_VISUAL_ACTIVITIES:
@@ -684,6 +686,6 @@ class XamlParser:
             tag = current.tag.split("}")[-1] if "}" in current.tag else current.tag
             path_parts.insert(0, tag)
             # Note: getparent() is lxml-specific, standard lib ET doesn't have parent tracking
-            current = current.getparent() if hasattr(current, "getparent") else None  # type: ignore[attr-defined,assignment]
+            current = current.getparent() if hasattr(current, "getparent") else None
 
         return "/" + "/".join(path_parts) if path_parts else "/root"

@@ -9,8 +9,6 @@ Design: docs/INSTRUCTIONS-nesting.md Part 4
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from typing import Any
-
 from .dto import ActivityDto, EdgeDto, WorkflowDto
 from .graph import Graph
 

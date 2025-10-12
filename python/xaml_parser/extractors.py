@@ -126,7 +126,7 @@ class VariableExtractor:
         if parent is not None:
             parent_tag = parent.tag.split("}")[-1] if "}" in parent.tag else parent.tag
             if parent_tag in CORE_VISUAL_ACTIVITIES:
-                return parent_tag
+                return str(parent_tag)
         return "workflow"
 
 
