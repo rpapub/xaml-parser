@@ -115,7 +115,11 @@ class Normalizer:
         variables = [self._transform_variable(var) for var in content.variables]
 
         # Transform dependencies
-        dependencies = self._transform_dependencies(content.assembly_references)
+        # NOTE: Assembly references are NOT package dependencies - they are .NET framework
+        # assemblies required by the VB expression engine. Real package dependencies should
+        # come from project.json (not yet implemented). For now, return empty list.
+        # See: docs/INSTRUCTIONS-assembly-refs.md
+        dependencies: list[DependencyDto] = []
 
         # Sort all collections deterministically (only if explicitly requested)
         if sort_output:

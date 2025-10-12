@@ -9,7 +9,9 @@ Design: docs/INSTRUCTIONS-nesting.md Part 4
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .dto import ActivityDto, WorkflowDto
+from typing import Any
+
+from .dto import ActivityDto, EdgeDto, WorkflowDto
 from .graph import Graph
 
 __all__ = ["ProjectIndex", "ProjectAnalyzer"]
@@ -39,8 +41,8 @@ class ProjectIndex:
     # Core graphs
     workflows: Graph[WorkflowDto]
     activities: Graph[ActivityDto]
-    call_graph: Graph  # Workflow invocations (data = WorkflowDto)
-    control_flow: Graph  # Activity edges (data = EdgeDto)
+    call_graph: Graph[WorkflowDto]  # Workflow invocations (data = WorkflowDto)
+    control_flow: Graph[EdgeDto]  # Activity edges (data = EdgeDto)
 
     # Lookups
     workflow_by_path: dict[str, str] = field(default_factory=dict)
@@ -137,8 +139,8 @@ class ProjectAnalyzer:
         # Initialize graphs
         workflows_graph = Graph[WorkflowDto]()
         activities_graph = Graph[ActivityDto]()
-        call_graph = Graph()
-        control_flow_graph = Graph()
+        call_graph: Graph[WorkflowDto] = Graph[WorkflowDto]()
+        control_flow_graph: Graph[EdgeDto] = Graph[EdgeDto]()
 
         # Lookups
         workflow_by_path: dict[str, str] = {}
