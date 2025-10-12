@@ -10,12 +10,36 @@ Design: ADR-DTO-DESIGN.md (Deterministic Serialization)
 """
 
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import Any, Protocol, TypeVar
+
+
+class HasId(Protocol):
+    """Protocol for objects with an 'id' attribute."""
+
+    id: str
+
+
+class HasName(Protocol):
+    """Protocol for objects with a 'name' attribute."""
+
+    name: str
+
+
+class HasEdgeFields(Protocol):
+    """Protocol for edge-like objects with from_id, to_id, and kind."""
+
+    from_id: str
+    to_id: str
+    kind: str
+
 
 T = TypeVar("T")
+TId = TypeVar("TId", bound=HasId)
+TName = TypeVar("TName", bound=HasName)
+TEdge = TypeVar("TEdge", bound=HasEdgeFields)
 
 
-def sort_by_id(items: list[T]) -> list[T]:
+def sort_by_id(items: list[TId]) -> list[TId]:
     """Sort items by their 'id' attribute using binary collation.
 
     Args:
@@ -33,7 +57,7 @@ def sort_by_id(items: list[T]) -> list[T]:
     return sorted(items, key=lambda item: item.id)
 
 
-def sort_by_name(items: list[T]) -> list[T]:
+def sort_by_name(items: list[TName]) -> list[TName]:
     """Sort items by their 'name' attribute using binary collation.
 
     Args:
@@ -89,7 +113,7 @@ def sort_by_key(items: list[T], key_func: Callable[[T], str]) -> list[T]:
     return sorted(items, key=key_func)
 
 
-def sort_edges(edges: list[T]) -> list[T]:
+def sort_edges(edges: list[TEdge]) -> list[TEdge]:
     """Sort edges by (from_id, to_id, kind) tuple for deterministic output.
 
     Args:

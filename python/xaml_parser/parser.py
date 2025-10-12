@@ -56,7 +56,7 @@ class XamlParser:
         """
         self.config = {**DEFAULT_CONFIG, **(config or {})}
         self._id_generator = IdGenerator()
-        self._diagnostics = None  # Will be initialized per parse operation
+        self._diagnostics: ParseDiagnostics = ParseDiagnostics()  # Re-initialized per parse operation
         self._workflow_xml_content = ""  # Store original XML for workflow ID generation
 
     def parse_file(self, file_path: Path) -> ParseResult:
@@ -218,7 +218,7 @@ class XamlParser:
         # Calculate XML depth
         max_depth = 0
 
-        def get_depth(elem, depth=0):
+        def get_depth(elem: ET.Element, depth: int = 0) -> None:
             nonlocal max_depth
             max_depth = max(max_depth, depth)
             for child in elem:
@@ -297,7 +297,7 @@ class XamlParser:
         self, root: ET.Element, namespaces: dict[str, str]
     ) -> list[WorkflowArgument]:
         """Extract workflow arguments from x:Members section."""
-        arguments = []
+        arguments: list[WorkflowArgument] = []
 
         # Find x:Members element
         x_ns = namespaces.get("x", "")
@@ -377,7 +377,7 @@ class XamlParser:
         activities = []
         sap2010_ns = namespaces.get("sap2010", "")
 
-        def process_element(elem: ET.Element, parent_id: str | None = None, depth: int = 0):
+        def process_element(elem: ET.Element, parent_id: str | None = None, depth: int = 0) -> None:
             """Recursively process elements to find activities."""
             tag_name = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
 
@@ -530,13 +530,13 @@ class XamlParser:
             elif "CSharp" in elem.tag:
                 return "CSharp"
 
-        return self.config["expression_language"]
+        return str(self.config.get("expression_language", "VisualBasic"))
 
     def _determine_variable_scope(self, var_element: ET.Element) -> str:
         """Determine the scope context for a variable."""
-        parent = var_element.getparent() if hasattr(var_element, "getparent") else None
+        parent = var_element.getparent() if hasattr(var_element, "getparent") else None  # type: ignore[attr-defined]
         if parent is not None:
-            parent_tag = parent.tag.split("}")[-1] if "}" in parent.tag else parent.tag
+            parent_tag: str = parent.tag.split("}")[-1] if "}" in parent.tag else parent.tag
             if parent_tag in CORE_VISUAL_ACTIVITIES:
                 return parent_tag
         return "workflow"
@@ -676,13 +676,14 @@ class XamlParser:
     def _get_xpath_location(self, elem: ET.Element, root: ET.Element) -> str:
         """Generate XPath location for debugging."""
         # Simple XPath generation - could be enhanced
-        path_parts = []
-        current = elem
+        path_parts: list[str] = []
+        current: ET.Element | None = elem
 
         # Walk up the tree to build path
         while current is not None and current != root:
             tag = current.tag.split("}")[-1] if "}" in current.tag else current.tag
             path_parts.insert(0, tag)
-            current = current.getparent() if hasattr(current, "getparent") else None
+            # Note: getparent() is lxml-specific, standard lib ET doesn't have parent tracking
+            current = current.getparent() if hasattr(current, "getparent") else None  # type: ignore[attr-defined,assignment]
 
         return "/" + "/".join(path_parts) if path_parts else "/root"
