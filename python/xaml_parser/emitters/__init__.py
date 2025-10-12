@@ -23,6 +23,8 @@ class EmitterConfig:
         combine: Single file vs. one-per-workflow
         pretty: Pretty print output
         exclude_none: Exclude None values from output
+        view: View type for rendering (flat, execution, slice)
+        view_config: View-specific configuration (e.g., entry_point, focus, radius)
         extra: Emitter-specific configuration
     """
 
@@ -30,6 +32,8 @@ class EmitterConfig:
     combine: bool = False
     pretty: bool = True
     exclude_none: bool = True
+    view: str = "flat"  # flat, execution, slice
+    view_config: dict[str, Any] = field(default_factory=dict)
     extra: dict[str, Any] = field(default_factory=dict)
 
 
