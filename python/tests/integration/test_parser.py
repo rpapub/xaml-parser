@@ -72,8 +72,8 @@ class TestXamlParser(unittest.TestCase):
         self.assertTrue(result.success)
         self.assertGreater(len(result.content.activities), 0)
 
-        # Check for Sequence activity
-        sequences = [a for a in result.content.activities if a.activity_type == "Sequence"]
+        # Check for Sequence activity (may have namespace prefix)
+        sequences = [a for a in result.content.activities if "Sequence" in a.activity_type]
         self.assertGreater(len(sequences), 0)
 
         seq = sequences[0]
