@@ -169,6 +169,14 @@ class NestedView:
                 if "InvokeWorkflowFile" not in activity.type:
                     continue
 
+                # Add depth context to InvokeWorkflowFile activities
+                act_dict = nested_map[activity.id]
+                act_dict["depth_context"] = {
+                    "current_depth": depth,
+                    "max_depth": self.max_depth,
+                    "depth_delta": 1,
+                }
+
                 # Find callee workflow ID
                 callee_wf_id = self._find_callee_for_activity(activity.id, workflow_dto)
 
@@ -189,7 +197,6 @@ class NestedView:
                 )
 
                 # Embed workflow in activity as "invoked_workflow"
-                act_dict = nested_map[activity.id]
                 act_dict["invoked_workflow"] = nested_callee_wf
 
         # Remove parent_id field (redundant in nested structure)
@@ -321,6 +328,14 @@ class ExecutionView:
                 if "InvokeWorkflowFile" not in activity.type:
                     continue
 
+                # Add depth context to InvokeWorkflowFile activities
+                act_dict = nested_map[activity.id]
+                act_dict["depth_context"] = {
+                    "current_depth": depth,
+                    "max_depth": self.max_depth,
+                    "depth_delta": 1,
+                }
+
                 # Find callee workflow ID
                 callee_wf_id = self._find_callee_for_activity(activity.id, workflow_dto)
 
@@ -339,7 +354,6 @@ class ExecutionView:
                 )
 
                 # Set as children of InvokeWorkflowFile
-                act_dict = nested_map[activity.id]
                 act_dict["children"] = callee_nested
                 act_dict["expanded_from"] = callee_wf_id
 
