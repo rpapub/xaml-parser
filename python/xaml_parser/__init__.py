@@ -39,7 +39,7 @@ from .models import (
     WorkflowVariable,
 )
 from .parser import XamlParser
-from .project import ProjectConfig, ProjectParser, ProjectResult, WorkflowResult
+from .project import ProjectConfig, ProjectParser, ProjectResult, WorkflowResult, analyze_project
 from .utils import DataUtils, DebugUtils, TextUtils, ValidationUtils, XmlUtils
 from .validation import OutputValidator, ValidationError, get_validator, validate_output
 from .views import ExecutionView, FlatView, SliceView, View
@@ -98,6 +98,7 @@ __all__ = [
     "ProjectConfig",
     "ProjectResult",
     "WorkflowResult",
+    "analyze_project",
 ]
 
 

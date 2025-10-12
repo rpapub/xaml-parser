@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .control_flow import ControlFlowExtractor
 from .dto import WorkflowCollectionDto
@@ -19,6 +19,9 @@ from .id_generation import IdGenerator
 from .models import ParseResult, WorkflowContent
 from .normalization import Normalizer
 from .parser import XamlParser
+
+if TYPE_CHECKING:
+    from .analyzer import ProjectIndex
 
 
 @dataclass
@@ -437,6 +440,40 @@ class ProjectParser:
             graph[workflow.relative_path] = workflow.invoked_workflows
 
         return graph
+
+
+def analyze_project(project_result: ProjectResult) -> "ProjectIndex":
+    """Analyze project and build graph structures.
+
+    This function normalizes all workflows to DTOs and then builds
+    queryable graph structures using ProjectAnalyzer.
+
+    Args:
+        project_result: Result from ProjectParser.parse_project()
+
+    Returns:
+        ProjectIndex with queryable graphs for multi-view output
+
+    Example:
+        >>> parser = ProjectParser()
+        >>> result = parser.parse_project(Path("myproject"))
+        >>> index = analyze_project(result)
+        >>> # Now use views to transform
+        >>> from xaml_parser.views import FlatView
+        >>> view = FlatView()
+        >>> output = view.render(index)
+    """
+    from .analyzer import ProjectAnalyzer
+
+    # Convert ProjectResult → WorkflowDtos
+    collection_dto = project_result_to_dto(project_result, sort_output=False)
+
+    # Build graph structures from DTOs
+    analyzer = ProjectAnalyzer()
+    return analyzer.analyze(
+        workflows=collection_dto.workflows,
+        project_dir=project_result.project_dir,
+    )
 
 
 def project_result_to_dto(
