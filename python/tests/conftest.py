@@ -1,87 +1,40 @@
-"""Pytest configuration and fixtures for XAML parser tests."""
+"""Pytest configuration for XAML parser tests.
+
+This root conftest defines:
+- Test markers
+- Collection hooks
+- Shared fixtures (if any)
+
+Subdirectory-specific fixtures are in:
+- unit/conftest.py - Inline XAML fixtures
+- integration/conftest.py - testdata/ file fixtures
+- corpus/conftest.py - test-corpus/ submodule fixtures
+"""
 
 import pytest
-from pathlib import Path
-
-from xaml_parser import XamlParser
-
-
-@pytest.fixture
-def parser():
-    """Basic parser fixture."""
-    return XamlParser()
-
-
-@pytest.fixture
-def strict_parser():
-    """Parser with strict mode enabled."""
-    return XamlParser({'strict_mode': True})
-
-
-@pytest.fixture
-def test_xaml():
-    """Sample XAML content for testing."""
-    return """<?xml version="1.0" encoding="utf-8"?>
-<Activity x:Class="Main" xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation">
-  <x:Members>
-    <x:Property Name="in_TestArg" Type="InArgument(x:String)" sap2010:Annotation.AnnotationText="Test argument" />
-  </x:Members>
-  <Sequence DisplayName="Test Sequence" sap2010:Annotation.AnnotationText="Test workflow">
-    <LogMessage DisplayName="Log Test" Text="Hello World" />
-  </Sequence>
-</Activity>"""
-
-
-@pytest.fixture
-def testdata_dir():
-    """Path to shared testdata directory."""
-    # testdata is at monorepo root, not in python/
-    return Path(__file__).parent.parent.parent / "testdata"
-
-
-@pytest.fixture
-def golden_dir(testdata_dir):
-    """Path to golden freeze test data."""
-    return testdata_dir / "golden"
-
-
-@pytest.fixture
-def corpus_dir(testdata_dir):
-    """Path to test corpus directory."""
-    return testdata_dir / "corpus"
-
-
-@pytest.fixture
-def simple_project(corpus_dir):
-    """Path to simple test project."""
-    return corpus_dir / "simple_project"
-
-
-@pytest.fixture
-def main_workflow(simple_project):
-    """Path to Main.xaml in simple project."""
-    return simple_project / "Main.xaml"
-
-
-@pytest.fixture
-def corpus_available(corpus_dir):
-    """Check if corpus data is available."""
-    return corpus_dir.exists() and (corpus_dir / "simple_project" / "Main.xaml").exists()
 
 
 def pytest_configure(config):
-    """Configure pytest with custom settings."""
+    """Configure pytest with custom markers."""
+    config.addinivalue_line("markers", "unit: mark test as a unit test (fast, no I/O)")
+    config.addinivalue_line(
+        "markers", "integration: mark test as an integration test (uses testdata)"
+    )
+    config.addinivalue_line(
+        "markers", "corpus: mark test as a corpus test (uses test-corpus submodule)"
+    )
+    config.addinivalue_line("markers", "smoke: mark test as a smoke test (basic robustness)")
     config.addinivalue_line("markers", "requires_corpus: mark test as requiring corpus data")
 
 
 def pytest_collection_modifyitems(config, items):
-    """Modify test collection to add markers."""
+    """Automatically mark tests based on their location."""
     for item in items:
-        # Mark integration tests
-        if "integration" in item.nodeid.lower():
+        # Auto-mark based on directory structure
+        if "/unit/" in str(item.fspath) or "\\unit\\" in str(item.fspath):
+            item.add_marker(pytest.mark.unit)
+        elif "/integration/" in str(item.fspath) or "\\integration\\" in str(item.fspath):
             item.add_marker(pytest.mark.integration)
-        
-        # Mark corpus tests
-        if "corpus" in item.nodeid.lower():
+        elif "/corpus/" in str(item.fspath) or "\\corpus\\" in str(item.fspath):
             item.add_marker(pytest.mark.corpus)
             item.add_marker(pytest.mark.requires_corpus)

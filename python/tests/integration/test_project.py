@@ -1,9 +1,8 @@
 """Tests for project-level parsing functionality."""
 
-import pytest
 from pathlib import Path
 
-from xaml_parser.project import ProjectParser, ProjectConfig, ProjectResult, WorkflowResult
+from xaml_parser.project import ProjectConfig, ProjectParser, WorkflowResult
 
 
 class TestProjectParser:
@@ -127,11 +126,16 @@ class TestProjectParser:
         project_json = project_dir / "project.json"
         if not project_json.exists():
             import json
-            project_json.write_text(json.dumps({
-                "name": "EdgeCasesProject",
-                "main": "malformed.xaml",
-                "expressionLanguage": "VisualBasic"
-            }))
+
+            project_json.write_text(
+                json.dumps(
+                    {
+                        "name": "EdgeCasesProject",
+                        "main": "malformed.xaml",
+                        "expressionLanguage": "VisualBasic",
+                    }
+                )
+            )
 
         parser = ProjectParser()
         result = parser.parse_project(project_dir, entry_points_only=True)
@@ -151,10 +155,7 @@ class TestProjectParser:
         assert result.total_parse_time_ms > 0
 
         # Total should be sum of individual workflow parse times
-        individual_total = sum(
-            w.parse_result.parse_time_ms
-            for w in result.workflows
-        )
+        individual_total = sum(w.parse_result.parse_time_ms for w in result.workflows)
         assert abs(result.total_parse_time_ms - individual_total) < 0.01
 
     def test_relative_path_resolution(self, corpus_dir):
@@ -166,7 +167,7 @@ class TestProjectParser:
 
         # All workflows should have POSIX-style relative paths
         for workflow in result.workflows:
-            assert '\\' not in workflow.relative_path or '/' in workflow.relative_path
+            assert "\\" not in workflow.relative_path or "/" in workflow.relative_path
             # Should not be absolute
             assert not Path(workflow.relative_path).is_absolute()
 
@@ -175,7 +176,7 @@ class TestProjectParser:
         project_dir = corpus_dir / "simple_project"
 
         # Use config with no expression extraction
-        parser = ProjectParser({'extract_expressions': False})
+        parser = ProjectParser({"extract_expressions": False})
         result = parser.parse_project(project_dir)
 
         assert result.success
@@ -210,7 +211,7 @@ class TestProjectConfig:
             name="TestProject",
             main="Main.xaml",
             expression_language="CSharp",
-            entry_points=[{"filePath": "Main.xaml"}]
+            entry_points=[{"filePath": "Main.xaml"}],
         )
 
         assert config.name == "TestProject"
@@ -226,17 +227,14 @@ class TestWorkflowResult:
         """Test creating WorkflowResult."""
         from xaml_parser.models import ParseResult, WorkflowContent
 
-        parse_result = ParseResult(
-            content=WorkflowContent(),
-            success=True
-        )
+        parse_result = ParseResult(content=WorkflowContent(), success=True)
 
         workflow = WorkflowResult(
             file_path=Path("Main.xaml"),
             relative_path="Main.xaml",
             parse_result=parse_result,
             invoked_workflows=["GetConfig.xaml"],
-            is_entry_point=True
+            is_entry_point=True,
         )
 
         assert workflow.relative_path == "Main.xaml"
