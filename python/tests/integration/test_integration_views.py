@@ -6,12 +6,12 @@ Tests the complete flow: Parse → Analyze → View → Render
 import pytest
 
 from xaml_parser import ProjectParser, analyze_project
-from xaml_parser.views import ExecutionView, FlatView, SliceView
+from xaml_parser.views import ExecutionView, NestedView, SliceView
 
 
 @pytest.mark.integration
-def test_flat_view_produces_backward_compatible_output(simple_project):
-    """FlatView should produce output identical to pre-view implementation."""
+def test_nested_view_produces_backward_compatible_output(simple_project):
+    """NestedView should produce hierarchical workflow output."""
     # Parse project
     parser = ProjectParser()
     result = parser.parse_project(simple_project)
@@ -21,13 +21,13 @@ def test_flat_view_produces_backward_compatible_output(simple_project):
     # Analyze
     index = analyze_project(result)
 
-    # Render flat view
-    view = FlatView()
+    # Render nested view
+    view = NestedView()
     output = view.render(index)
 
     # Verify structure
     assert "schema_id" in output
-    assert output["schema_id"] == "https://rpax.io/schemas/xaml-workflow-collection.json"
+    assert output["schema_id"] == "https://rpax.io/schemas/xaml-nested-workflow-graph.json"
     assert "schema_version" in output
     assert "workflows" in output
     assert isinstance(output["workflows"], list)
@@ -195,7 +195,7 @@ def test_view_query_methods(simple_project):
 
 
 @pytest.mark.integration
-def test_end_to_end_flat_view_json_output(simple_project, tmp_path):
+def test_end_to_end_nested_view_json_output(simple_project, tmp_path):
     """Test complete flow with JSON output."""
     # Parse
     parser = ProjectParser()
@@ -206,7 +206,7 @@ def test_end_to_end_flat_view_json_output(simple_project, tmp_path):
     index = analyze_project(result)
 
     # Render
-    view = FlatView()
+    view = NestedView()
     output = view.render(index)
 
     # Write to file

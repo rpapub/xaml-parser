@@ -90,7 +90,7 @@ class JsonEmitter(Emitter):
             schema_id="https://rpax.io/schemas/xaml-workflow-collection.json",
             schema_version="1.0.0",
             collected_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            project=None,  # TODO: Pass project info from context
+            project_info=None,  # TODO: Pass project info from context
             workflows=workflows,
             issues=[],
         )
@@ -176,7 +176,7 @@ class JsonEmitter(Emitter):
         # Apply field profile
         if config.field_profile != "full":
             # Detect DTO type
-            if "workflows" in data and "project" in data:
+            if "workflows" in data and "project_info" in data:
                 dto_type = "WorkflowCollectionDto"
             else:
                 dto_type = "WorkflowDto"

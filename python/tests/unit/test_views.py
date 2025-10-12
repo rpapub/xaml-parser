@@ -2,26 +2,26 @@
 
 from xaml_parser.analyzer import ProjectAnalyzer
 from xaml_parser.dto import ActivityDto, InvocationDto, SourceInfo, WorkflowDto
-from xaml_parser.views import ExecutionView, FlatView, SliceView
+from xaml_parser.views import ExecutionView, NestedView, SliceView
 
 
-def test_flat_view_empty():
-    """Test flat view with empty project."""
+def test_nested_view_empty():
+    """Test nested view with empty project."""
     analyzer = ProjectAnalyzer()
     index = analyzer.analyze([])
 
-    view = FlatView()
+    view = NestedView()
     result = view.render(index)
 
-    assert result["schema_id"] == "https://rpax.io/schemas/xaml-workflow-collection.json"
-    assert result["schema_version"] == "1.0.0"
+    assert result["schema_id"] == "https://rpax.io/schemas/xaml-nested-workflow-graph.json"
+    assert result["schema_version"] == "2.0.0"
     assert "collected_at" in result
     assert result["workflows"] == []
     assert result["issues"] == []
 
 
-def test_flat_view_single_workflow():
-    """Test flat view with single workflow."""
+def test_nested_view_single_workflow():
+    """Test nested view with single workflow."""
     workflow = WorkflowDto(
         id="wf:test",
         name="TestWorkflow",
@@ -46,7 +46,7 @@ def test_flat_view_single_workflow():
     analyzer = ProjectAnalyzer()
     index = analyzer.analyze([workflow])
 
-    view = FlatView()
+    view = NestedView()
     result = view.render(index)
 
     assert len(result["workflows"]) == 1

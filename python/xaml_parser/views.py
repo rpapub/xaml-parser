@@ -4,8 +4,8 @@ This module implements the "view pattern" inspired by Roslyn (C# compiler).
 Each view transforms the ProjectIndex (IR) into a different representation.
 
 Views:
-- FlatView: Current flat output (backward compatible)
-- ExecutionView: Call graph traversal from entry point
+- NestedView: Hierarchical call graph (DEFAULT) - embeds workflows at invocation points
+- ExecutionView: Call graph traversal from single entry point
 - SliceView: Context window around focal activity
 
 Design: docs/INSTRUCTIONS-nesting.md Part 4.2
@@ -18,7 +18,7 @@ from typing import Any, Protocol
 from .analyzer import ProjectIndex
 from .dto import ActivityDto
 
-__all__ = ["View", "FlatView", "ExecutionView", "SliceView"]
+__all__ = ["View", "NestedView", "ExecutionView", "SliceView"]
 
 
 class View(Protocol):
@@ -32,33 +32,176 @@ class View(Protocol):
         ...
 
 
-class FlatView:
-    """Current flat output - 100% backward compatible.
+class NestedView:
+    """Hierarchical workflow view with nested call graph (DEFAULT).
 
-    Produces same structure as current JSON emitter.
-    This is the DEFAULT view to maintain backward compatibility.
+    Embeds invoked workflows directly at InvokeWorkflowFile activities,
+    creating a true hierarchical representation of the call graph.
+
+    Starting points:
+    1. Entry points from project.json (if available)
+    2. All workflows with no callers (roots of call graph)
     """
 
-    def render(self, index: ProjectIndex) -> dict[str, Any]:
-        """Render flat view (current output format)."""
-        workflows = []
+    def __init__(self, max_depth: int = 10) -> None:
+        """Initialize nested view.
 
-        for wf_id in index.workflows.nodes():
+        Args:
+            max_depth: Maximum call depth (cycle protection)
+        """
+        self.max_depth = max_depth
+
+    def render(self, index: ProjectIndex) -> dict[str, Any]:
+        """Render nested hierarchical view."""
+        # Determine starting workflows
+        starting_workflows = self._find_starting_workflows(index)
+
+        # Build nested workflow structures
+        workflows = []
+        visited: set[str] = set()
+
+        for wf_id in starting_workflows:
             wf_dto = index.get_workflow(wf_id)
-            if not wf_dto:
+            if not wf_dto or wf_id in visited:
                 continue
 
-            # Convert WorkflowDto to dict
-            wf_dict = dataclasses.asdict(wf_dto)
-            workflows.append(wf_dict)
+            visited.add(wf_id)
+            nested_wf = self._build_nested_workflow(wf_dto, index, visited, depth=0)
+            workflows.append(nested_wf)
+
+        # Convert project_info to dict if present
+        project_info_dict = None
+        if index.project_info:
+            project_info_dict = dataclasses.asdict(index.project_info)
+
+        # Convert issues to dicts
+        issues_dicts = []
+        if index.collection_issues:
+            issues_dicts = [dataclasses.asdict(issue) for issue in index.collection_issues]
 
         return {
-            "schema_id": "https://rpax.io/schemas/xaml-workflow-collection.json",
-            "schema_version": "1.0.0",
+            "schema_id": "https://rpax.io/schemas/xaml-nested-workflow-graph.json",
+            "schema_version": "2.0.0",
             "collected_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "project_info": project_info_dict,
+            "max_depth": self.max_depth,
             "workflows": workflows,
-            "issues": [],
+            "issues": issues_dicts,
         }
+
+    def _find_starting_workflows(self, index: ProjectIndex) -> list[str]:
+        """Find starting workflows for nested view.
+
+        Priority:
+        1. Entry points from project.json
+        2. Workflows with no callers (call graph roots)
+        """
+        # Use entry points if available
+        if index.entry_points:
+            return index.entry_points
+
+        # Find workflows with no incoming edges in call graph
+        roots = []
+        for wf_id in index.workflows.nodes():
+            if not list(index.call_graph.predecessors(wf_id)):
+                roots.append(wf_id)
+
+        return roots
+
+    def _build_nested_workflow(
+        self,
+        workflow_dto: Any,
+        index: ProjectIndex,
+        visited: set[str],
+        depth: int,
+    ) -> dict[str, Any]:
+        """Build nested workflow dict with embedded invoked workflows."""
+        # Convert workflow to dict
+        wf_dict = dataclasses.asdict(workflow_dto)
+
+        # Build nested activity tree with workflow embedding
+        nested_activities = self._build_nested_activities(workflow_dto, index, visited, depth)
+
+        wf_dict["activities"] = nested_activities
+        wf_dict["call_depth"] = depth
+
+        return wf_dict
+
+    def _build_nested_activities(
+        self,
+        workflow_dto: Any,
+        index: ProjectIndex,
+        visited: set[str],
+        depth: int,
+    ) -> list[dict[str, Any]]:
+        """Build nested activity tree with workflow embedding.
+
+        For InvokeWorkflowFile activities, embeds the invoked workflow
+        as nested structure under the activity.
+        """
+        # Build activity tree
+        activity_map = {act.id: act for act in workflow_dto.activities}
+        nested_map: dict[str, dict[str, Any]] = {}
+
+        for activity in workflow_dto.activities:
+            act_dict = dataclasses.asdict(activity)
+            act_dict["children"] = []  # Will be filled with nested dicts
+            nested_map[activity.id] = act_dict
+
+        # Nest children (local hierarchy)
+        for activity in workflow_dto.activities:
+            act_dict = nested_map[activity.id]
+            for child_id in activity.children:
+                if child_id in nested_map:
+                    act_dict["children"].append(nested_map[child_id])
+
+        # Expand InvokeWorkflowFile activities
+        if depth < self.max_depth:
+            for activity in workflow_dto.activities:
+                if "InvokeWorkflowFile" not in activity.type:
+                    continue
+
+                # Find callee workflow ID
+                callee_wf_id = self._find_callee_for_activity(activity.id, workflow_dto)
+
+                if not callee_wf_id or callee_wf_id in visited:
+                    continue
+
+                # Get callee workflow
+                callee_dto = index.get_workflow(callee_wf_id)
+                if not callee_dto:
+                    continue
+
+                # Mark as visited BEFORE recursion to prevent cycles
+                new_visited = visited | {callee_wf_id}
+
+                # Recursively build nested callee workflow
+                nested_callee_wf = self._build_nested_workflow(
+                    callee_dto, index, new_visited, depth + 1
+                )
+
+                # Embed workflow in activity as "invoked_workflow"
+                act_dict = nested_map[activity.id]
+                act_dict["invoked_workflow"] = nested_callee_wf
+
+        # Remove parent_id field (redundant in nested structure)
+        for act_dict in nested_map.values():
+            act_dict.pop("parent_id", None)
+
+        # Return only root activities (no parent)
+        roots = []
+        for activity in workflow_dto.activities:
+            if not activity.parent_id or activity.parent_id not in activity_map:
+                roots.append(nested_map[activity.id])
+
+        return roots
+
+    def _find_callee_for_activity(self, activity_id: str, workflow_dto: Any) -> str | None:
+        """Find callee workflow ID for InvokeWorkflowFile activity."""
+        for invocation in workflow_dto.invocations:
+            if invocation.via_activity_id == activity_id:
+                return str(invocation.callee_id)
+        return None
 
 
 class ExecutionView:
@@ -106,12 +249,24 @@ class ExecutionView:
             wf_dict["call_depth"] = depth
             workflows.append(wf_dict)
 
+        # Convert project_info to dict if present
+        project_info_dict = None
+        if index.project_info:
+            project_info_dict = dataclasses.asdict(index.project_info)
+
+        # Convert issues to dicts
+        issues_dicts = []
+        if index.collection_issues:
+            issues_dicts = [dataclasses.asdict(issue) for issue in index.collection_issues]
+
         return {
             "schema_id": "https://rpax.io/schemas/xaml-workflow-execution.json",
             "schema_version": "2.0.0",
             "entry_point": entry_wf_id,
+            "project_info": project_info_dict,
             "max_depth": self.max_depth,
             "workflows": workflows,
+            "issues": issues_dicts,
         }
 
     def _resolve_entry_point(self, index: ProjectIndex, entry: str) -> str | None:

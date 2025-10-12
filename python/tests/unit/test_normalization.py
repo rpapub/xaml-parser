@@ -93,9 +93,8 @@ class TestNormalizer:
         assert workflow_dto.activities[0].id == "act:sha256:abc123"
         assert workflow_dto.activities[0].type_short == "Sequence"
 
-        assert len(workflow_dto.dependencies) == 1
-        assert workflow_dto.dependencies[0].package == "UiPath.System.Activities"
-        assert workflow_dto.dependencies[0].version == "23.10.0"
+        # Dependencies come from project_dependencies parameter, not assembly_references
+        assert len(workflow_dto.dependencies) == 0
 
     def test_normalize_with_edges(self):
         """Test that edges are extracted during normalization."""
@@ -158,8 +157,6 @@ class TestNormalizer:
             variables_referenced=["btnSubmit"],
             selectors={"Selector": "<html><button id='submit'/>"},
             annotation="Click the submit button",
-            source_line=42,
-            xpath_location="/Activity/Sequence/Click",
         )
 
         activity_dto = normalizer._transform_activity(activity)
@@ -177,11 +174,6 @@ class TestNormalizer:
         assert activity_dto.variables_referenced == ["btnSubmit"]
         assert activity_dto.selectors == {"Selector": "<html><button id='submit'/>"}
         assert activity_dto.annotation == "Click the submit button"
-
-        # Verify location
-        assert activity_dto.location is not None
-        assert activity_dto.location.line == 42
-        assert activity_dto.location.xpath == "/Activity/Sequence/Click"
 
     def test_transform_argument(self):
         """Test argument transformation with stable ID."""
