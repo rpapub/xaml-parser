@@ -102,11 +102,15 @@ class Normalizer:
         elif not workflow_name:
             workflow_name = "Untitled"
 
-        # Generate workflow ID from XML content
-        # Note: This assumes the parser stored the raw XML content somewhere
-        # For now, we'll generate a placeholder ID based on name
-        # TODO: Store raw XML content in ParseResult for proper workflow ID generation
-        workflow_id = f"wf:sha256:{hash(workflow_name) & 0xFFFFFFFFFFFFFFFF:016x}"
+        # Generate workflow ID from XML content hash
+        if parse_result.content_hash:
+            # Use the stored content hash for stable IDs
+            # content_hash format is "sha256:abc..." so extract just the hash part
+            hash_part = parse_result.content_hash.replace("sha256:", "")[:16]
+            workflow_id = f"wf:sha256:{hash_part}"
+        else:
+            # Fallback: generate from workflow name (less stable)
+            workflow_id = f"wf:sha256:{hash(workflow_name) & 0xFFFFFFFFFFFFFFFF:016x}"
 
         # Transform activities
         activities = [self._transform_activity(act) for act in content.activities]
@@ -146,7 +150,7 @@ class Normalizer:
         source = SourceInfo(
             path=parse_result.file_path or "",
             path_aliases=[],
-            hash="",  # TODO: Store full hash in ParseResult
+            hash=parse_result.content_hash or "",  # Full SHA-256 hash from parser
             size_bytes=parse_result.diagnostics.file_size_bytes if parse_result.diagnostics else 0,
             encoding="utf-8",
         )
@@ -202,6 +206,44 @@ class Normalizer:
             issues=issues,
         )
 
+    def _detect_property_direction(self, property_name: str, activity: Activity) -> str | None:
+        """Detect argument direction from XAML metadata.
+
+        Args:
+            property_name: Property/argument name
+            activity: Activity containing the property
+
+        Returns:
+            'in', 'out', 'inout', or None if direction cannot be determined
+
+        Note:
+            In XAML, property directions are encoded in metadata attributes or
+            can be inferred from common patterns:
+            - Result properties are typically Out
+            - Value, Target, Condition properties are typically In
+        """
+        prop_lower = property_name.lower()
+
+        # Common output properties by convention
+        if prop_lower in ["result", "output", "out"]:
+            return "out"
+
+        # Check metadata for explicit direction markers
+        # Some UiPath activities annotate properties with [In], [Out], [InOut] attributes
+        if property_name in activity.metadata:
+            metadata_val = activity.metadata[property_name]
+            if isinstance(metadata_val, str):
+                metadata_lower = metadata_val.lower()
+                if "outargument" in metadata_lower or "[out]" in metadata_lower:
+                    return "out"
+                elif "inargument" in metadata_lower or "[in]" in metadata_lower:
+                    return "in"
+                elif "inoutargument" in metadata_lower or "[inout]" in metadata_lower:
+                    return "inout"
+
+        # Default: cannot determine from metadata
+        return None
+
     def _transform_activity(self, activity: Activity) -> ActivityDto:
         """Transform Activity to ActivityDto.
 
@@ -226,14 +268,21 @@ class Normalizer:
         in_args: dict[str, str] = {}
         out_args: dict[str, str] = {}
 
-        # Parse arguments dict to separate In/Out
+        # Parse arguments dict to separate In/Out based on metadata
         for key, value in activity.arguments.items():
-            # Simplified: treat all as input arguments for now
-            # TODO: Properly detect direction from XAML metadata
-            if isinstance(value, str):
-                in_args[key] = value
-            else:
-                in_args[key] = str(value)
+            str_value = str(value) if not isinstance(value, str) else value
+
+            # Detect direction from metadata (if available)
+            # Check metadata for property direction attributes
+            direction = self._detect_property_direction(key, activity)
+
+            if direction == "out" or direction == "inout":
+                out_args[key] = str_value
+            if direction == "in" or direction == "inout":
+                in_args[key] = str_value
+            if direction is None:
+                # Default: treat as input argument for backward compatibility
+                in_args[key] = str_value
 
         return ActivityDto(
             id=activity.activity_id,

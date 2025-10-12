@@ -49,7 +49,6 @@ class TestOutputValidation(unittest.TestCase):
             arguments=[self.valid_argument],
             variables=[self.valid_variable],
             activities=[self.valid_activity],
-            expression_language="VisualBasic",
             total_activities=1,
             total_arguments=1,
             total_variables=1,
@@ -137,28 +136,12 @@ class TestOutputValidation(unittest.TestCase):
         errors = self.validator.validate_workflow_content(self.valid_content)
         self.assertEqual(len(errors), 0, f"Valid content should have no errors: {errors}")
 
-    def test_invalid_expression_language(self):
-        """Test validation with invalid expression language."""
-        content = WorkflowContent(
-            arguments=[],
-            variables=[],
-            activities=[],
-            expression_language="InvalidLanguage",  # Invalid language
-            total_activities=0,
-            total_arguments=0,
-            total_variables=0,
-        )
-
-        errors = self.validator.validate_workflow_content(content)
-        self.assertIn("expression_language must be 'VisualBasic' or 'CSharp'", errors)
-
     def test_mismatched_counts(self):
         """Test validation with mismatched count fields."""
         content = WorkflowContent(
             arguments=[self.valid_argument],
             variables=[],
             activities=[],
-            expression_language="VisualBasic",
             total_activities=5,  # Mismatched count
             total_arguments=10,  # Mismatched count
             total_variables=0,
@@ -293,7 +276,6 @@ class TestOutputValidation(unittest.TestCase):
         errors = self.validator.validate_config(invalid_config)
         self.assertIn("extract_arguments must be boolean", errors)
         self.assertIn("max_depth must be positive integer", errors)
-        self.assertIn("expression_language must be 'VisualBasic' or 'CSharp'", errors)
 
     def test_validate_output_function(self):
         """Test the validate_output convenience function."""

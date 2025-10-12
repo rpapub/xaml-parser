@@ -170,6 +170,10 @@ class ParseResult:
     warnings: list[str] = field(default_factory=list)
     parse_time_ms: float = 0.0
     file_path: str | None = None
+    # Raw XML content for content-based ID generation
+    raw_xml: str | None = None
+    # Full SHA-256 hash of normalized XML (hex)
+    content_hash: str | None = None
     # Enhanced diagnostics for troubleshooting
     diagnostics: ParseDiagnostics | None = None
     config_used: dict[str, Any] = field(default_factory=dict)

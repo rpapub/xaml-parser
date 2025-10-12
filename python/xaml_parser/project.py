@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from .control_flow import ControlFlowExtractor
-from .dto import WorkflowCollectionDto
+from .dto import EntryPointInfo, ProjectInfo, WorkflowCollectionDto
 from .id_generation import IdGenerator
 from .models import ParseResult, WorkflowContent
 from .normalization import Normalizer
@@ -473,6 +473,8 @@ def analyze_project(project_result: ProjectResult) -> "ProjectIndex":
     return analyzer.analyze(
         workflows=collection_dto.workflows,
         project_dir=project_result.project_dir,
+        project_info=collection_dto.project_info,
+        collection_issues=collection_dto.issues,
     )
 
 
@@ -557,11 +559,80 @@ def project_result_to_dto(
         if dto_index < len(workflow_dtos):
             workflow_dtos[dto_index].invocations = invocations
 
+    # Build ProjectInfo if project config is available
+    project_info = None
+    if project_result.project_config:
+        config = project_result.project_config
+
+        # Map main workflow path to stable ID
+        main_workflow_id = None
+        if config.main:
+            main_normalized = config.main.replace("\\", "/")
+            main_workflow_id = path_to_id_map.get(main_normalized)
+
+        # Map entry points to stable IDs
+        entry_points_info = []
+        for ep in config.entry_points:
+            ep_path = ep.get("filePath", "")
+            ep_normalized = ep_path.replace("\\", "/")
+            ep_wf_id = path_to_id_map.get(ep_normalized)
+
+            if ep_wf_id:
+                entry_points_info.append(
+                    EntryPointInfo(
+                        workflow_id=ep_wf_id,
+                        file_path=ep_path,
+                        unique_id=ep.get("uniqueId"),
+                    )
+                )
+
+        # Build ProjectInfo
+        project_info = ProjectInfo(
+            name=config.name,
+            path=str(project_result.project_dir),
+            project_id=config.raw_data.get("projectId"),
+            description=config.description,
+            project_version=config.project_version,
+            schema_version=config.schema_version,
+            studio_version=config.raw_data.get("studioVersion"),
+            expression_language=config.expression_language,
+            target_framework=config.raw_data.get("targetFramework"),
+            main_workflow_id=main_workflow_id,
+            entry_points=entry_points_info,
+            dependencies=config.dependencies,
+        )
+
+    # Build collection-level issues from project errors
+    collection_issues = []
+    for error in project_result.errors:
+        from .dto import IssueDto
+
+        collection_issues.append(
+            IssueDto(
+                level="error",
+                message=error,
+                path=None,
+                code="PROJECT_ERROR",
+            )
+        )
+    for warning in project_result.warnings[:10]:  # Limit to first 10
+        from .dto import IssueDto
+
+        collection_issues.append(
+            IssueDto(
+                level="warning",
+                message=warning,
+                path=None,
+                code="PROJECT_WARNING",
+            )
+        )
+
     # Create workflow collection DTO
     return WorkflowCollectionDto(
         schema_id="https://rpax.io/schemas/xaml-workflow-collection.json",
-        schema_version="1.0.0",
+        schema_version="0.4.0",
         collected_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        project_info=project_info,
         workflows=workflow_dtos,
-        issues=[],  # Project-level issues could be added here
+        issues=collection_issues,
     )

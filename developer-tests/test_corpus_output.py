@@ -32,7 +32,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "python"))
 from xaml_parser import ProjectParser, analyze_project
 from xaml_parser.views import ExecutionView, NestedView, SliceView
 from xaml_parser.interprocedural_analysis import InterproceduralAliasAnalyzer
-from xaml_parser.emitters.ancestry_emitter import AncestryJsonEmitter, AncestryMermaidEmitter
+from xaml_parser.emitters.ancestry_emitter import (
+    AncestryJsonEmitter,
+    AncestryMermaidEmitter,
+)
 
 
 def main():
@@ -94,7 +97,9 @@ def main():
 
             # Generate Ancestry Graph
             print("[3/7] Building ancestry graph...")
-            workflows = [wf.dto for wf in result.workflows if wf.dto]
+            # Get workflows from index (they're already WorkflowDto objects)
+            workflows = [index.get_workflow(wf_id) for wf_id in index.workflows.nodes()]
+            workflows = [wf for wf in workflows if wf is not None]
             if workflows:
                 analyzer = InterproceduralAliasAnalyzer(workflows)
                 ancestry_graph = analyzer.build_graph()
@@ -110,7 +115,12 @@ def main():
                 # Save Mermaid format
                 mermaid_emitter = AncestryMermaidEmitter()
                 ancestry_mmd_file = project_output / "ancestry_graph.mmd"
-                mermaid_emitter.emit(ancestry_graph, ancestry_mmd_file, group_by_workflow=True, max_nodes=100)
+                mermaid_emitter.emit(
+                    ancestry_graph,
+                    ancestry_mmd_file,
+                    group_by_workflow=True,
+                    max_nodes=100,
+                )
                 print(f"      [OK] Saved: {ancestry_mmd_file}")
             else:
                 print("      [WARN] No workflows available for ancestry analysis")

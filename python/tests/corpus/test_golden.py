@@ -57,8 +57,31 @@ def test_output_matches_golden_baseline(project_name, corpus_root, golden_dir, u
         f"Workflow names mismatch: " f"got {actual_names}, " f"expected {expected_names}"
     )
 
-    # TODO: Add deeper comparison (DeepDiff or similar)
-    # For now, this verifies basic structure stability
+    # Deep comparison using DeepDiff
+    from deepdiff import DeepDiff
+
+    # Exclude provenance fields (timestamps change each run)
+    exclude_paths = [
+        "root['collected_at']",
+        "root['provenance']",
+        "root['workflows'][*]['collected_at']",
+        "root['workflows'][*]['provenance']",
+    ]
+
+    diff = DeepDiff(
+        expected,
+        actual,
+        exclude_paths=exclude_paths,
+        ignore_order=False,  # Preserve order for deterministic output
+        verbose_level=2,
+    )
+
+    if diff:
+        import pprint
+
+        print("\n[FAIL] Golden baseline mismatch:")
+        pprint.pprint(dict(diff), width=120)
+        pytest.fail(f"Output differs from golden baseline:\n{diff}")
 
 
 @pytest.mark.corpus

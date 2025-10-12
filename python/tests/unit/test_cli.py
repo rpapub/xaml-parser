@@ -70,7 +70,6 @@ class TestFormatPretty:
                     display_name="Main Sequence",
                 )
             ],
-            expression_language="VisualBasic",
         )
 
         result = ParseResult(content=content, success=True, parse_time_ms=15.5)
@@ -85,7 +84,6 @@ class TestFormatPretty:
         assert "Arguments: 1" in output
         assert "Variables: 1" in output
         assert "Activities: 1" in output
-        assert "Expression Language: VisualBasic" in output
         assert "Parse Time: 15.50ms" in output
         assert "IN: in_FilePath (System.String)" in output
         assert "Input file" in output

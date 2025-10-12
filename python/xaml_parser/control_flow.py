@@ -395,9 +395,23 @@ class ControlFlowExtractor:
 
         # Flowcharts use explicit FlowStep/FlowDecision/FlowSwitch nodes
         # connected by Next properties
-
-        # For now, create sequential links between children
-        # TODO: Parse actual FlowStep.Next connections from configuration
+        #
+        # Implementation note: FlowStep elements have a Next property that points
+        # to the next FlowStep/FlowDecision/FlowSwitch by IdRef. These should be
+        # extracted from the activity configuration to create accurate Link edges.
+        # Current implementation creates sequential links as fallback.
+        #
+        # Example XAML structure:
+        #   <Flowchart>
+        #     <FlowStep x:Name="node1">
+        #       <Sequence>...</Sequence>
+        #       <FlowStep.Next>
+        #         <FlowStep x:Name="node2">...</FlowStep>
+        #       </FlowStep.Next>
+        #     </FlowStep>
+        #   </Flowchart>
+        #
+        # TODO: Parse FlowStep.Next from configuration when test corpus has Flowchart examples
         children = activity.child_activities
         for i in range(len(children) - 1):
             from_id = children[i]
@@ -491,9 +505,23 @@ class ControlFlowExtractor:
         """
         edges: list[EdgeDto] = []
 
-        # State machines have explicit Transition elements
-        # TODO: Parse Transition configuration from State activities
-        # For now, create transitions between consecutive states
+        # State machines have explicit Transition elements in UiPath
+        #
+        # Implementation note: State activities have Transitions collections that define
+        # state transitions with trigger events and target states. These should be extracted
+        # from the State activity configuration to create accurate Transition edges.
+        #
+        # Example XAML structure:
+        #   <StateMachine>
+        #     <State DisplayName="InitialState">
+        #       <State.Transitions>
+        #         <Transition To="ProcessingState" Trigger="{ActivityReference}" />
+        #       </State.Transitions>
+        #     </State>
+        #     <State DisplayName="ProcessingState">...</State>
+        #   </StateMachine>
+        #
+        # TODO: Parse State.Transitions from configuration when test corpus has StateMachine examples
         children = activity.child_activities
         for i in range(len(children) - 1):
             from_id = children[i]

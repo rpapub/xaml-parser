@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from defusedxml.ElementTree import fromstring as defused_fromstring  # type: ignore[assignment]
+    from defusedxml.ElementTree import fromstring as defused_fromstring
 except ImportError:
     # Fallback to standard library if defusedxml not available
     from xml.etree.ElementTree import fromstring as defused_fromstring
@@ -107,6 +107,10 @@ class XamlParser:
             result.content = workflow_content
             self._diagnostics.processing_steps.append("content_extracted")
 
+            # Store raw XML and content hash for stable ID generation
+            result.raw_xml = content
+            result.content_hash = self._id_generator.compute_full_hash(content)
+
         except ET.ParseError as e:
             result.success = False
             result.errors.append(f"XML parse error: {e}")
@@ -174,6 +178,10 @@ class XamlParser:
 
             result.content = workflow_content
             self._diagnostics.processing_steps.append("content_extracted")
+
+            # Store raw XML and content hash for stable ID generation
+            result.raw_xml = xml_content
+            result.content_hash = self._id_generator.compute_full_hash(xml_content)
 
         except ET.ParseError as e:
             result.success = False

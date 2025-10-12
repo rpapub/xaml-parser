@@ -61,7 +61,6 @@ class TestNormalizer:
                 ),
             ],
             assembly_references=["UiPath.System.Activities, Version=23.10.0"],
-            expression_language="VisualBasic",
         )
 
         parse_result = ParseResult(
@@ -415,7 +414,6 @@ class TestNormalizer:
             root_annotation="This is the main workflow",
             display_name="Main Workflow",
             description="Processes incoming files",
-            expression_language="CSharp",
         )
 
         parse_result = ParseResult(content=content, success=True)
@@ -427,7 +425,6 @@ class TestNormalizer:
         assert workflow_dto.metadata.annotation == "This is the main workflow"
         assert workflow_dto.metadata.display_name == "Main Workflow"
         assert workflow_dto.metadata.description == "Processes incoming files"
-        assert workflow_dto.metadata.expression_language == "CSharp"
 
     def test_normalize_source_info(self):
         """Test that source info is populated."""

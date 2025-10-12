@@ -52,7 +52,6 @@ class TestXamlParser(unittest.TestCase):
         self.assertIsInstance(content.arguments, list)
         self.assertIsInstance(content.variables, list)
         self.assertIsInstance(content.activities, list)
-        self.assertEqual(content.expression_language, "VisualBasic")
 
     def test_parse_content_with_arguments(self):
         """Test argument extraction from XAML."""

@@ -59,7 +59,6 @@ def format_pretty(result: ParseResult, file_path: str | None = None) -> str:
     lines.append(f"  Arguments: {len(content.arguments)}")
     lines.append(f"  Variables: {len(content.variables)}")
     lines.append(f"  Activities: {len(content.activities)}")
-    lines.append(f"  Expression Language: {content.expression_language}")
     lines.append(f"  Parse Time: {result.parse_time_ms:.2f}ms")
 
     # Arguments
@@ -573,7 +572,7 @@ Examples:
         elif args.graph:
             output = format_dependency_graph(project_result)
         elif args.json:
-            # TODO: Implement JSON output for projects
+            # JSON output for projects
             output = json.dumps(
                 {
                     "project_name": project_result.project_config.name
@@ -715,7 +714,6 @@ Examples:
                     ],
                     "display_name": parse_result.content.display_name,
                     "root_annotation": parse_result.content.root_annotation,
-                    "expression_language": parse_result.content.expression_language,
                     "total_arguments": parse_result.content.total_arguments,
                     "total_variables": parse_result.content.total_variables,
                     "total_activities": parse_result.content.total_activities,

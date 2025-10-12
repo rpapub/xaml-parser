@@ -1,0 +1,642 @@
+============================= test session starts =============================
+platform win32 -- Python 3.11.13, pytest-8.4.2, pluggy-1.6.0 -- D:\github.com\rpapub\xaml-parser\python\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: D:\github.com\rpapub\xaml-parser\python
+configfile: pytest.ini
+plugins: cov-6.3.0
+collecting ... collected 368 items / 7 deselected / 361 selected
+
+tests/integration/test_control_flow.py::TestSequenceEdges::test_extract_sequence_edges PASSED [  0%]
+tests/integration/test_control_flow.py::TestSequenceEdges::test_empty_sequence_no_edges PASSED [  0%]
+tests/integration/test_control_flow.py::TestSequenceEdges::test_single_child_sequence_no_edges PASSED [  0%]
+tests/integration/test_control_flow.py::TestIfEdges::test_extract_if_edges PASSED [  1%]
+tests/integration/test_control_flow.py::TestIfEdges::test_if_without_else PASSED [  1%]
+tests/integration/test_control_flow.py::TestSwitchEdges::test_extract_switch_edges PASSED [  1%]
+tests/integration/test_control_flow.py::TestFlowDecisionEdges::test_extract_flow_decision_edges PASSED [  1%]
+tests/integration/test_control_flow.py::TestTryCatchEdges::test_extract_try_catch_edges PASSED [  2%]
+tests/integration/test_control_flow.py::TestParallelEdges::test_extract_parallel_edges PASSED [  2%]
+tests/integration/test_control_flow.py::TestEdgeDeterminism::test_edge_id_determinism PASSED [  2%]
+tests/integration/test_control_flow.py::TestEdgeDeterminism::test_different_edges_different_ids PASSED [  3%]
+tests/integration/test_control_flow.py::TestNonControlFlowActivities::test_assign_no_edges PASSED [  3%]
+tests/integration/test_control_flow.py::TestNonControlFlowActivities::test_log_no_edges PASSED [  3%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_emitter_properties PASSED [  3%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_emit_single_workflow PASSED [  4%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_emit_multiple_workflows PASSED [  4%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_workflow_with_arguments PASSED [  4%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_workflow_with_variables PASSED [  4%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_workflow_with_edges PASSED [  5%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_workflow_with_issues PASSED [  5%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_index_generation PASSED [  5%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_sanitize_filename PASSED [  6%]
+tests/integration/test_doc_emitter.py::TestDocEmitter::test_custom_template_directory PASSED [  6%]
+tests/integration/test_emitters.py::TestEmitterInterface::test_emitter_is_abstract PASSED [  6%]
+tests/integration/test_emitters.py::TestEmitterInterface::test_custom_emitter_implementation PASSED [  6%]
+tests/integration/test_emitters.py::TestEmitterRegistry::test_register_emitter PASSED [  7%]
+tests/integration/test_emitters.py::TestEmitterRegistry::test_get_emitter PASSED [  7%]
+tests/integration/test_emitters.py::TestEmitterRegistry::test_get_unknown_emitter_raises_error PASSED [  7%]
+tests/integration/test_emitters.py::TestEmitterRegistry::test_register_duplicate_raises_error PASSED [  8%]
+tests/integration/test_emitters.py::TestEmitterRegistry::test_list_emitters PASSED [  8%]
+tests/integration/test_emitters.py::TestJsonEmitter::test_emitter_properties PASSED [  8%]
+tests/integration/test_emitters.py::TestJsonEmitter::test_emit_combined_mode PASSED [  8%]
+tests/integration/test_emitters.py::TestJsonEmitter::test_emit_per_workflow_mode PASSED [  9%]
+tests/integration/test_emitters.py::TestJsonEmitter::test_field_profile_minimal PASSED [  9%]
+tests/integration/test_emitters.py::TestJsonEmitter::test_exclude_none_values PASSED [  9%]
+tests/integration/test_emitters.py::TestJsonEmitter::test_pretty_printing PASSED [  9%]
+tests/integration/test_emitters.py::TestJsonEmitter::test_filename_sanitization PASSED [ 10%]
+tests/integration/test_emitters.py::TestJsonEmitter::test_error_handling PASSED [ 10%]
+tests/integration/test_integration_views.py::test_nested_view_produces_backward_compatible_output PASSED [ 10%]
+tests/integration/test_integration_views.py::test_execution_view_traverses_call_graph PASSED [ 11%]
+tests/integration/test_integration_views.py::test_execution_view_nests_activities PASSED [ 11%]
+tests/integration/test_integration_views.py::test_slice_view_extracts_activity_context PASSED [ 11%]
+tests/integration/test_integration_views.py::test_analyze_project_builds_all_graphs PASSED [ 11%]
+tests/integration/test_integration_views.py::test_view_query_methods PASSED [ 12%]
+tests/integration/test_integration_views.py::test_end_to_end_nested_view_json_output PASSED [ 12%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_emitter_properties PASSED [ 12%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_emit_single_workflow PASSED [ 13%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_emit_multiple_workflows PASSED [ 13%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_node_shapes PASSED [ 13%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_edge_generation PASSED [ 13%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_max_depth_filtering PASSED [ 14%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_sanitize_id PASSED [ 14%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_sanitize_filename PASSED [ 14%]
+tests/integration/test_mermaid_emitter.py::TestMermaidEmitter::test_error_handling PASSED [ 14%]
+tests/integration/test_mermaid_emitter.py::TestMermaidFormatting::test_label_truncation PASSED [ 15%]
+tests/integration/test_mermaid_emitter.py::TestMermaidFormatting::test_label_escaping PASSED [ 15%]
+tests/integration/test_mermaid_emitter.py::TestMermaidFormatting::test_annotation_in_comments PASSED [ 15%]
+tests/integration/test_parser.py::TestXamlParser::test_configuration_preservation PASSED [ 16%]
+tests/integration/test_parser.py::TestXamlParser::test_diagnostics_collection PASSED [ 16%]
+tests/integration/test_parser.py::TestXamlParser::test_parse_content_success FAILED [ 16%]
+tests/integration/test_parser.py::TestXamlParser::test_parse_content_with_activities FAILED [ 16%]
+tests/integration/test_parser.py::TestXamlParser::test_parse_content_with_arguments PASSED [ 17%]
+tests/integration/test_parser.py::TestXamlParser::test_parse_empty_content PASSED [ 17%]
+tests/integration/test_parser.py::TestXamlParser::test_parse_invalid_xml PASSED [ 17%]
+tests/integration/test_parser.py::TestXamlParser::test_parser_initialization PASSED [ 18%]
+tests/integration/test_parser.py::TestXamlParser::test_parser_with_custom_config PASSED [ 18%]
+tests/integration/test_parser.py::TestXamlParser::test_strict_mode_validation PASSED [ 18%]
+tests/integration/test_parser.py::TestParserIntegration::test_corpus_file_parsing SKIPPED [ 18%]
+tests/integration/test_parser.py::TestParserIntegration::test_large_file_performance SKIPPED [ 19%]
+tests/integration/test_project.py::TestProjectParser::test_parse_simple_project PASSED [ 19%]
+tests/integration/test_project.py::TestProjectParser::test_project_entry_points PASSED [ 19%]
+tests/integration/test_project.py::TestProjectParser::test_workflow_discovery PASSED [ 19%]
+tests/integration/test_project.py::TestProjectParser::test_entry_points_only_mode PASSED [ 20%]
+tests/integration/test_project.py::TestProjectParser::test_dependency_graph PASSED [ 20%]
+tests/integration/test_project.py::TestProjectParser::test_invoke_workflow_file_extraction PASSED [ 20%]
+tests/integration/test_project.py::TestProjectParser::test_project_config_loading PASSED [ 21%]
+tests/integration/test_project.py::TestProjectParser::test_missing_project_json PASSED [ 21%]
+tests/integration/test_project.py::TestProjectParser::test_workflow_parsing_errors PASSED [ 21%]
+tests/integration/test_project.py::TestProjectParser::test_parse_time_accumulation PASSED [ 21%]
+tests/integration/test_project.py::TestProjectParser::test_relative_path_resolution PASSED [ 22%]
+tests/integration/test_project.py::TestProjectParser::test_custom_parser_config PASSED [ 22%]
+tests/integration/test_project.py::TestProjectParser::test_get_workflow_method PASSED [ 22%]
+tests/integration/test_project.py::TestProjectParser::test_project_dependencies_in_dto_output PASSED [ 22%]
+tests/integration/test_project.py::TestProjectConfig::test_project_config_creation PASSED [ 23%]
+tests/integration/test_project.py::TestWorkflowResult::test_workflow_result_creation PASSED [ 23%]
+tests/test_expression_parser.py::TestSimpleExpressions::test_parse_bracketed_variable PASSED [ 23%]
+tests/test_expression_parser.py::TestSimpleExpressions::test_parse_simple_variable PASSED [ 24%]
+tests/test_expression_parser.py::TestSimpleExpressions::test_parse_empty_expression PASSED [ 24%]
+tests/test_expression_parser.py::TestSimpleExpressions::test_parse_null_expression PASSED [ 24%]
+tests/test_expression_parser.py::TestDictionaryAccess::test_parse_dict_access_static_key PASSED [ 24%]
+tests/test_expression_parser.py::TestDictionaryAccess::test_parse_dict_access_dynamic_key PASSED [ 25%]
+tests/test_expression_parser.py::TestDictionaryAccess::test_parse_dict_access_with_method PASSED [ 25%]
+tests/test_expression_parser.py::TestMethodCalls::test_parse_single_method PASSED [ 25%]
+tests/test_expression_parser.py::TestMethodCalls::test_parse_method_chain PASSED [ 26%]
+tests/test_expression_parser.py::TestMethodCalls::test_parse_property_access PASSED [ 26%]
+tests/test_expression_parser.py::TestComplexExpressions::test_parse_string_concatenation PASSED [ 26%]
+tests/test_expression_parser.py::TestComplexExpressions::test_parse_vb_concatenation PASSED [ 26%]
+tests/test_expression_parser.py::TestCastExpressions::test_parse_cint PASSED [ 27%]
+tests/test_expression_parser.py::TestCastExpressions::test_parse_cstr PASSED [ 27%]
+tests/test_expression_parser.py::TestKeywordFiltering::test_exclude_new_keyword PASSED [ 27%]
+tests/test_expression_parser.py::TestKeywordFiltering::test_exclude_method_names PASSED [ 27%]
+tests/test_type_system.py::TestTypeInfoParsing::test_parse_simple_type PASSED [ 28%]
+tests/test_type_system.py::TestTypeInfoParsing::test_parse_short_type PASSED [ 28%]
+tests/test_type_system.py::TestTypeInfoParsing::test_parse_generic_type_simple PASSED [ 28%]
+tests/test_type_system.py::TestTypeInfoParsing::test_parse_dictionary PASSED [ 29%]
+tests/test_type_system.py::TestTypeInfoParsing::test_parse_array_single_dimension PASSED [ 29%]
+tests/test_type_system.py::TestTypeInfoParsing::test_parse_array_multi_dimension PASSED [ 29%]
+tests/test_type_system.py::TestTypeInfoParsing::test_parse_nested_generic PASSED [ 29%]
+tests/test_type_system.py::TestTypeInfoElementType::test_get_element_type_array PASSED [ 30%]
+tests/test_type_system.py::TestTypeInfoElementType::test_get_element_type_dictionary PASSED [ 30%]
+tests/test_type_system.py::TestTypeInfoElementType::test_get_element_type_list PASSED [ 30%]
+tests/test_type_system.py::TestTypeInfoElementType::test_get_element_type_non_collection PASSED [ 31%]
+tests/test_type_system.py::TestTypeInfoMethodInference::test_infer_tostring PASSED [ 31%]
+tests/test_type_system.py::TestTypeInfoMethodInference::test_infer_string_methods PASSED [ 31%]
+tests/test_type_system.py::TestTypeInfoMethodInference::test_infer_collection_count PASSED [ 31%]
+tests/test_type_system.py::TestTypeInfoMethodInference::test_infer_collection_first PASSED [ 32%]
+tests/test_type_system.py::TestTypeInfoMethodInference::test_infer_unknown_method PASSED [ 32%]
+tests/test_type_system.py::TestTypeInfoPropertyInference::test_infer_string_length PASSED [ 32%]
+tests/test_type_system.py::TestTypeInfoPropertyInference::test_infer_collection_count_property PASSED [ 32%]
+tests/test_type_system.py::TestTypeInfoStringRepresentation::test_str_simple_type PASSED [ 33%]
+tests/test_type_system.py::TestTypeInfoStringRepresentation::test_str_generic_type PASSED [ 33%]
+tests/test_type_system.py::TestTypeInfoStringRepresentation::test_str_dictionary PASSED [ 33%]
+tests/test_type_system.py::TestTypeInfoStringRepresentation::test_str_array PASSED [ 34%]
+tests/test_type_system.py::TestTypeInfoStringRepresentation::test_repr PASSED [ 34%]
+tests/unit/test_analyzer.py::test_analyze_empty PASSED                   [ 34%]
+tests/unit/test_analyzer.py::test_analyze_single_workflow PASSED         [ 34%]
+tests/unit/test_analyzer.py::test_analyze_workflow_with_hierarchy PASSED [ 35%]
+tests/unit/test_analyzer.py::test_analyze_workflow_invocations PASSED    [ 35%]
+tests/unit/test_analyzer.py::test_analyze_control_flow PASSED            [ 35%]
+tests/unit/test_analyzer.py::test_workflow_by_path_lookup PASSED         [ 36%]
+tests/unit/test_analyzer.py::test_activity_to_workflow_lookup PASSED     [ 36%]
+tests/unit/test_analyzer.py::test_slice_context PASSED                   [ 36%]
+tests/unit/test_analyzer.py::test_find_call_cycles PASSED                [ 36%]
+tests/unit/test_analyzer.py::test_get_execution_order PASSED             [ 37%]
+tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_success FAILED [ 37%]
+tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_failed PASSED [ 37%]
+tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_no_content PASSED [ 37%]
+tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_with_file_path FAILED [ 38%]
+tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_many_variables FAILED [ 38%]
+tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_activity_types_summary FAILED [ 38%]
+tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_with_warnings FAILED [ 39%]
+tests/unit/test_cli.py::TestFormatArguments::test_format_arguments_success PASSED [ 39%]
+tests/unit/test_cli.py::TestFormatArguments::test_format_arguments_no_arguments PASSED [ 39%]
+tests/unit/test_cli.py::TestFormatArguments::test_format_arguments_failed_parse PASSED [ 39%]
+tests/unit/test_cli.py::TestFormatArguments::test_format_arguments_no_content PASSED [ 40%]
+tests/unit/test_cli.py::TestFormatActivities::test_format_activities_success PASSED [ 40%]
+tests/unit/test_cli.py::TestFormatActivities::test_format_activities_no_activities PASSED [ 40%]
+tests/unit/test_cli.py::TestFormatActivities::test_format_activities_failed_parse PASSED [ 40%]
+tests/unit/test_cli.py::TestFormatTree::test_format_tree_nested_activities PASSED [ 41%]
+tests/unit/test_cli.py::TestFormatTree::test_format_tree_no_activities PASSED [ 41%]
+tests/unit/test_cli.py::TestFormatTree::test_format_tree_failed_parse PASSED [ 41%]
+tests/unit/test_cli.py::TestFormatSummary::test_format_summary_multiple_files PASSED [ 42%]
+tests/unit/test_cli.py::TestFormatSummary::test_format_summary_all_success PASSED [ 42%]
+tests/unit/test_cli.py::TestFormatProjectSummary::test_format_project_summary_success PASSED [ 42%]
+tests/unit/test_cli.py::TestFormatProjectSummary::test_format_project_summary_failed PASSED [ 42%]
+tests/unit/test_cli.py::TestFormatProjectSummary::test_format_project_summary_with_failures PASSED [ 43%]
+tests/unit/test_cli.py::TestFormatProjectSummary::test_format_project_summary_many_workflows PASSED [ 43%]
+tests/unit/test_cli.py::TestFormatProjectSummary::test_format_project_summary_with_warnings PASSED [ 43%]
+tests/unit/test_cli.py::TestFormatDependencyGraph::test_format_dependency_graph_with_dependencies PASSED [ 44%]
+tests/unit/test_cli.py::TestFormatDependencyGraph::test_format_dependency_graph_empty PASSED [ 44%]
+tests/unit/test_cli.py::TestFormatDependencyGraph::test_format_dependency_graph_no_config PASSED [ 44%]
+tests/unit/test_cli.py::TestParseFiles::test_parse_files_single_file PASSED [ 44%]
+tests/unit/test_cli.py::TestParseFiles::test_parse_files_wildcard PASSED [ 45%]
+tests/unit/test_cli.py::TestParseFiles::test_parse_files_nonexistent PASSED [ 45%]
+tests/unit/test_cli.py::TestParseFiles::test_parse_files_multiple_patterns PASSED [ 45%]
+tests/unit/test_cli.py::TestParseFiles::test_parse_files_config_passed PASSED [ 45%]
+tests/unit/test_cli.py::TestMain::test_main_single_file_default FAILED   [ 46%]
+tests/unit/test_cli.py::TestMain::test_main_file_not_found PASSED        [ 46%]
+tests/unit/test_cli.py::TestMain::test_main_json_output FAILED           [ 46%]
+tests/unit/test_cli.py::TestMain::test_main_arguments_flag PASSED        [ 47%]
+tests/unit/test_cli.py::TestMain::test_main_tree_flag PASSED             [ 47%]
+tests/unit/test_cli.py::TestMain::test_main_output_file FAILED           [ 47%]
+tests/unit/test_cli.py::TestMain::test_main_strict_mode FAILED           [ 47%]
+tests/unit/test_cli.py::TestMain::test_main_no_expressions_flag FAILED   [ 48%]
+tests/unit/test_cli.py::TestMain::test_main_project_mode_not_found PASSED [ 48%]
+tests/unit/test_cli.py::TestMain::test_main_project_mode_directory_no_project_json PASSED [ 48%]
+tests/unit/test_cli.py::TestMain::test_main_entry_points_only_without_project PASSED [ 49%]
+tests/unit/test_cli.py::TestMain::test_main_graph_without_project PASSED [ 49%]
+tests/unit/test_cli.py::TestMain::test_main_multiple_files_summary PASSED [ 49%]
+tests/unit/test_cli.py::TestMain::test_main_summary_flag_explicit PASSED [ 49%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_extract_single_in_argument PASSED [ 50%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_extract_single_out_argument PASSED [ 50%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_extract_single_inout_argument PASSED [ 50%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_extract_argument_with_annotation PASSED [ 50%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_extract_argument_with_default_value PASSED [ 51%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_extract_multiple_arguments PASSED [ 51%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_handle_missing_x_members PASSED [ 51%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_handle_missing_x_namespace PASSED [ 52%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_handle_argument_without_name PASSED [ 52%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_handle_empty_members_section PASSED [ 52%]
+tests/unit/test_extractors.py::TestArgumentExtractor::test_direction_defaults_to_in PASSED [ 52%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_extract_workflow_scoped_variable PASSED [ 53%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_extract_activity_scoped_variable PASSED [ 53%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_extract_multiple_variables PASSED [ 53%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_variable_with_default_value PASSED [ 54%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_variable_type_parsing PASSED [ 54%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_is_variable_element_detection PASSED [ 54%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_handle_variable_without_name PASSED [ 54%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_scope_determination PASSED [ 55%]
+tests/unit/test_extractors.py::TestVariableExtractor::test_extract_from_empty_workflow PASSED [ 55%]
+tests/unit/test_extractors.py::TestAnnotationExtractor::test_extract_root_annotation PASSED [ 55%]
+tests/unit/test_extractors.py::TestAnnotationExtractor::test_extract_annotation_html_entities PASSED [ 55%]
+tests/unit/test_extractors.py::TestAnnotationExtractor::test_extract_all_annotations PASSED [ 56%]
+tests/unit/test_extractors.py::TestAnnotationExtractor::test_handle_missing_sap2010_namespace PASSED [ 56%]
+tests/unit/test_extractors.py::TestAnnotationExtractor::test_extract_empty_annotation PASSED [ 56%]
+tests/unit/test_extractors.py::TestAnnotationExtractor::test_annotation_from_sequence_fallback PASSED [ 57%]
+tests/unit/test_extractors.py::TestAnnotationExtractor::test_all_annotations_html_entity_decoding PASSED [ 57%]
+tests/unit/test_extractors.py::TestMetadataExtractor::test_extract_standard_namespaces PASSED [ 57%]
+tests/unit/test_extractors.py::TestMetadataExtractor::test_extract_default_namespace PASSED [ 57%]
+tests/unit/test_extractors.py::TestMetadataExtractor::test_extract_assembly_references PASSED [ 58%]
+tests/unit/test_extractors.py::TestMetadataExtractor::test_extract_multiple_assemblies PASSED [ 58%]
+tests/unit/test_extractors.py::TestMetadataExtractor::test_detect_visual_basic_language FAILED [ 58%]
+tests/unit/test_extractors.py::TestMetadataExtractor::test_detect_csharp_language FAILED [ 59%]
+tests/unit/test_extractors.py::TestMetadataExtractor::test_default_to_visual_basic FAILED [ 59%]
+tests/unit/test_extractors.py::TestMetadataExtractor::test_extract_namespaces_from_minimal_xaml PASSED [ 59%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_initialization_with_default_config PASSED [ 59%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_initialization_with_custom_config PASSED [ 60%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_extract_simple_sequence PASSED [ 60%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_extract_nested_activities PASSED [ 60%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_activity_counter_increments PASSED [ 60%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_skip_elements_handling PASSED [ 61%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_activity_detection_for_core_visual_activities PASSED [ 61%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_activity_detection_via_attributes PASSED [ 61%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_activity_detection_via_annotation PASSED [ 62%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_parent_child_relationships PASSED [ 62%]
+tests/unit/test_extractors.py::TestActivityExtractorCore::test_depth_tracking PASSED [ 62%]
+tests/unit/test_extractors.py::TestActivityExtractorAttributes::test_categorize_visible_vs_invisible_attributes PASSED [ 62%]
+tests/unit/test_extractors.py::TestActivityExtractorAttributes::test_extract_annotation_with_html_entities PASSED [ 63%]
+tests/unit/test_extractors.py::TestActivityExtractorAttributes::test_handle_missing_annotation_namespace PASSED [ 63%]
+tests/unit/test_extractors.py::TestActivityExtractorAttributes::test_extract_visible_properties PASSED [ 63%]
+tests/unit/test_extractors.py::TestActivityExtractorAttributes::test_extract_activity_metadata PASSED [ 63%]
+tests/unit/test_extractors.py::TestActivityExtractorAttributes::test_extract_activity_arguments PASSED [ 64%]
+tests/unit/test_extractors.py::TestActivityExtractorConfiguration::test_extract_nested_configuration PASSED [ 64%]
+tests/unit/test_extractors.py::TestActivityExtractorConfiguration::test_extract_deeply_nested_elements PASSED [ 64%]
+tests/unit/test_extractors.py::TestActivityExtractorConfiguration::test_skip_variables_in_configuration PASSED [ 65%]
+tests/unit/test_extractors.py::TestActivityExtractorConfiguration::test_nested_element_with_attributes_and_text PASSED [ 65%]
+tests/unit/test_extractors.py::TestActivityExtractorExpressions::test_detect_expressions_in_attributes PASSED [ 65%]
+tests/unit/test_extractors.py::TestActivityExtractorExpressions::test_expression_pattern_matching PASSED [ 65%]
+tests/unit/test_extractors.py::TestActivityExtractorExpressions::test_classify_condition_expression PASSED [ 66%]
+tests/unit/test_extractors.py::TestActivityExtractorExpressions::test_classify_assignment_expression PASSED [ 66%]
+tests/unit/test_extractors.py::TestActivityExtractorExpressions::test_classify_message_expression PASSED [ 66%]
+tests/unit/test_extractors.py::TestActivityExtractorExpressions::test_extract_business_logic_expressions PASSED [ 67%]
+tests/unit/test_extractors.py::TestActivityExtractorInstances::test_extract_activity_instances PASSED [ 67%]
+tests/unit/test_extractors.py::TestActivityExtractorInstances::test_activity_id_generation PASSED [ 67%]
+tests/unit/test_extractors.py::TestActivityExtractorInstances::test_container_type_determination PASSED [ 67%]
+tests/unit/test_extractors.py::TestActivityExtractorInstances::test_namespace_cache_precomputation PASSED [ 68%]
+tests/unit/test_extractors.py::TestActivityExtractorInstances::test_serialize_activity_for_hashing PASSED [ 68%]
+tests/unit/test_extractors.py::TestActivityExtractorEdgeCases::test_handle_max_depth_limit PASSED [ 68%]
+tests/unit/test_extractors.py::TestActivityExtractorEdgeCases::test_extract_from_empty_workflow PASSED [ 68%]
+tests/unit/test_extractors.py::TestActivityExtractorEdgeCases::test_extract_from_empty_workflow_instances PASSED [ 69%]
+tests/unit/test_graph.py::test_add_node PASSED                           [ 69%]
+tests/unit/test_graph.py::test_add_edge PASSED                           [ 69%]
+tests/unit/test_graph.py::test_traverse_dfs PASSED                       [ 70%]
+tests/unit/test_graph.py::test_traverse_dfs_with_visitor PASSED          [ 70%]
+tests/unit/test_graph.py::test_traverse_bfs PASSED                       [ 70%]
+tests/unit/test_graph.py::test_find_cycles PASSED                        [ 70%]
+tests/unit/test_graph.py::test_find_cycles_no_cycle PASSED               [ 71%]
+tests/unit/test_graph.py::test_topological_sort PASSED                   [ 71%]
+tests/unit/test_graph.py::test_topological_sort_with_cycle PASSED        [ 71%]
+tests/unit/test_graph.py::test_reachable_from PASSED                     [ 72%]
+tests/unit/test_graph.py::test_subgraph PASSED                           [ 72%]
+tests/unit/test_graph.py::test_node_count PASSED                         [ 72%]
+tests/unit/test_graph.py::test_edge_count PASSED                         [ 72%]
+tests/unit/test_graph.py::test_nodes PASSED                              [ 73%]
+tests/unit/test_graph.py::test_max_depth_traversal PASSED                [ 73%]
+tests/unit/test_graph.py::test_repr PASSED                               [ 73%]
+tests/unit/test_graph.py::test_empty_graph_traversal PASSED              [ 73%]
+tests/unit/test_graph.py::test_multiple_edges_same_pair PASSED           [ 74%]
+tests/unit/test_graph.py::test_update_node_data PASSED                   [ 74%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_generate_workflow_id PASSED [ 74%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_generate_activity_id PASSED [ 75%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_generate_edge_id PASSED [ 75%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_determinism_same_content PASSED [ 75%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_determinism_whitespace_normalized PASSED [ 75%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_attribute_order_normalized PASSED [ 76%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_content_changes_affect_id PASSED [ 76%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_compute_full_hash PASSED [ 76%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_full_hash_matches_truncated PASSED [ 77%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_edge_id_determinism PASSED [ 77%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_edge_id_different_kind PASSED [ 77%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_normalization_strips_bom PASSED [ 77%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_fallback_normalize_on_parse_error PASSED [ 78%]
+tests/unit/test_id_generation.py::TestIdGenerator::test_normalization_line_endings PASSED [ 78%]
+tests/unit/test_id_generation.py::TestGenerateStableId::test_generate_stable_id_string PASSED [ 78%]
+tests/unit/test_id_generation.py::TestGenerateStableId::test_generate_stable_id_different_prefixes PASSED [ 78%]
+tests/unit/test_id_generation.py::TestGenerateStableId::test_generate_stable_id_object PASSED [ 79%]
+tests/unit/test_id_generation.py::TestRealWorldXaml::test_sequence_activity PASSED [ 79%]
+tests/unit/test_id_generation.py::TestRealWorldXaml::test_workflow_with_namespaces PASSED [ 79%]
+tests/unit/test_id_generation.py::TestHashCollisionResistance::test_similar_content_different_ids PASSED [ 80%]
+tests/unit/test_id_generation.py::TestHashCollisionResistance::test_truncation_still_unique PASSED [ 80%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_simple_workflow FAILED [ 80%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_with_edges PASSED [ 80%]
+tests/unit/test_normalization.py::TestNormalizer::test_transform_activity_with_all_fields PASSED [ 81%]
+tests/unit/test_normalization.py::TestNormalizer::test_transform_argument PASSED [ 81%]
+tests/unit/test_normalization.py::TestNormalizer::test_transform_variable PASSED [ 81%]
+tests/unit/test_normalization.py::TestNormalizer::test_transform_dependencies PASSED [ 81%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_collects_issues PASSED [ 82%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_handles_empty_parse_result PASSED [ 82%]
+tests/unit/test_normalization.py::TestNormalizer::test_deterministic_sorting PASSED [ 82%]
+tests/unit/test_normalization.py::TestNormalizer::test_source_order_preservation PASSED [ 83%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_metadata FAILED [ 83%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_source_info PASSED [ 83%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_custom_timestamp PASSED [ 83%]
+tests/unit/test_normalization.py::TestNormalizer::test_parse_project_dependencies_exact_version PASSED [ 84%]
+tests/unit/test_normalization.py::TestNormalizer::test_parse_project_dependencies_range PASSED [ 84%]
+tests/unit/test_normalization.py::TestNormalizer::test_parse_project_dependencies_plain_version PASSED [ 84%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_with_project_dependencies PASSED [ 85%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_without_project_dependencies PASSED [ 85%]
+tests/unit/test_normalization.py::TestNormalizer::test_normalize_with_multiple_project_dependencies PASSED [ 85%]
+tests/unit/test_ordering.py::TestSortById::test_sort_activities_by_id PASSED [ 85%]
+tests/unit/test_ordering.py::TestSortById::test_sort_empty_list PASSED   [ 86%]
+tests/unit/test_ordering.py::TestSortById::test_sort_single_item PASSED  [ 86%]
+tests/unit/test_ordering.py::TestSortById::test_sort_does_not_modify_input PASSED [ 86%]
+tests/unit/test_ordering.py::TestSortByName::test_sort_arguments_by_name PASSED [ 86%]
+tests/unit/test_ordering.py::TestSortByName::test_sort_variables_by_name PASSED [ 87%]
+tests/unit/test_ordering.py::TestSortByName::test_case_sensitive_sorting PASSED [ 87%]
+tests/unit/test_ordering.py::TestSortDictByKey::test_sort_properties_dict PASSED [ 87%]
+tests/unit/test_ordering.py::TestSortDictByKey::test_sort_empty_dict PASSED [ 88%]
+tests/unit/test_ordering.py::TestSortDictByKey::test_sort_preserves_values PASSED [ 88%]
+tests/unit/test_ordering.py::TestSortEdges::test_sort_edges_by_composite_key PASSED [ 88%]
+tests/unit/test_ordering.py::TestSortEdges::test_sort_edges_kind_matters PASSED [ 88%]
+tests/unit/test_ordering.py::TestSortByKey::test_sort_with_custom_key PASSED [ 89%]
+tests/unit/test_ordering.py::TestEnsureDeterministicOrder::test_sorts_all_collections PASSED [ 89%]
+tests/unit/test_ordering.py::TestEnsureDeterministicOrder::test_sorts_activity_properties PASSED [ 89%]
+tests/unit/test_ordering.py::TestEnsureDeterministicOrder::test_handles_none_collections PASSED [ 90%]
+tests/unit/test_ordering.py::TestEnsureDeterministicOrder::test_handles_empty_collections PASSED [ 90%]
+tests/unit/test_ordering.py::TestVerifyDeterministicOrder::test_detects_unsorted_activities PASSED [ 90%]
+tests/unit/test_ordering.py::TestVerifyDeterministicOrder::test_detects_unsorted_arguments PASSED [ 90%]
+tests/unit/test_ordering.py::TestVerifyDeterministicOrder::test_passes_for_sorted_workflow PASSED [ 91%]
+tests/unit/test_ordering.py::TestLocaleIndependence::test_binary_collation PASSED [ 91%]
+tests/unit/test_ordering.py::TestDeterminismAcrossRuns::test_sort_stability_100_runs PASSED [ 91%]
+tests/unit/test_validation.py::TestOutputValidation::test_activity_validation FAILED [ 91%]
+tests/unit/test_validation.py::TestOutputValidation::test_argument_validation FAILED [ 92%]
+tests/unit/test_validation.py::TestOutputValidation::test_config_validation FAILED [ 92%]
+tests/unit/test_validation.py::TestOutputValidation::test_diagnostics_validation FAILED [ 92%]
+tests/unit/test_validation.py::TestOutputValidation::test_duplicate_activity_ids FAILED [ 93%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_activity_id_pattern FAILED [ 93%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_argument_direction FAILED [ 93%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_config_types FAILED [ 93%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_diagnostics_integers FAILED [ 94%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_errors_list FAILED [ 94%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_expression_language FAILED [ 94%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_parse_time FAILED [ 95%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_performance_metrics FAILED [ 95%]
+tests/unit/test_validation.py::TestOutputValidation::test_invalid_success_field FAILED [ 95%]
+tests/unit/test_validation.py::TestOutputValidation::test_mismatched_counts FAILED [ 95%]
+tests/unit/test_validation.py::TestOutputValidation::test_valid_parse_result FAILED [ 96%]
+tests/unit/test_validation.py::TestOutputValidation::test_validate_output_function FAILED [ 96%]
+tests/unit/test_validation.py::TestOutputValidation::test_validate_output_strict_mode FAILED [ 96%]
+tests/unit/test_validation.py::TestOutputValidation::test_workflow_content_validation FAILED [ 96%]
+tests/unit/test_views.py::test_nested_view_empty PASSED                  [ 97%]
+tests/unit/test_views.py::test_nested_view_single_workflow PASSED        [ 97%]
+tests/unit/test_views.py::test_execution_view_entry_not_found PASSED     [ 97%]
+tests/unit/test_views.py::test_execution_view_single_workflow PASSED     [ 98%]
+tests/unit/test_views.py::test_execution_view_with_invocation PASSED     [ 98%]
+tests/unit/test_views.py::test_execution_view_nested_activities PASSED   [ 98%]
+tests/unit/test_views.py::test_execution_view_resolve_entry_by_path PASSED [ 98%]
+tests/unit/test_views.py::test_slice_view_activity_not_found PASSED      [ 99%]
+tests/unit/test_views.py::test_slice_view_single_activity PASSED         [ 99%]
+tests/unit/test_views.py::test_slice_view_with_parent_chain PASSED       [ 99%]
+tests/unit/test_views.py::test_slice_view_with_siblings PASSED           [100%]
+ERROR: Coverage failure: total of 73 is less than fail-under=90
+
+
+================================== FAILURES ===================================
+__________________ TestXamlParser.test_parse_content_success __________________
+tests\integration\test_parser.py:55: in test_parse_content_success
+    self.assertEqual(content.expression_language, "VisualBasic")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+______________ TestXamlParser.test_parse_content_with_activities ______________
+tests\integration\test_parser.py:78: in test_parse_content_with_activities
+    self.assertGreater(len(sequences), 0)
+E   AssertionError: 0 not greater than 0
+_________________ TestFormatPretty.test_format_pretty_success _________________
+tests\unit\test_cli.py:49: in test_format_pretty_success
+    content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+_____________ TestFormatPretty.test_format_pretty_with_file_path ______________
+tests\unit\test_cli.py:125: in test_format_pretty_with_file_path
+    output = format_pretty(result, "workflows/Main.xaml")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+xaml_parser\cli.py:62: in format_pretty
+    lines.append(f"  Expression Language: {content.expression_language}")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+_____________ TestFormatPretty.test_format_pretty_many_variables ______________
+tests\unit\test_cli.py:135: in test_format_pretty_many_variables
+    output = format_pretty(result)
+             ^^^^^^^^^^^^^^^^^^^^^
+xaml_parser\cli.py:62: in format_pretty
+    lines.append(f"  Expression Language: {content.expression_language}")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+_________ TestFormatPretty.test_format_pretty_activity_types_summary __________
+tests\unit\test_cli.py:154: in test_format_pretty_activity_types_summary
+    output = format_pretty(result)
+             ^^^^^^^^^^^^^^^^^^^^^
+xaml_parser\cli.py:62: in format_pretty
+    lines.append(f"  Expression Language: {content.expression_language}")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+______________ TestFormatPretty.test_format_pretty_with_warnings ______________
+tests\unit\test_cli.py:169: in test_format_pretty_with_warnings
+    output = format_pretty(result)
+             ^^^^^^^^^^^^^^^^^^^^^
+xaml_parser\cli.py:62: in format_pretty
+    lines.append(f"  Expression Language: {content.expression_language}")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+___________________ TestMain.test_main_single_file_default ____________________
+tests\unit\test_cli.py:708: in test_main_single_file_default
+    main()
+xaml_parser\cli.py:732: in main
+    output = format_pretty(parse_result, file_path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+xaml_parser\cli.py:62: in format_pretty
+    lines.append(f"  Expression Language: {content.expression_language}")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+_______________________ TestMain.test_main_json_output ________________________
+tests\unit\test_cli.py:739: in test_main_json_output
+    main()
+xaml_parser\cli.py:718: in main
+    "expression_language": parse_result.content.expression_language,
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+_______________________ TestMain.test_main_output_file ________________________
+tests\unit\test_cli.py:811: in test_main_output_file
+    main()
+xaml_parser\cli.py:732: in main
+    output = format_pretty(parse_result, file_path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+xaml_parser\cli.py:62: in format_pretty
+    lines.append(f"  Expression Language: {content.expression_language}")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+_______________________ TestMain.test_main_strict_mode ________________________
+tests\unit\test_cli.py:832: in test_main_strict_mode
+    main()
+xaml_parser\cli.py:732: in main
+    output = format_pretty(parse_result, file_path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+xaml_parser\cli.py:62: in format_pretty
+    lines.append(f"  Expression Language: {content.expression_language}")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+___________________ TestMain.test_main_no_expressions_flag ____________________
+tests\unit\test_cli.py:850: in test_main_no_expressions_flag
+    main()
+xaml_parser\cli.py:732: in main
+    output = format_pretty(parse_result, file_path)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+xaml_parser\cli.py:62: in format_pretty
+    lines.append(f"  Expression Language: {content.expression_language}")
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+___________ TestMetadataExtractor.test_detect_visual_basic_language ___________
+tests\unit\test_extractors.py:501: in test_detect_visual_basic_language
+    language = MetadataExtractor.extract_expression_language(root)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'MetadataExtractor' has no attribute 'extract_expression_language'
+______________ TestMetadataExtractor.test_detect_csharp_language ______________
+tests\unit\test_extractors.py:513: in test_detect_csharp_language
+    language = MetadataExtractor.extract_expression_language(root)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'MetadataExtractor' has no attribute 'extract_expression_language'
+_____________ TestMetadataExtractor.test_default_to_visual_basic ______________
+tests\unit\test_extractors.py:521: in test_default_to_visual_basic
+    language = MetadataExtractor.extract_expression_language(root)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: type object 'MetadataExtractor' has no attribute 'extract_expression_language'
+________________ TestNormalizer.test_normalize_simple_workflow ________________
+tests\unit\test_normalization.py:35: in test_normalize_simple_workflow
+    content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+___________________ TestNormalizer.test_normalize_metadata ____________________
+tests\unit\test_normalization.py:414: in test_normalize_metadata
+    content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+________________ TestOutputValidation.test_activity_validation ________________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+________________ TestOutputValidation.test_argument_validation ________________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+_________________ TestOutputValidation.test_config_validation _________________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+______________ TestOutputValidation.test_diagnostics_validation _______________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+______________ TestOutputValidation.test_duplicate_activity_ids _______________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+____________ TestOutputValidation.test_invalid_activity_id_pattern ____________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+____________ TestOutputValidation.test_invalid_argument_direction _____________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+_______________ TestOutputValidation.test_invalid_config_types ________________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+___________ TestOutputValidation.test_invalid_diagnostics_integers ____________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+________________ TestOutputValidation.test_invalid_errors_list ________________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+____________ TestOutputValidation.test_invalid_expression_language ____________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+________________ TestOutputValidation.test_invalid_parse_time _________________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+____________ TestOutputValidation.test_invalid_performance_metrics ____________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+_______________ TestOutputValidation.test_invalid_success_field _______________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+_________________ TestOutputValidation.test_mismatched_counts _________________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+________________ TestOutputValidation.test_valid_parse_result _________________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+_____________ TestOutputValidation.test_validate_output_function ______________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+____________ TestOutputValidation.test_validate_output_strict_mode ____________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+____________ TestOutputValidation.test_workflow_content_validation ____________
+tests\unit\test_validation.py:48: in setUp
+    self.valid_content = WorkflowContent(
+E   TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.11.13-final-0 _______________
+
+Name                                       Stmts   Miss  Cover   Missing
+------------------------------------------------------------------------
+xaml_parser\__init__.py                       26      7    73%   121, 134-137, 150-151, 157
+xaml_parser\__version__.py                     3      0   100%
+xaml_parser\analyzer.py                       89      1    99%   70
+xaml_parser\ancestry_graph.py                137    137     0%   7-399
+xaml_parser\cli.py                           380    132    65%   51-56, 63-105, 204-209, 481, 490-491, 507-600, 607-608, 612-667, 724, 728, 734, 738-739
+xaml_parser\constants.py                       8      0   100%
+xaml_parser\control_flow.py                  165     34    79%   86, 90, 92, 94, 394-418, 462-478, 492-514, 528-547, 574, 595, 600
+xaml_parser\dto.py                           128      0   100%
+xaml_parser\emitters\__init__.py              24      1    96%   113
+xaml_parser\emitters\ancestry_emitter.py     149    149     0%   7-386
+xaml_parser\emitters\doc_emitter.py           69     10    86%   15-16, 35-39, 109-110, 194-200
+xaml_parser\emitters\json_emitter.py          71      4    94%   155-156, 181, 232
+xaml_parser\emitters\mermaid_emitter.py      109     10    91%   21, 58-59, 86, 115, 117, 230, 237, 271-272
+xaml_parser\emitters\registry.py              35     10    71%   68-80
+xaml_parser\expression_parser.py             128      4    97%   332, 359-360, 436
+xaml_parser\extractors.py                    430     40    91%   127-129, 199, 203, 306, 314, 318, 356-364, 385-391, 412-415, 477-480, 497-505, 675, 683, 687, 751, 785, 803, 830-831, 833, 863, 912
+xaml_parser\field_profiles.py                 61     32    48%   89, 97, 101, 123, 137, 152, 165-184, 216, 232-247
+xaml_parser\graph.py                         131      6    95%   211, 258, 267, 270, 276, 279
+xaml_parser\id_generation.py                  65      6    91%   99-102, 164-166, 228-229
+xaml_parser\interprocedural_analysis.py      173    173     0%   7-572
+xaml_parser\models.py                        101      0   100%
+xaml_parser\normalization.py                 118      7    94%   236, 410, 459-463
+xaml_parser\ordering.py                       72      9    88%   169, 177, 184, 204, 214, 249-252
+xaml_parser\parser.py                        339     41    88%   17-19, 114-121, 133-134, 182-185, 197-198, 296-297, 299, 313, 326, 439-441, 504, 511, 567-568, 574-576, 610, 619, 632, 661, 680-686, 705, 709
+xaml_parser\project.py                       238     17    93%   244, 273, 284, 290, 337, 341, 372, 376, 395-397, 422, 514, 544, 608-610, 619-621
+xaml_parser\provenance.py                     47      9    81%   26-27, 54-55, 59, 63, 84, 94, 111
+xaml_parser\type_system.py                   119     19    84%   88-90, 238, 267, 272-273, 277-282, 286-300, 328-344
+xaml_parser\utils.py                         247    150    39%   28-37, 50, 66-71, 83-86, 98, 114-127, 139-155, 167, 181-184, 200-218, 223-243, 248-265, 277-292, 309-317, 331-343, 356-363, 376-382, 398, 418-445, 490, 519, 572, 605, 609-610, 625-682
+xaml_parser\validation.py                    162     50    69%   27-29, 59, 62, 64, 67, 69, 72, 104, 111, 114-115, 118, 127, 129, 135, 137, 143, 145, 180, 184, 188, 192, 196, 198, 228, 233, 238, 247, 250, 253, 259-274, 288, 293-296, 302, 308, 335-337, 372
+xaml_parser\views.py                         204     12    94%   33, 73, 87, 109, 184, 219, 260, 281, 343, 377, 413, 454
+xaml_parser\visibility.py                     50     24    52%   79, 92, 130-143, 157-178, 190-196
+------------------------------------------------------------------------
+TOTAL                                       4078   1094    73%
+Coverage HTML written to dir htmlcov
+FAIL Required test coverage of 90% not reached. Total coverage: 73.17%
+=========================== short test summary info ===========================
+FAILED tests/integration/test_parser.py::TestXamlParser::test_parse_content_success - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/integration/test_parser.py::TestXamlParser::test_parse_content_with_activities - AssertionError: 0 not greater than 0
+FAILED tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_success - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_with_file_path - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_many_variables - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_activity_types_summary - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_cli.py::TestFormatPretty::test_format_pretty_with_warnings - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_cli.py::TestMain::test_main_single_file_default - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_cli.py::TestMain::test_main_json_output - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_cli.py::TestMain::test_main_output_file - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_cli.py::TestMain::test_main_strict_mode - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_cli.py::TestMain::test_main_no_expressions_flag - AttributeError: 'WorkflowContent' object has no attribute 'expression_language'
+FAILED tests/unit/test_extractors.py::TestMetadataExtractor::test_detect_visual_basic_language - AttributeError: type object 'MetadataExtractor' has no attribute 'extract_expression_language'
+FAILED tests/unit/test_extractors.py::TestMetadataExtractor::test_detect_csharp_language - AttributeError: type object 'MetadataExtractor' has no attribute 'extract_expression_language'
+FAILED tests/unit/test_extractors.py::TestMetadataExtractor::test_default_to_visual_basic - AttributeError: type object 'MetadataExtractor' has no attribute 'extract_expression_language'
+FAILED tests/unit/test_normalization.py::TestNormalizer::test_normalize_simple_workflow - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_normalization.py::TestNormalizer::test_normalize_metadata - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_activity_validation - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_argument_validation - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_config_validation - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_diagnostics_validation - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_duplicate_activity_ids - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_activity_id_pattern - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_argument_direction - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_config_types - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_diagnostics_integers - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_errors_list - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_expression_language - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_parse_time - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_performance_metrics - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_invalid_success_field - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_mismatched_counts - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_valid_parse_result - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_validate_output_function - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_validate_output_strict_mode - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+FAILED tests/unit/test_validation.py::TestOutputValidation::test_workflow_content_validation - TypeError: WorkflowContent.__init__() got an unexpected keyword argument 'expression_language'
+========== 36 failed, 323 passed, 2 skipped, 7 deselected in 16.50s ===========

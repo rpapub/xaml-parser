@@ -51,6 +51,7 @@ Thumbs.db
 .env
 .env.local
 .secrets
+.xaml-parser.json
 
 # Test artifacts
 .test-artifacts/
