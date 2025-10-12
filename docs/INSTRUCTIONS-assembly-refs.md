@@ -1,10 +1,14 @@
 # Assembly References vs Package Dependencies - Developer Instructions
 
-## Problem Statement
+## Status: ✅ IMPLEMENTED
 
-**Issue**: Assembly references from XAML files are incorrectly being extracted and output as "dependencies" with `version="unknown"`.
+This issue has been resolved. The following documentation describes the problem, solution, and implementation details for future reference.
 
-**Discovery**: Manual inspection of `developer-tests/output/CORE_00000001/flat_view.json` revealed that `{Root}.workflows[2].dependencies` contains 30+ entries that are NOT package dependencies, but rather .NET assembly references (namespaces).
+## Problem Statement (RESOLVED)
+
+**Issue**: Assembly references from XAML files were incorrectly being extracted and output as "dependencies" with `version="unknown"`.
+
+**Discovery**: Manual inspection of `developer-tests/output/CORE_00000001/flat_view.json` revealed that `{Root}.workflows[2].dependencies` contained 30+ entries that were NOT package dependencies, but rather .NET assembly references (namespaces).
 
 ### Example of Incorrect Output
 
@@ -376,22 +380,90 @@ After implementation, verify:
 - [ ] Type checking passes (`mypy xaml_parser/`)
 - [ ] Linting passes (`ruff check xaml_parser/`)
 
-## Future Enhancements
+## Implementation Summary (COMPLETED)
 
-Once this fix is complete, real package dependencies should be extracted from `project.json`:
+The issue has been resolved using **Option A** (stop extracting assembly references entirely), with the addition of project.json dependency parsing.
 
-```python
-# Future: parse project.json
-def extract_project_dependencies(project_json_path: Path) -> list[tuple[str, str]]:
-    """Extract real package dependencies from project.json.
+### Changes Made
 
-    Returns list of (package_name, version_constraint) tuples.
-    Example: [("UiPath.Excel.Activities", "[2.12.3]"), ...]
-    """
-    with open(project_json_path) as f:
-        data = json.load(f)
-        deps = data.get("dependencies", {})
-        return [(pkg, ver) for pkg, ver in deps.items()]
+1. **python/xaml_parser/extractors.py**: Modified `extract_dependencies()` to return empty list
+   - Assembly references are no longer extracted during parsing
+   - Added clear documentation that real dependencies come from project.json
+
+2. **python/xaml_parser/normalization.py**: Added project.json dependency support
+   - Added `project_dependencies` parameter to `Normalizer.normalize()`
+   - Created `_parse_project_dependencies()` helper method to parse NuGet version constraints
+   - Updated dependency transform logic to use project.json dependencies when provided
+
+3. **python/xaml_parser/project.py**: Modified `project_result_to_dto()`
+   - Extracts dependencies from `ProjectConfig.dependencies`
+   - Passes them to normalizer during DTO conversion
+
+4. **Tests**: Added comprehensive test coverage
+   - Unit tests for dependency parsing (version constraint handling)
+   - Integration test for end-to-end project dependency extraction
+   - All tests passing
+
+### Current Behavior
+
+**Before** (incorrect):
+```json
+{
+  "dependencies": [
+    {"package": "System.Core", "version": "unknown"},
+    {"package": "mscorlib", "version": "unknown"}
+    // ... 30+ assembly references
+  ]
+}
+```
+
+**After** (correct):
+```json
+{
+  "dependencies": [
+    {"package": "UiPath.Excel.Activities", "version": "3.0.1"},
+    {"package": "UiPath.System.Activities", "version": "25.4.4"}
+    // Real package dependencies from project.json
+  ]
+}
+```
+
+### Version Constraint Parsing
+
+The implementation correctly parses NuGet version constraint formats:
+
+- `[3.0.1]` → `3.0.1` (exact version)
+- `[3.0,4.0)` → `3.0` (range, uses first version)
+- `3.0.1` → `3.0.1` (plain version)
+
+This ensures that version strings in the output are clean and usable without special parsing.
+
+## Verification Results
+
+All verification checks passed:
+
+- ✅ `developer-tests/output/CORE_00000001/flat_view.json` now has real package dependencies
+- ✅ `developer-tests/output/CORE_00000010/flat_view.json` now has real package dependencies
+- ✅ No JSON output contains assembly references like `"package": "System.Core"`
+- ✅ All unit tests pass (6 new tests added for dependency parsing)
+- ✅ Integration test passes (`test_project_dependencies_in_dto_output`)
+- ✅ Developer test outputs regenerated and verified
+
+### Sample Output
+
+From `developer-tests/output/CORE_00000001/flat_view.json`:
+```json
+{
+  "workflows": [
+    {
+      "name": "myEmptyWorkflow",
+      "dependencies": [
+        {"package": "UiPath.Excel.Activities", "version": "3.0.1"},
+        {"package": "UiPath.System.Activities", "version": "25.4.4"}
+      ]
+    }
+  ]
+}
 ```
 
 ## References
@@ -400,9 +472,9 @@ def extract_project_dependencies(project_json_path: Path) -> list[tuple[str, str
 - **Example XAML source**: `test-corpus/c25v001_CORE_00000001/myEntrypointOne.xaml` (lines 40-83)
 - **User requirement**: "it is ok to parse them as namespace references, but NOT include them in any default output"
 - **User clarification**: "i need no backward compatibility"
-
-## Questions for User (After Implementation)
-
-1. Should we keep assembly references in internal models for future use (Option B), or remove extraction entirely (Option A)?
-2. Should we implement project.json parsing to populate real package dependencies?
-3. Are there other fields with similar issues (data extracted but shouldn't be in output)?
+- **Implementation date**: 2025-10-12
+- **Related files modified**:
+  - `python/xaml_parser/normalization.py`
+  - `python/xaml_parser/project.py`
+  - `python/tests/unit/test_normalization.py`
+  - `python/tests/integration/test_project.py`

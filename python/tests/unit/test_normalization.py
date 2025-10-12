@@ -468,6 +468,100 @@ class TestNormalizer:
         # Verify custom timestamp used
         assert workflow_dto.collected_at == custom_timestamp
 
+    def test_parse_project_dependencies_exact_version(self):
+        """Test parsing exact version constraints [X.Y.Z]."""
+        normalizer = Normalizer()
+        deps = {
+            "UiPath.Excel.Activities": "[3.0.1]",
+            "UiPath.System.Activities": "[25.4.4]",
+        }
+
+        result = normalizer._parse_project_dependencies(deps)
+
+        assert len(result) == 2
+        assert result[0].package == "UiPath.Excel.Activities"
+        assert result[0].version == "3.0.1"
+        assert result[1].package == "UiPath.System.Activities"
+        assert result[1].version == "25.4.4"
+
+    def test_parse_project_dependencies_range(self):
+        """Test parsing version ranges."""
+        normalizer = Normalizer()
+        deps = {"SomePackage": "[3.0,4.0)", "AnotherPackage": "[2.0,)"}
+
+        result = normalizer._parse_project_dependencies(deps)
+
+        assert len(result) == 2
+        assert result[0].version == "3.0"  # Takes first version from range
+        assert result[1].version == "2.0"
+
+    def test_parse_project_dependencies_plain_version(self):
+        """Test parsing plain version without brackets."""
+        normalizer = Normalizer()
+        deps = {"PlainPackage": "1.2.3"}
+
+        result = normalizer._parse_project_dependencies(deps)
+
+        assert len(result) == 1
+        assert result[0].package == "PlainPackage"
+        assert result[0].version == "1.2.3"
+
+    def test_normalize_with_project_dependencies(self):
+        """Test that project dependencies are included in workflow DTO."""
+        content = WorkflowContent()
+        parse_result = ParseResult(content=content, success=True)
+
+        normalizer = Normalizer()
+        project_deps = {"UiPath.Excel.Activities": "[3.0.1]"}
+
+        # Execute
+        workflow_dto = normalizer.normalize(parse_result, project_dependencies=project_deps)
+
+        # Verify
+        assert len(workflow_dto.dependencies) == 1
+        assert workflow_dto.dependencies[0].package == "UiPath.Excel.Activities"
+        assert workflow_dto.dependencies[0].version == "3.0.1"
+
+    def test_normalize_without_project_dependencies(self):
+        """Test backward compatibility when project_dependencies is None."""
+        content = WorkflowContent()
+        parse_result = ParseResult(content=content, success=True)
+
+        normalizer = Normalizer()
+
+        # Execute (no project_dependencies parameter)
+        workflow_dto = normalizer.normalize(parse_result)
+
+        # Verify - should have empty dependencies
+        assert workflow_dto.dependencies == []
+
+    def test_normalize_with_multiple_project_dependencies(self):
+        """Test parsing multiple project dependencies."""
+        content = WorkflowContent()
+        parse_result = ParseResult(content=content, success=True)
+
+        normalizer = Normalizer()
+        project_deps = {
+            "UiPath.Excel.Activities": "[3.0.1]",
+            "UiPath.System.Activities": "[25.4.4]",
+            "UiPath.UIAutomation.Activities": "[23.10.0]",
+        }
+
+        workflow_dto = normalizer.normalize(parse_result, project_dependencies=project_deps)
+
+        # Verify all dependencies present
+        assert len(workflow_dto.dependencies) == 3
+        packages = {dep.package for dep in workflow_dto.dependencies}
+        assert "UiPath.Excel.Activities" in packages
+        assert "UiPath.System.Activities" in packages
+        assert "UiPath.UIAutomation.Activities" in packages
+
+        # Verify versions parsed correctly
+        for dep in workflow_dto.dependencies:
+            assert not dep.version.startswith("[")
+            assert not dep.version.endswith("]")
+            assert dep.version != "unknown"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

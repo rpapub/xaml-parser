@@ -60,6 +60,7 @@ class Normalizer:
         collected_at: str | None = None,
         workflow_id_map: dict[str, str] | None = None,
         sort_output: bool = False,
+        project_dependencies: dict[str, str] | None = None,
     ) -> WorkflowDto:
         """Transform ParseResult to WorkflowDto.
 
@@ -70,6 +71,9 @@ class Normalizer:
             workflow_id_map: Optional mapping of workflow paths to stable IDs for invocations
             sort_output: If True, sort all collections deterministically. If False (default),
                         preserve source file order for activities and other collections.
+            project_dependencies: Optional dict of package dependencies from project.json.
+                                Format: {"PackageName": "[version_constraint]", ...}
+                                Example: {"UiPath.Excel.Activities": "[3.0.1]"}
 
         Returns:
             WorkflowDto with stable IDs, edges, and metadata
@@ -114,12 +118,15 @@ class Normalizer:
         # Transform variables
         variables = [self._transform_variable(var) for var in content.variables]
 
-        # Transform dependencies
+        # Transform dependencies from project.json (if provided)
         # NOTE: Assembly references are NOT package dependencies - they are .NET framework
-        # assemblies required by the VB expression engine. Real package dependencies should
-        # come from project.json (not yet implemented). For now, return empty list.
+        # assemblies required by the VB expression engine and are intentionally excluded.
+        # Real package dependencies come from project.json.
         # See: docs/INSTRUCTIONS-assembly-refs.md
-        dependencies: list[DependencyDto] = []
+        if project_dependencies:
+            dependencies = self._parse_project_dependencies(project_dependencies)
+        else:
+            dependencies = []
 
         # Sort all collections deterministically (only if explicitly requested)
         if sort_output:
@@ -310,6 +317,50 @@ class Normalizer:
                         break
 
                 dependencies.append(DependencyDto(package=package, version=version))
+
+        return dependencies
+
+    def _parse_project_dependencies(self, project_deps: dict[str, str]) -> list[DependencyDto]:
+        """Parse project.json dependencies into DependencyDto list.
+
+        Args:
+            project_deps: Dictionary from project.json dependencies field.
+                         Format: {"PackageName": "[version_constraint]", ...}
+                         Example: {"UiPath.Excel.Activities": "[3.0.1]"}
+
+        Returns:
+            List of DependencyDto objects with parsed versions
+
+        Examples:
+            >>> deps = {"UiPath.Excel.Activities": "[3.0.1]"}
+            >>> result = self._parse_project_dependencies(deps)
+            >>> result[0]
+            DependencyDto(package="UiPath.Excel.Activities", version="3.0.1")
+
+            >>> deps = {"UiPath.System.Activities": "[25.4.4]"}
+            >>> result = self._parse_project_dependencies(deps)
+            >>> result[0]
+            DependencyDto(package="UiPath.System.Activities", version="25.4.4")
+        """
+        dependencies = []
+
+        for package_name, version_constraint in project_deps.items():
+            # Parse version constraint format: "[3.0.1]" → "3.0.1"
+            # Also handle: "(3.0.1,4.0.0)", "[3.0.1,)", "3.0.1", etc.
+            version = version_constraint.strip()
+
+            # Remove brackets/parentheses for exact versions
+            if version.startswith("[") and version.endswith("]"):
+                # Exact version: "[3.0.1]" → "3.0.1"
+                version = version[1:-1].strip()
+            elif version.startswith("(") or version.startswith("["):
+                # Range: "(3.0,4.0)" or "[3.0,)" → keep first version
+                version = version.lstrip("([").split(",")[0].strip()
+
+            # Create DependencyDto
+            dependencies.append(
+                DependencyDto(package=package_name, version=version if version else "unknown")
+            )
 
         return dependencies
 

@@ -201,6 +201,48 @@ class TestProjectParser:
         nonexistent = result.get_workflow("NonExistent.xaml")
         assert nonexistent is None
 
+    def test_project_dependencies_in_dto_output(self, corpus_dir):
+        """Test that project.json dependencies appear in workflow DTOs."""
+        from xaml_parser.project import project_result_to_dto
+
+        project_dir = corpus_dir / "simple_project"
+
+        # Parse project
+        parser = ProjectParser()
+        result = parser.parse_project(project_dir)
+
+        assert result.success, f"Project parsing should succeed: {result.errors}"
+        assert result.project_config is not None
+        assert len(result.project_config.dependencies) > 0, "Project should have dependencies"
+
+        # Convert to DTOs
+        collection_dto = project_result_to_dto(result)
+
+        # Verify dependencies are populated in ALL workflows
+        assert len(collection_dto.workflows) > 0, "Should have at least one workflow"
+
+        for workflow_dto in collection_dto.workflows:
+            # Each workflow should inherit project dependencies
+            assert (
+                len(workflow_dto.dependencies) > 0
+            ), f"Workflow {workflow_dto.name} should have dependencies"
+
+            # Check that versions are parsed correctly (not raw constraint format)
+            for dep in workflow_dto.dependencies:
+                # Version should not have brackets
+                assert not dep.version.startswith(
+                    "["
+                ), f"Version should be parsed, not raw: {dep.version}"
+                assert not dep.version.endswith("]"), f"Version should be parsed: {dep.version}"
+                assert dep.version != "unknown", f"Version should be known: {dep.package}"
+
+            # Check for common UiPath packages
+            packages = {dep.package for dep in workflow_dto.dependencies}
+            # Simple project should have System.Activities at minimum
+            assert any(
+                "System.Activities" in pkg or "UiPath" in pkg for pkg in packages
+            ), f"Should have UiPath/System packages, got: {packages}"
+
 
 class TestProjectConfig:
     """Test ProjectConfig model."""

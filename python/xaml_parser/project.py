@@ -514,12 +514,18 @@ def project_result_to_dto(
         # Derive workflow name from file path
         workflow_name = Path(wf_result.file_path).stem
 
+        # Extract project dependencies if available
+        project_deps = {}
+        if project_result.project_config:
+            project_deps = project_result.project_config.dependencies
+
         # Normalize to DTO (invocations will be empty for now)
         workflow_dto = normalizer.normalize(
             parse_result=wf_result.parse_result,
             workflow_name=workflow_name,
             workflow_id_map={},  # Empty for first pass
             sort_output=sort_output,
+            project_dependencies=project_deps,
         )
 
         workflow_dtos.append(workflow_dto)
