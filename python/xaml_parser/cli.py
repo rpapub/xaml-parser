@@ -269,7 +269,9 @@ def format_dependency_graph(project_result: ProjectResult) -> str:
     """Format project dependency graph."""
     lines = []
 
-    project_name = project_result.project_config.name if project_result.project_config else "(unknown)"
+    project_name = (
+        project_result.project_config.name if project_result.project_config else "(unknown)"
+    )
     lines.append(f"Project: {project_name}")
     lines.append("Dependency Graph:")
     lines.append("")
@@ -540,7 +542,9 @@ Examples:
             # TODO: Implement JSON output for projects
             output = json.dumps(
                 {
-                    "project_name": project_result.project_config.name if project_result.project_config else "(unknown)",
+                    "project_name": project_result.project_config.name
+                    if project_result.project_config
+                    else "(unknown)",
                     "project_dir": str(project_result.project_dir),
                     "success": project_result.success,
                     "total_workflows": project_result.total_workflows,
