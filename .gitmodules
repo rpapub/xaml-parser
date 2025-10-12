@@ -1,0 +1,4 @@
+[submodule "test-corpus"]
+	path = test-corpus
+	url = https://github.com/rpapub/rpax-corpuses.git
+	branch = development
