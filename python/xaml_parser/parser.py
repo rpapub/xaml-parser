@@ -5,12 +5,15 @@ workflow metadata from XAML files using only Python stdlib.
 """
 
 import html
+import logging
 import time
 
 # Use secure XML parsing
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 try:
     from defusedxml.ElementTree import fromstring as defused_fromstring
@@ -81,6 +84,7 @@ class XamlParser:
         try:
             # Read file and collect diagnostics
             file_size = file_path.stat().st_size
+            logger.info("Parsing file: %s (size: %d bytes)", file_path.name, file_size)
             self._diagnostics.file_size_bytes = file_size
             self._diagnostics.processing_steps.append("file_read")
 
@@ -111,21 +115,34 @@ class XamlParser:
             result.raw_xml = content
             result.content_hash = self._id_generator.compute_full_hash(content)
 
+            logger.info(
+                "Successfully parsed %s: %d activities, %d arguments, %d variables",
+                file_path.name,
+                len(workflow_content.activities),
+                len(workflow_content.arguments),
+                len(workflow_content.variables),
+            )
+
         except ET.ParseError as e:
             result.success = False
             result.errors.append(f"XML parse error: {e}")
+            logger.error("XML parse error in %s: %s", file_path, e)
             self._diagnostics.processing_steps.append("xml_parse_failed")
         except UnicodeDecodeError as e:
             result.success = False
             result.errors.append(f"Encoding error: {e}")
+            logger.error("Encoding error in %s: %s", file_path, e)
             self._diagnostics.processing_steps.append("encoding_error")
         except Exception as e:
             result.success = False
             result.errors.append(f"Unexpected error: {e}")
+            logger.exception("Unexpected error parsing %s", file_path)
             self._diagnostics.processing_steps.append("unexpected_error")
 
         result.parse_time_ms = (time.time() - start_time) * 1000
         result.diagnostics = self._diagnostics
+
+        logger.debug("Parse completed for %s in %.2fms", file_path.name, result.parse_time_ms)
 
         # Validate output if in strict mode
         if self.config.get("strict_mode", False):
@@ -155,6 +172,8 @@ class XamlParser:
         # Initialize diagnostics
         self._diagnostics = ParseDiagnostics()
         self._diagnostics.processing_steps.append("parse_content_started")
+
+        logger.debug("Parsing content from string (length: %d chars)", len(xml_content))
 
         try:
             # Store XML content for workflow ID generation

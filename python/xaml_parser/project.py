@@ -8,10 +8,13 @@ This module provides functionality to parse entire UiPath projects by:
 """
 
 import json
+import logging
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+logger = logging.getLogger(__name__)
 
 from .control_flow import ControlFlowExtractor
 from .dto import EntryPointInfo, ProjectInfo, WorkflowCollectionDto
@@ -113,10 +116,20 @@ class ProjectParser:
         errors = []
         warnings = []
 
+        logger.info("Parsing project: %s", project_dir.name)
+        logger.debug(
+            "Project directory: %s (recursive=%s, entry_points_only=%s)",
+            project_dir,
+            recursive,
+            entry_points_only,
+        )
+
         # Load project.json
         try:
             project_config = self._load_project_json(project_dir)
+            logger.info("Loaded project.json for: %s", project_config.name)
         except Exception as e:
+            logger.error("Failed to load project.json from %s: %s", project_dir, e)
             return ProjectResult(
                 project_dir=project_dir,
                 project_config=None,
@@ -129,11 +142,13 @@ class ProjectParser:
             # Only parse entry points from project.json
             workflows_to_parse = self._get_entry_point_paths(project_config, project_dir)
             discovered_workflows: set[str] = set()
+            logger.info("Entry points only mode: found %d entry points", len(workflows_to_parse))
         else:
             # Discover all workflows recursively
             workflows_to_parse, discovered_workflows = self._discover_workflows(
                 project_config, project_dir, recursive=recursive
             )
+            logger.info("Workflow discovery complete: %d workflows found", len(workflows_to_parse))
 
         # Parse all workflows
         workflow_results = []
@@ -169,6 +184,19 @@ class ProjectParser:
 
         # Build dependency graph
         dependency_graph = self._build_dependency_graph(workflow_results)
+
+        success_count = sum(1 for wf in workflow_results if wf.parse_result.success)
+        failed_count = len(workflow_results) - success_count
+
+        logger.info(
+            "Project parsing complete: %d/%d workflows parsed successfully in %.2fms",
+            success_count,
+            len(workflow_results),
+            total_parse_time,
+        )
+
+        if failed_count > 0:
+            logger.warning("%d workflows failed to parse", failed_count)
 
         return ProjectResult(
             project_dir=project_dir,

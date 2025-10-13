@@ -453,10 +453,48 @@ Examples:
         "--max-depth", type=int, default=50, help="Maximum activity nesting depth (default: 50)"
     )
 
-    # Misc options
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    # Logging options
+    logging_group = parser.add_argument_group("logging options")
+    logging_group.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enable verbose diagnostic logging to stderr",
+    )
+    logging_group.add_argument(
+        "--log-level",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set logging level (default: INFO, or from config/env)",
+    )
+    logging_group.add_argument(
+        "--log-dir",
+        type=Path,
+        help="Directory for log files (default: ~/.xaml-parser/logs)",
+    )
+    logging_group.add_argument(
+        "--no-log-file",
+        action="store_true",
+        help="Disable file logging (performance mode)",
+    )
 
     args = parser.parse_args()
+
+    # Load config file if it exists (for logging and provenance)
+    from .provenance import load_config
+
+    config_file = load_config()
+    logging_config = config_file.get("logging", {}) if config_file else {}
+
+    # Setup logging (before any operations)
+    from .logging_config import setup_logging
+
+    setup_logging(
+        log_level=args.log_level or logging_config.get("level", "INFO"),
+        log_dir=args.log_dir,
+        enable_file_logging=not args.no_log_file,
+        verbose=args.verbose,
+        config_dict=logging_config,
+    )
 
     # Build parser config
     config = {
