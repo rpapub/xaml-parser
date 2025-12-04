@@ -87,7 +87,7 @@ def apply_profile(data: dict[str, Any], profile_name: str, dto_type: str) -> dic
     """
     if profile_name not in PROFILES:
         raise ValueError(
-            f"Unknown profile: {profile_name}. " f"Valid profiles: {', '.join(PROFILES.keys())}"
+            f"Unknown profile: {profile_name}. Valid profiles: {', '.join(PROFILES.keys())}"
         )
 
     profile = PROFILES[profile_name]
@@ -231,7 +231,7 @@ def get_profile_fields(profile_name: str, dto_type: str) -> list[str] | None:
     """
     if profile_name not in PROFILES:
         raise ValueError(
-            f"Unknown profile: {profile_name}. " f"Valid profiles: {', '.join(PROFILES.keys())}"
+            f"Unknown profile: {profile_name}. Valid profiles: {', '.join(PROFILES.keys())}"
         )
 
     profile = PROFILES[profile_name]

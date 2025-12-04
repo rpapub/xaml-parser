@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from xaml_parser.project import ProjectConfig, ProjectParser, WorkflowResult
+from cpmf_xaml_parser.project import ProjectConfig, ProjectParser, WorkflowResult
 
 
 class TestProjectParser:
@@ -203,7 +203,7 @@ class TestProjectParser:
 
     def test_project_dependencies_in_dto_output(self, corpus_dir):
         """Test that project.json dependencies appear in workflow DTOs."""
-        from xaml_parser.project import project_result_to_dto
+        from cpmf_xaml_parser.project import project_result_to_dto
 
         project_dir = corpus_dir / "simple_project"
 
@@ -267,7 +267,7 @@ class TestWorkflowResult:
 
     def test_workflow_result_creation(self, parser):
         """Test creating WorkflowResult."""
-        from xaml_parser.models import ParseResult, WorkflowContent
+        from cpmf_xaml_parser.models import ParseResult, WorkflowContent
 
         parse_result = ParseResult(content=WorkflowContent(), success=True)
 

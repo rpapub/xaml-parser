@@ -97,6 +97,67 @@ class XmlUtils:
         """
         return tag.split("}")[-1] if "}" in tag else tag
 
+    @staticmethod
+    def get_prefix_for_uri(namespaces: dict[str, str], uri: str) -> str | None:
+        """Find prefix for a namespace URI (reverse lookup).
+
+        Args:
+            namespaces: Prefix → URI mapping
+            uri: Namespace URI to find
+
+        Returns:
+            Prefix string or None if not found
+        """
+        for prefix, ns_uri in namespaces.items():
+            if ns_uri == uri:
+                return prefix
+        return None
+
+    @staticmethod
+    def get_prefixes_for_uri(namespaces: dict[str, str], uri: str) -> list[str]:
+        """Find all prefixes for a namespace URI (handles aliasing).
+
+        Args:
+            namespaces: Prefix → URI mapping
+            uri: Namespace URI to find
+
+        Returns:
+            List of prefixes that map to the given URI
+        """
+        return [prefix for prefix, ns_uri in namespaces.items() if ns_uri == uri]
+
+    @staticmethod
+    def find_elements_by_local_name(
+        root: ET.Element,
+        local_name: str,
+        namespace_uri: str | None = None,
+    ) -> list[ET.Element]:
+        """Find elements by local name, optionally filtered by namespace.
+
+        Handles case where elements might have different prefixes but same local name.
+
+        Args:
+            root: Root element to search from
+            local_name: Local element name to find
+            namespace_uri: Optional namespace URI filter
+
+        Returns:
+            List of matching elements
+        """
+        results = []
+        for elem in root.iter():
+            # Extract local name and namespace from tag
+            if "}" in elem.tag:
+                ns, name = elem.tag[1:].split("}", 1)
+            else:
+                ns, name = None, elem.tag
+
+            if name == local_name:
+                if namespace_uri is None or ns == namespace_uri:
+                    results.append(elem)
+
+        return results
+
 
 class TextUtils:
     """Text processing utilities."""
@@ -680,3 +741,19 @@ class ActivityUtils:
             return "exception_handling"
 
         return "other"
+
+    @staticmethod
+    def parse_expression(expression: str, language: str = "VisualBasic") -> Any:
+        """Parse expression using tokenizer-based expression parser.
+
+        Args:
+            expression: Expression text to parse
+            language: Expression language ('VisualBasic' or 'CSharp')
+
+        Returns:
+            ParsedExpression with extracted variables, methods, operators
+        """
+        from .expression_parser import ExpressionParser
+
+        parser = ExpressionParser(language=language)
+        return parser.parse(expression)

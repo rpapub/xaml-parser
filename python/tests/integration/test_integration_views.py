@@ -5,8 +5,8 @@ Tests the complete flow: Parse → Analyze → View → Render
 
 import pytest
 
-from xaml_parser import ProjectParser, analyze_project
-from xaml_parser.views import ExecutionView, NestedView, SliceView
+from cpmf_xaml_parser import ProjectParser, analyze_project
+from cpmf_xaml_parser.views import ExecutionView, NestedView, SliceView
 
 
 @pytest.mark.integration

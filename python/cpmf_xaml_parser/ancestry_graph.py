@@ -74,7 +74,8 @@ class AncestryEdge:
     id: str
     from_id: str
     to_id: str
-    kind: str  # 'arg_binding_in' | 'arg_binding_out' | 'assign' | 'cast' | 'extract' | 'transform' | 'aggregate'
+    # 'arg_binding_in' | 'arg_binding_out' | 'assign' | 'cast' | 'extract' | 'transform' | 'aggregate'
+    kind: str
     via_activity_id: str
     transformation: TransformationInfo | None = None
     confidence: str = "definite"  # 'definite' | 'possible' | 'unknown'

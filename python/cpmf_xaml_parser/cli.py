@@ -292,6 +292,138 @@ def format_dependency_graph(project_result: ProjectResult) -> str:
     return "\n".join(lines)
 
 
+def format_performance_report(parse_result: ParseResult) -> str:
+    """Format performance profiling report (ASCII only, no Unicode).
+
+    Displays timing breakdown, memory usage, and bottleneck analysis
+    from ParseDiagnostics.performance_metrics.
+
+    Args:
+        parse_result: ParseResult with diagnostics containing performance_metrics
+
+    Returns:
+        Formatted ASCII report string
+
+    Example output:
+        [INFO] Performance Report
+        ----------------------------------------
+        Timing Breakdown:
+          Operation                    Total      Count  Avg      %
+          -----------------------------------------------------------
+          activities_extract           125.3ms    1      125.3    58.2%
+          xml_parse                    45.2ms     1      45.2     21.0%
+          variables_extract            18.5ms     1      18.5     8.6%
+          ...
+
+        Memory Usage:
+          Peak: 12.5 MB
+          Delta: +8.2 MB
+          Per Activity: ~0.15 MB
+
+        Bottlenecks:
+          [WARN] activities_extract took 58.2% of total time
+          [INFO] Consider optimizing activity extraction
+    """
+    lines = []
+
+    # Check if profiling data exists
+    if not parse_result.diagnostics or not parse_result.diagnostics.performance_metrics:
+        lines.append("[INFO] Performance profiling not enabled or no data collected")
+        return "\n".join(lines)
+
+    metrics = parse_result.diagnostics.performance_metrics
+
+    lines.append("")
+    lines.append("[INFO] Performance Report")
+    lines.append("-" * 60)
+    lines.append("")
+
+    # Section 1: Timing Breakdown
+    lines.append("Timing Breakdown:")
+    lines.append(f"  {'Operation':<28} {'Total':<10} {'Count':<6} {'Avg':<8} {'%':<6}")
+    lines.append("  " + "-" * 58)
+
+    # Collect timing operations (those ending in _total_ms)
+    timing_ops = []
+    for key in sorted(metrics.keys()):
+        if key.endswith("_total_ms"):
+            op_name = key.replace("_total_ms", "")
+            total_ms = metrics.get(key, 0.0)
+            count = metrics.get(f"{op_name}_count", 0)
+            avg_ms = metrics.get(f"{op_name}_avg_ms", 0.0)
+
+            # Calculate percentage of total_profiled_ms
+            total_profiled = metrics.get("total_profiled_ms", 0.0)
+            if total_profiled > 0:
+                pct = (total_ms / total_profiled) * 100.0
+            else:
+                pct = 0.0
+
+            timing_ops.append((op_name, total_ms, count, avg_ms, pct))
+
+    # Sort by percentage descending
+    timing_ops.sort(key=lambda x: x[4], reverse=True)
+
+    # Display timing operations
+    for op_name, total_ms, count, avg_ms, pct in timing_ops:
+        lines.append(f"  {op_name:<28} {total_ms:<10.2f} {count:<6} {avg_ms:<8.2f} {pct:<6.1f}%")
+
+    # Add total
+    total_profiled = metrics.get("total_profiled_ms", 0.0)
+    lines.append("  " + "-" * 58)
+    lines.append(f"  {'TOTAL':<28} {total_profiled:<10.2f}")
+    lines.append("")
+
+    # Section 2: Memory Usage
+    lines.append("Memory Usage:")
+
+    memory_peak_mb = metrics.get("memory_peak_mb", 0.0)
+    memory_delta_mb = metrics.get("memory_delta_mb", 0.0)
+    psutil_peak_mb = metrics.get("psutil_peak_mb", 0.0)
+    psutil_delta_mb = metrics.get("psutil_delta_mb", 0.0)
+
+    # Tracemalloc metrics (Python objects)
+    lines.append(f"  Peak (Python objects): {memory_peak_mb:.2f} MB")
+    lines.append(f"  Delta (Python objects): {memory_delta_mb:+.2f} MB")
+
+    # Psutil metrics (process RSS) if available
+    if psutil_peak_mb > 0:
+        lines.append(f"  Peak (Process RSS): {psutil_peak_mb:.2f} MB")
+        lines.append(f"  Delta (Process RSS): {psutil_delta_mb:+.2f} MB")
+
+    # Per-activity estimate
+    if parse_result.content and parse_result.content.total_activities > 0:
+        per_activity_kb = (memory_delta_mb * 1024) / parse_result.content.total_activities
+        lines.append(f"  Per Activity: ~{per_activity_kb:.2f} KB")
+
+    lines.append("")
+
+    # Section 3: Bottleneck Analysis
+    bottlenecks = []
+    threshold_pct = 10.0
+
+    for op_name, _total_ms, _count, _avg_ms, pct in timing_ops:
+        if pct >= threshold_pct:
+            bottlenecks.append((op_name, pct))
+
+    if bottlenecks:
+        lines.append("Bottlenecks (>10% of total time):")
+        for op_name, pct in bottlenecks:
+            lines.append(f"  [WARN] {op_name} took {pct:.1f}% of total time")
+
+        # Add optimization suggestions
+        if any(op == "activities_extract" for op, _ in bottlenecks):
+            lines.append("  [INFO] Consider using --no-expressions for faster parsing")
+        if any(op == "xml_parse" for op, _ in bottlenecks):
+            lines.append("  [INFO] XML parsing is I/O bound - file size matters")
+    else:
+        lines.append("Bottlenecks: None (all operations < 10% of total)")
+
+    lines.append("")
+
+    return "\n".join(lines)
+
+
 def parse_files(patterns: list[str], config: dict[str, Any]) -> list[tuple[str, ParseResult]]:
     """Parse multiple files from glob patterns."""
     parser = XamlParser(config)
@@ -416,6 +548,16 @@ Examples:
             "(default: preserve source order) [requires --dto]"
         ),
     )
+    parser.add_argument(
+        "--metrics",
+        action="store_true",
+        help="Calculate quality metrics (complexity, size, quality score) [requires --dto]",
+    )
+    parser.add_argument(
+        "--anti-patterns",
+        action="store_true",
+        help="Detect anti-patterns and code smells [requires --dto]",
+    )
 
     # View options (Phase 6)
     parser.add_argument(
@@ -423,8 +565,7 @@ Examples:
         choices=["flat", "execution", "slice"],
         default="flat",
         help=(
-            "View type: flat (default), execution (call graph), "
-            "or slice (context) [requires --dto]"
+            "View type: flat (default), execution (call graph), or slice (context) [requires --dto]"
         ),
     )
     parser.add_argument(
@@ -451,6 +592,16 @@ Examples:
     )
     parser.add_argument(
         "--max-depth", type=int, default=50, help="Maximum activity nesting depth (default: 50)"
+    )
+    parser.add_argument(
+        "--performance",
+        action="store_true",
+        help="Enable detailed performance profiling (timing and memory usage). Report shown with --verbose.",
+    )
+    parser.add_argument(
+        "--progress",
+        action="store_true",
+        help="Show progress bars for multi-file operations (requires rich library)",
     )
 
     # Logging options
@@ -501,6 +652,7 @@ Examples:
         "extract_expressions": not args.no_expressions,
         "strict_mode": args.strict,
         "max_depth": args.max_depth,
+        "enable_profiling": args.performance,  # v0.2.11
     }
 
     # Detect mode: project vs file parsing
@@ -554,6 +706,7 @@ Examples:
             project_dir,
             recursive=not args.entry_points_only,
             entry_points_only=args.entry_points_only,
+            show_progress=args.progress,  # v0.2.12
         )
 
         # Format project output
@@ -565,7 +718,7 @@ Examples:
             index = analyze_project(project_result)
 
             # Render view
-            from .views import ExecutionView, FlatView, SliceView, View
+            from .views import ExecutionView, NestedView, SliceView, View
 
             view: View
             if args.view == "execution":
@@ -592,8 +745,8 @@ Examples:
                 view = SliceView(focus=args.focus, radius=args.radius)
                 view_output = view.render(index)
 
-            else:  # flat view (default)
-                view = FlatView()
+            else:  # flat view (default) - uses NestedView for hierarchical structure
+                view = NestedView()
                 view_output = view.render(index)
 
             # Write output
@@ -662,7 +815,11 @@ Examples:
             if parse_result.success:
                 workflow_name = Path(file_path).stem
                 workflow_dto = normalizer.normalize(
-                    parse_result, workflow_name=workflow_name, sort_output=args.sort
+                    parse_result,
+                    workflow_name=workflow_name,
+                    sort_output=args.sort,
+                    calculate_metrics=getattr(args, "metrics", False),
+                    detect_anti_patterns=getattr(args, "anti_patterns", False),
                 )
                 workflows.append(workflow_dto)
 
@@ -768,6 +925,14 @@ Examples:
             output = format_pretty(parse_result, file_path)
     else:
         output = ""
+
+    # Add performance report if requested (v0.2.11)
+    # Show only when BOTH --performance AND --verbose are set
+    if args.performance and args.verbose and len(results) == 1:
+        _, parse_result = results[0]
+        if parse_result.success:
+            perf_report = format_performance_report(parse_result)
+            output += "\n" + perf_report
 
     # Write output
     if args.output:

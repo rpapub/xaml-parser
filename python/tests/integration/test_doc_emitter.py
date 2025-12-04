@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from xaml_parser.dto import (
+from cpmf_xaml_parser.dto import (
     ActivityDto,
     ArgumentDto,
     EdgeDto,
@@ -10,8 +10,8 @@ from xaml_parser.dto import (
     VariableDto,
     WorkflowDto,
 )
-from xaml_parser.emitters import EmitterConfig
-from xaml_parser.emitters.doc_emitter import DocEmitter
+from cpmf_xaml_parser.emitters import EmitterConfig
+from cpmf_xaml_parser.emitters.doc_emitter import DocEmitter
 
 
 class TestDocEmitter:

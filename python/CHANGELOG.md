@@ -7,16 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-12-03
+
 ### Added
-- Production-ready packaging with quality gates
-- Ruff linting and formatting
-- Mypy strict type checking
-- Pre-commit hooks
-- Test coverage requirements (≥90%)
+- Expression language detection (VisualBasic vs CSharp) via `MetadataExtractor.extract_expression_language()`
+- `expression_language` field to `WorkflowContent` model
+- Encoding detection and fallback support (UTF-8, UTF-8-sig, UTF-16, ISO-8859-1, cp1252)
+- Comprehensive unit tests for metadata extraction (19 new tests):
+  - x:Class attribute extraction (4 tests)
+  - .NET namespace imports extraction (2 tests)
+  - Assembly references extraction (4 tests - modern and legacy formats)
+  - Expression language detection (4 tests - VB.NET, C#, none)
+  - Case-insensitive default value extraction (1 test)
+
+### Fixed
+- **Bug**: Case-insensitive default value extraction - Arguments with capitalized `Default` attribute now correctly extracted
+- Parser now checks both `default` and `Default` attributes in `_extract_arguments()`
 
 ### Changed
-- Bumped minimum Python version to 3.11
-- Switched build backend to hatchling
+- File reading now uses encoding detection with automatic fallback
+- `encoding_detected` field in `ParseDiagnostics` now reflects actual encoding used
+
+### Developer
+- Added 6 detailed implementation plans (v0.2.1 through v0.2.6)
+- Plan tracking with markdown checklists in docs/plans/
+- All plans tracked with completion status
 
 ## [0.1.0] - 2025-10-11
 

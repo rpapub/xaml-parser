@@ -213,6 +213,24 @@ def xaml_with_annotations():
 
 
 @pytest.fixture
+def xaml_with_capitalized_default():
+    """XAML with both lowercase 'default' and capitalized 'Default' attributes on arguments."""
+    return """<?xml version="1.0" encoding="utf-8"?>
+<Activity x:Class="TestWorkflow"
+          xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+          xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation">
+  <x:Members>
+    <x:Property Name="in_ConfigPath" Type="InArgument(x:String)" Default="Config.xlsx" />
+    <x:Property Name="in_FilePath" Type="InArgument(x:String)" default="data.csv" />
+  </x:Members>
+  <Sequence DisplayName="Main">
+    <LogMessage Text="[in_ConfigPath]" />
+  </Sequence>
+</Activity>"""
+
+
+@pytest.fixture
 def xaml_with_namespaces():
     """XAML with multiple namespaces for testing."""
     return """<?xml version="1.0" encoding="utf-8"?>

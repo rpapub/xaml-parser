@@ -33,8 +33,7 @@ class DocEmitter(Emitter):
         """
         if not JINJA2_AVAILABLE:
             msg = (
-                "jinja2 is required for doc emitter. "
-                "Install with: pip install 'xaml-parser[docs]'"
+                "jinja2 is required for doc emitter. Install with: pip install 'xaml-parser[docs]'"
             )
             raise ImportError(msg)
 

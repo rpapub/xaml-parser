@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from xaml_parser.project import ProjectParser, project_result_to_dto
+from cpmf_xaml_parser.project import ProjectParser, project_result_to_dto
 
 
 @pytest.mark.corpus

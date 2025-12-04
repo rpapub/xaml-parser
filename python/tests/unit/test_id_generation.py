@@ -12,7 +12,7 @@ Tests:
 
 import pytest
 
-from xaml_parser.id_generation import IdGenerator, generate_stable_id
+from cpmf_xaml_parser.id_generation import IdGenerator, generate_stable_id
 
 
 class TestIdGenerator:

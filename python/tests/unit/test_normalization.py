@@ -15,7 +15,7 @@ Tests:
 
 import pytest
 
-from xaml_parser.models import (
+from cpmf_xaml_parser.models import (
     Activity,
     ParseDiagnostics,
     ParseResult,
@@ -23,7 +23,7 @@ from xaml_parser.models import (
     WorkflowContent,
     WorkflowVariable,
 )
-from xaml_parser.normalization import Normalizer
+from cpmf_xaml_parser.normalization import Normalizer
 
 
 class TestNormalizer:

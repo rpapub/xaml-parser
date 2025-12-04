@@ -7,15 +7,15 @@ Python implementation of the XAML workflow parser for automation projects.
 ### From PyPI (when published)
 
 ```bash
-pip install xaml-parser
+pip install cpmf-cpmf-xaml-parser
 ```
 
 ### For Development
 
 ```bash
-# Clone the monorepo
-git clone https://github.com/rpapub/xaml-parser.git
-cd xaml-parser/python
+# Clone the repository
+git clone https://github.com/rpapub/cpmf-xaml-parser.git
+cd cpmf-xaml-parser/python
 
 # Install with uv (recommended)
 uv sync
@@ -30,7 +30,7 @@ pip install -e .
 
 ```python
 from pathlib import Path
-from xaml_parser import XamlParser
+from cpmf_xaml_parser import XamlParser
 
 # Parse a workflow file
 parser = XamlParser()
@@ -62,46 +62,46 @@ else:
 
 ```bash
 # Parse entire project from project.json
-xaml-parser project.json
-xaml-parser /path/to/project.json
-xaml-parser /path/to/project        # Directory containing project.json
+cpmf-xaml-parser project.json
+cpmf-xaml-parser /path/to/project.json
+cpmf-xaml-parser /path/to/project        # Directory containing project.json
 
 # Show workflow dependency graph
-xaml-parser project.json --graph
+cpmf-xaml-parser project.json --graph
 
 # Parse only entry points (no recursive discovery)
-xaml-parser project.json --entry-points-only
+cpmf-xaml-parser project.json --entry-points-only
 
 # Save to file
-xaml-parser project.json --json -o output.json
+cpmf-xaml-parser project.json --json -o output.json
 ```
 
 **Individual Workflow Files:**
 
 ```bash
 # Parse single workflow
-xaml-parser Main.xaml
+cpmf-xaml-parser Main.xaml
 
 # JSON output
-xaml-parser Main.xaml --json
+cpmf-xaml-parser Main.xaml --json
 
 # List only arguments
-xaml-parser Main.xaml --arguments
+cpmf-xaml-parser Main.xaml --arguments
 
 # Show activity tree
-xaml-parser Main.xaml --tree
+cpmf-xaml-parser Main.xaml --tree
 
 # Process multiple files
-xaml-parser *.xaml --summary
+cpmf-xaml-parser *.xaml --summary
 
 # Recursive search
-xaml-parser **/*.xaml --summary
+cpmf-xaml-parser **/*.xaml --summary
 ```
 
 **Using with uv (development):**
 ```bash
-uv run xaml-parser project.json
-uv run xaml-parser workflow.xaml
+uv run cpmf-xaml-parser project.json
+uv run cpmf-xaml-parser workflow.xaml
 ```
 
 **CLI Options:**
@@ -127,7 +127,7 @@ uv run xaml-parser workflow.xaml
 
 ```python
 from pathlib import Path
-from xaml_parser import ProjectParser
+from cpmf_xaml_parser import ProjectParser
 
 # Parse entire project
 parser = ProjectParser()
@@ -159,7 +159,7 @@ else:
 
 ## Features
 
-- **Zero Dependencies**: Uses only Python standard library (except defusedxml for security)
+- **Minimal Dependencies**: Single required dependency (defusedxml for secure XML parsing)
 - **Complete Extraction**: Arguments, variables, activities, expressions, annotations
 - **Project Parsing**: Auto-discover and parse entire UiPath projects with dependency analysis
 - **Type Safety**: Full type hints for all APIs
@@ -229,7 +229,7 @@ Data models for parsed content:
 Schema-based validation:
 
 ```python
-from xaml_parser.validation import validate_output
+from cpmf_xaml_parser.validation import validate_output
 
 errors = validate_output(result)
 if errors:
@@ -309,7 +309,7 @@ python/
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.11+
 - defusedxml (for secure XML parsing)
 - pytest (for development)
 
@@ -328,10 +328,15 @@ See the main repository [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines.
 
 ## License
 
-Licensed under CC-BY 4.0. See [LICENSE](../LICENSE) for details.
+This project is dual-licensed:
+
+- **Code**: Apache License 2.0 (see [LICENSE-APACHE](LICENSE-APACHE))
+- **Documentation & Output**: Creative Commons Attribution 4.0 (see [LICENSE-CC-BY](LICENSE-CC-BY))
+
+You may choose which license applies to your use case.
 
 ## Links
 
-- **Monorepo**: https://github.com/rpapub/xaml-parser
-- **Issues**: https://github.com/rpapub/xaml-parser/issues
-- **PyPI**: https://pypi.org/project/xaml-parser/ (planned)
+- **Repository**: https://github.com/rpapub/cpmf-xaml-parser
+- **Issues**: https://github.com/rpapub/cpmf-xaml-parser/issues
+- **PyPI**: https://pypi.org/project/cpmf-xaml-parser/ (coming soon)

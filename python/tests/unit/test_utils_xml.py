@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from xaml_parser.utils import XmlUtils
+from cpmf_xaml_parser.utils import XmlUtils
 
 
 class TestXmlUtilsSafeParse:

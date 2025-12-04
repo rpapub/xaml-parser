@@ -13,8 +13,6 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
-
 try:
     from defusedxml.ElementTree import fromstring as defused_fromstring
 except ImportError:
@@ -36,13 +34,17 @@ from .id_generation import IdGenerator
 from .models import (
     Activity,
     Expression,
+    ParseDiagnostic,
     ParseDiagnostics,
     ParseResult,
     WorkflowArgument,
     WorkflowContent,
     WorkflowVariable,
 )
+from .profiling import Profiler
 from .validation import validate_output
+
+logger = logging.getLogger(__name__)
 
 
 class XamlParser:
@@ -65,6 +67,9 @@ class XamlParser:
         )  # Re-initialized per parse operation
         self._workflow_xml_content = ""  # Store original XML for workflow ID generation
 
+        # Initialize profiler (v0.2.11)
+        self.profiler = Profiler(enabled=self.config.get("enable_profiling", False))
+
     def parse_file(self, file_path: Path) -> ParseResult:
         """Parse XAML workflow file.
 
@@ -81,32 +86,40 @@ class XamlParser:
         self._diagnostics = ParseDiagnostics()
         self._diagnostics.processing_steps.append("parse_file_started")
 
+        # Start memory tracking (v0.2.11)
+        if self.profiler.enabled:
+            self.profiler.start_memory_tracking()
+
         try:
             # Read file and collect diagnostics
-            file_size = file_path.stat().st_size
-            logger.info("Parsing file: %s (size: %d bytes)", file_path.name, file_size)
-            self._diagnostics.file_size_bytes = file_size
-            self._diagnostics.processing_steps.append("file_read")
+            with self.profiler.profile("file_read"):
+                file_size = file_path.stat().st_size
+                logger.info("Parsing file: %s (size: %d bytes)", file_path.name, file_size)
+                self._diagnostics.file_size_bytes = file_size
+                self._diagnostics.processing_steps.append("file_read")
 
-            # Read and parse XAML
-            content = file_path.read_text(encoding="utf-8")
-            self._workflow_xml_content = content  # Store for workflow ID generation
-            self._diagnostics.encoding_detected = "utf-8"
+                # Read and parse XAML with encoding detection
+                content, encoding_used = self._read_file_with_encoding(file_path)
+                self._workflow_xml_content = content  # Store for workflow ID generation
+                self._diagnostics.encoding_detected = encoding_used
 
-            parse_start = time.time()
-            root = defused_fromstring(content)
-            self._diagnostics.performance_metrics["xml_parse_ms"] = (
-                time.time() - parse_start
-            ) * 1000
-            self._diagnostics.root_element_tag = root.tag
-            self._diagnostics.processing_steps.append("xml_parsed")
+            # Parse XML
+            with self.profiler.profile("xml_parse"):
+                parse_start = time.time()
+                root = defused_fromstring(content)
+                self._diagnostics.performance_metrics["xml_parse_ms"] = (
+                    time.time() - parse_start
+                ) * 1000
+                self._diagnostics.root_element_tag = root.tag
+                self._diagnostics.processing_steps.append("xml_parsed")
 
             # Extract all workflow content
-            extract_start = time.time()
-            workflow_content = self._extract_workflow_content(root, str(file_path))
-            self._diagnostics.performance_metrics["content_extract_ms"] = (
-                time.time() - extract_start
-            ) * 1000
+            with self.profiler.profile("content_extract_total"):
+                extract_start = time.time()
+                workflow_content = self._extract_workflow_content(root, str(file_path))
+                self._diagnostics.performance_metrics["content_extract_ms"] = (
+                    time.time() - extract_start
+                ) * 1000
 
             result.content = workflow_content
             self._diagnostics.processing_steps.append("content_extracted")
@@ -125,12 +138,31 @@ class XamlParser:
 
         except ET.ParseError as e:
             result.success = False
-            result.errors.append(f"XML parse error: {e}")
+            # Extract line/column info from parse error
+            line = getattr(e, "lineno", None)
+            column = getattr(e, "offset", None)
+
+            # Create structured diagnostic
+            diagnostic = ParseDiagnostic(
+                level="error",
+                message=f"XML parse error: {str(e)}",
+                line=line,
+                column=column,
+                suggestion="Check for unclosed tags, mismatched brackets, or invalid XML syntax",
+            )
+            self._diagnostics.messages.append(diagnostic)
+            result.errors.append(str(diagnostic))
             logger.error("XML parse error in %s: %s", file_path, e)
             self._diagnostics.processing_steps.append("xml_parse_failed")
         except UnicodeDecodeError as e:
             result.success = False
-            result.errors.append(f"Encoding error: {e}")
+            diagnostic = ParseDiagnostic(
+                level="error",
+                message=f"Encoding error: {str(e)}",
+                suggestion="File may be in a different encoding. Common encodings: UTF-8, UTF-16, ISO-8859-1",
+            )
+            self._diagnostics.messages.append(diagnostic)
+            result.errors.append(str(diagnostic))
             logger.error("Encoding error in %s: %s", file_path, e)
             self._diagnostics.processing_steps.append("encoding_error")
         except Exception as e:
@@ -138,6 +170,11 @@ class XamlParser:
             result.errors.append(f"Unexpected error: {e}")
             logger.exception("Unexpected error parsing %s", file_path)
             self._diagnostics.processing_steps.append("unexpected_error")
+        finally:
+            # Stop memory tracking and merge profiler data (v0.2.11)
+            if self.profiler.enabled:
+                self.profiler.stop_memory_tracking()
+                self._diagnostics.performance_metrics.update(self.profiler.get_summary())
 
         result.parse_time_ms = (time.time() - start_time) * 1000
         result.diagnostics = self._diagnostics
@@ -258,53 +295,68 @@ class XamlParser:
         self._diagnostics.xml_depth = max_depth
 
         # Extract namespaces (xmlns declarations)
-        content.namespaces = self._extract_namespaces(root)
-        content.xmlns_declarations = content.namespaces.copy()  # Alias
-        self._diagnostics.namespaces_detected = len(content.namespaces)
-        self._diagnostics.processing_steps.append("namespaces_extracted")
+        with self.profiler.profile("namespace_extract"):
+            content.namespaces = self._extract_namespaces(root)
+            content.xmlns_declarations = content.namespaces.copy()  # Alias
+            self._diagnostics.namespaces_detected = len(content.namespaces)
+            self._diagnostics.processing_steps.append("namespaces_extracted")
 
         # Extract XAML class name (x:Class attribute)
-        content.xaml_class = self._extract_xaml_class(root, content.namespaces)
-        self._diagnostics.processing_steps.append("xaml_class_extracted")
+        with self.profiler.profile("xaml_class_extract"):
+            content.xaml_class = self._extract_xaml_class(root, content.namespaces)
+            self._diagnostics.processing_steps.append("xaml_class_extracted")
 
         # Extract imported .NET namespaces (TextExpression.NamespacesForImplementation)
-        content.imported_namespaces = self._extract_imported_namespaces(root)
-        self._diagnostics.processing_steps.append("imported_namespaces_extracted")
+        with self.profiler.profile("imported_ns_extract"):
+            content.imported_namespaces = self._extract_imported_namespaces(root)
+            self._diagnostics.processing_steps.append("imported_namespaces_extracted")
 
         # Extract assembly references (TextExpression.ReferencesForImplementation)
         if self.config["extract_assembly_references"]:
-            content.assembly_references = self._extract_assembly_references(root)
-            self._diagnostics.processing_steps.append("assembly_references_extracted")
+            with self.profiler.profile("assembly_refs_extract"):
+                content.assembly_references = self._extract_assembly_references(root)
+                self._diagnostics.processing_steps.append("assembly_references_extracted")
+
+        # Extract expression language (VisualBasic or CSharp)
+        with self.profiler.profile("expr_lang_detect"):
+            content.expression_language = self._extract_expression_language(root)
+            self._diagnostics.processing_steps.append("expression_language_extracted")
 
         # Extract arguments from x:Members
         if self.config["extract_arguments"]:
-            content.arguments = self._extract_arguments(root, content.namespaces)
-            self._diagnostics.arguments_found = len(content.arguments)
-            self._diagnostics.processing_steps.append("arguments_extracted")
+            with self.profiler.profile("arguments_extract"):
+                content.arguments = self._extract_arguments(root, content.namespaces)
+                self._diagnostics.arguments_found = len(content.arguments)
+                self._diagnostics.processing_steps.append("arguments_extracted")
 
         # Extract variables from all scopes
         if self.config["extract_variables"]:
-            content.variables = self._extract_variables(root, content.namespaces)
-            self._diagnostics.variables_found = len(content.variables)
-            self._diagnostics.processing_steps.append("variables_extracted")
+            with self.profiler.profile("variables_extract"):
+                content.variables = self._extract_variables(root, content.namespaces)
+                self._diagnostics.variables_found = len(content.variables)
+                self._diagnostics.processing_steps.append("variables_extracted")
 
         # Extract activities with complete metadata
         if self.config["extract_activities"]:
-            content.activities = self._extract_activities(root, content.namespaces, workflow_id)
-            self._diagnostics.activities_found = len(content.activities)
-            # Count activities with annotations
-            self._diagnostics.annotations_found = sum(1 for a in content.activities if a.annotation)
-            # Count expressions
-            self._diagnostics.expressions_found = sum(
-                len(a.expressions) for a in content.activities
-            )
-            self._diagnostics.processing_steps.append("activities_extracted")
+            with self.profiler.profile("activities_extract"):
+                content.activities = self._extract_activities(root, content.namespaces, workflow_id)
+                self._diagnostics.activities_found = len(content.activities)
+                # Count activities with annotations
+                self._diagnostics.annotations_found = sum(
+                    1 for a in content.activities if a.annotation
+                )
+                # Count expressions
+                self._diagnostics.expressions_found = sum(
+                    len(a.expressions) for a in content.activities
+                )
+                self._diagnostics.processing_steps.append("activities_extracted")
 
         # Extract root annotation
-        content.root_annotation = self._extract_root_annotation(root, content.namespaces)
-        if content.root_annotation:
-            self._diagnostics.annotations_found += 1
-        self._diagnostics.processing_steps.append("root_annotation_extracted")
+        with self.profiler.profile("root_annotation_extract"):
+            content.root_annotation = self._extract_root_annotation(root, content.namespaces)
+            if content.root_annotation:
+                self._diagnostics.annotations_found += 1
+            self._diagnostics.processing_steps.append("root_annotation_extracted")
 
         # Calculate statistics
         content.total_activities = len(content.activities)
@@ -367,8 +419,8 @@ class XamlParser:
                 if annotation:
                     annotation = html.unescape(annotation)  # Decode HTML entities
 
-            # Extract default value
-            default_value = prop.get("default") or prop.text
+            # Extract default value (check both lowercase and capitalized)
+            default_value = prop.get("default") or prop.get("Default") or prop.text
 
             argument = WorkflowArgument(
                 name=name,
@@ -546,6 +598,36 @@ class XamlParser:
 
         return None
 
+    def _read_file_with_encoding(self, file_path: Path) -> tuple[str, str]:
+        """Read file content with encoding detection.
+
+        Tries multiple encodings in order: UTF-8, UTF-8 with BOM, UTF-16,
+        ISO-8859-1, Windows-1252. Falls back to UTF-8 with error replacement.
+
+        Args:
+            file_path: Path to file to read
+
+        Returns:
+            Tuple of (content, encoding_used)
+        """
+        encodings = ["utf-8", "utf-8-sig", "utf-16", "iso-8859-1", "cp1252"]
+
+        for encoding in encodings:
+            try:
+                content = file_path.read_text(encoding=encoding)
+                logger.debug("Successfully read file with encoding: %s", encoding)
+                return content, encoding
+            except (UnicodeDecodeError, UnicodeError):
+                continue
+
+        # Last resort: read as binary, replace errors
+        logger.warning(
+            "Unable to decode %s with standard encodings, using UTF-8 with error replacement",
+            file_path.name,
+        )
+        content = file_path.read_bytes().decode("utf-8", errors="replace")
+        return content, "utf-8-fallback"
+
     def _extract_xaml_class(self, root: ET.Element, namespaces: dict[str, str]) -> str | None:
         """Extract x:Class attribute from root Activity element."""
         return MetadataExtractor.extract_xaml_class(root, namespaces)
@@ -557,6 +639,10 @@ class XamlParser:
     def _extract_assembly_references(self, root: ET.Element) -> list[str]:
         """Extract assembly references from TextExpression.ReferencesForImplementation."""
         return MetadataExtractor.extract_assembly_references(root)
+
+    def _extract_expression_language(self, root: ET.Element) -> str | None:
+        """Extract expression language (VisualBasic or CSharp) from workflow XAML."""
+        return MetadataExtractor.extract_expression_language(root)
 
     def _extract_type_info(
         self, element: ET.Element, namespaces: dict[str, str]

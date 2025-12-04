@@ -126,7 +126,7 @@ class AncestryMermaidEmitter:
 
         # Emit edges
         edge_count = 0
-        for edge_id, edge in graph.edges.items():
+        for _edge_id, edge in graph.edges.items():
             if edge_count >= max_nodes * 2:  # Limit edges too
                 break
 
@@ -269,10 +269,10 @@ class AncestryGraphMLEmitter:
                 nx.write_graphml(graph.graph, output_path)
             else:
                 # Convert to NetworkX first
-                G = nx.DiGraph()
+                g = nx.DiGraph()
 
                 for node_id, node in graph.nodes.items():
-                    G.add_node(
+                    g.add_node(
                         node_id,
                         name=node.name,
                         entity_type=node.entity_type,
@@ -280,20 +280,20 @@ class AncestryGraphMLEmitter:
                         workflow=node.workflow_name,
                     )
 
-                for edge_id, edge in graph.edges.items():
-                    G.add_edge(
+                for _edge_id, edge in graph.edges.items():
+                    g.add_edge(
                         edge.from_id,
                         edge.to_id,
                         kind=edge.kind,
                         confidence=edge.confidence,
                     )
 
-                nx.write_graphml(G, output_path)
+                nx.write_graphml(g, output_path)
 
-        except ImportError:
+        except ImportError as err:
             raise RuntimeError(
                 "NetworkX is required for GraphML export. Install with: pip install networkx"
-            )
+            ) from err
 
 
 class AncestryDOTEmitter:
@@ -343,7 +343,7 @@ class AncestryDOTEmitter:
         lines.append("")
 
         # Emit edges
-        for edge_id, edge in graph.edges.items():
+        for _edge_id, edge in graph.edges.items():
             from_id_safe = self._sanitize_id(edge.from_id)
             to_id_safe = self._sanitize_id(edge.to_id)
 

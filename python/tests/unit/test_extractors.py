@@ -15,8 +15,8 @@ from typing import Any
 
 import pytest
 
-from xaml_parser.constants import DEFAULT_CONFIG
-from xaml_parser.extractors import (
+from cpmf_xaml_parser.constants import DEFAULT_CONFIG
+from cpmf_xaml_parser.extractors import (
     ActivityExtractor,
     AnnotationExtractor,
     ArgumentExtractor,
@@ -222,6 +222,26 @@ class TestArgumentExtractor:
 
         assert len(arguments) == 1
         assert arguments[0].direction == "in"
+
+    def test_extract_arguments_with_capitalized_default(self, xaml_with_capitalized_default):
+        """Test extraction of arguments with both lowercase 'default' and capitalized 'Default'."""
+        root = parse_xaml_string(xaml_with_capitalized_default)
+        namespaces = {
+            "x": "http://schemas.microsoft.com/winfx/2006/xaml",
+            "sap2010": "http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation",
+        }
+
+        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+
+        assert len(arguments) == 2
+
+        config_arg = next(a for a in arguments if a.name == "in_ConfigPath")
+        file_arg = next(a for a in arguments if a.name == "in_FilePath")
+
+        # Test capitalized Default attribute is extracted
+        assert config_arg.default_value == "Config.xlsx"
+        # Test lowercase default attribute is still extracted
+        assert file_arg.default_value == "data.csv"
 
 
 # ============================================================================
@@ -501,6 +521,191 @@ class TestMetadataExtractor:
         # ElementTree may not preserve namespaces in attrib after parsing
         # Just verify we get a dict back
         assert isinstance(namespaces, dict)
+
+    def test_extract_xaml_class_standard(self):
+        """Test x:Class extraction with standard namespace."""
+        xaml = """<?xml version="1.0"?>
+<Activity x:Class="Main"
+    xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+</Activity>"""
+        root = parse_xaml_string(xaml)
+        namespaces = MetadataExtractor.extract_namespaces(root)
+
+        result = MetadataExtractor.extract_xaml_class(root, namespaces)
+        assert result == "Main"
+
+    def test_extract_xaml_class_with_namespace(self):
+        """Test x:Class with fully qualified class name."""
+        xaml = """<?xml version="1.0"?>
+<Activity x:Class="MyProject.Workflows.Main"
+    xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+</Activity>"""
+        root = parse_xaml_string(xaml)
+        namespaces = MetadataExtractor.extract_namespaces(root)
+
+        result = MetadataExtractor.extract_xaml_class(root, namespaces)
+        assert result == "MyProject.Workflows.Main"
+
+    def test_extract_xaml_class_missing(self):
+        """Test when x:Class is not present."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities">
+</Activity>"""
+        root = parse_xaml_string(xaml)
+        namespaces = MetadataExtractor.extract_namespaces(root)
+
+        result = MetadataExtractor.extract_xaml_class(root, namespaces)
+        assert result is None
+
+    def test_extract_xaml_class_2009_namespace(self):
+        """Test x:Class with 2009 XAML namespace."""
+        xaml = """<?xml version="1.0"?>
+<Activity x:Class="Main"
+    xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+</Activity>"""
+        root = parse_xaml_string(xaml)
+        namespaces = MetadataExtractor.extract_namespaces(root)
+
+        result = MetadataExtractor.extract_xaml_class(root, namespaces)
+        assert result == "Main"
+
+    def test_extract_imported_namespaces(self, xaml_with_namespaces):
+        """Test extraction of .NET namespace imports."""
+        root = parse_xaml_string(xaml_with_namespaces)
+
+        imports = MetadataExtractor.extract_imported_namespaces(root)
+
+        assert isinstance(imports, list)
+        assert len(imports) >= 2
+        assert "System" in imports
+        assert "System.Collections.Generic" in imports
+
+    def test_extract_imported_namespaces_empty(self, simple_xaml):
+        """Test when no namespace imports are present."""
+        root = parse_xaml_string(simple_xaml)
+
+        imports = MetadataExtractor.extract_imported_namespaces(root)
+
+        assert isinstance(imports, list)
+        assert len(imports) == 0
+
+    def test_extract_assembly_references_modern_format(self):
+        """Test modern ReferencesForImplementation format."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+          xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib">
+    <TextExpression.ReferencesForImplementation>
+        <scg:List>
+            <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+            <AssemblyReference>System.Core</AssemblyReference>
+        </scg:List>
+    </TextExpression.ReferencesForImplementation>
+</Activity>"""
+        root = parse_xaml_string(xaml)
+
+        result = MetadataExtractor.extract_assembly_references(root)
+
+        assert len(result) == 2
+        assert "UiPath.System.Activities" in result
+        assert "System.Core" in result
+
+    def test_extract_assembly_references_legacy_format(self):
+        """Test legacy AssemblyReference elements."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities">
+    <AssemblyReference Assembly="UiPath.System.Activities" />
+    <AssemblyReference>System.Core</AssemblyReference>
+</Activity>"""
+        root = parse_xaml_string(xaml)
+
+        result = MetadataExtractor.extract_assembly_references(root)
+
+        assert len(result) == 2
+        assert "UiPath.System.Activities" in result
+        assert "System.Core" in result
+
+    def test_extract_assembly_references_no_duplicates(self):
+        """Test deduplication when both formats present."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+          xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib">
+    <TextExpression.ReferencesForImplementation>
+        <scg:List>
+            <AssemblyReference>System.Core</AssemblyReference>
+        </scg:List>
+    </TextExpression.ReferencesForImplementation>
+    <AssemblyReference>System.Core</AssemblyReference>
+</Activity>"""
+        root = parse_xaml_string(xaml)
+
+        result = MetadataExtractor.extract_assembly_references(root)
+
+        # Should only have one instance of System.Core despite appearing twice
+        assert result.count("System.Core") == 1
+
+    def test_extract_assembly_references_empty(self):
+        """Test when no references present."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities">
+</Activity>"""
+        root = parse_xaml_string(xaml)
+
+        result = MetadataExtractor.extract_assembly_references(root)
+        assert result == []
+
+    def test_extract_expression_language_vb_settings(self):
+        """Test VB.NET detection via VisualBasic.Settings element."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities">
+    <VisualBasic.Settings>
+        <x:Null xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" />
+    </VisualBasic.Settings>
+</Activity>"""
+        root = parse_xaml_string(xaml)
+
+        result = MetadataExtractor.extract_expression_language(root)
+        assert result == "VisualBasic"
+
+    def test_extract_expression_language_csharp_value(self):
+        """Test C# detection via CSharpValue element."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities">
+    <Assign>
+        <CSharpValue>"test"</CSharpValue>
+    </Assign>
+</Activity>"""
+        root = parse_xaml_string(xaml)
+
+        result = MetadataExtractor.extract_expression_language(root)
+        assert result == "CSharp"
+
+    def test_extract_expression_language_visualbasic_value(self):
+        """Test VB.NET detection via VisualBasicValue element."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities">
+    <Assign>
+        <VisualBasicValue>"test"</VisualBasicValue>
+    </Assign>
+</Activity>"""
+        root = parse_xaml_string(xaml)
+
+        result = MetadataExtractor.extract_expression_language(root)
+        assert result == "VisualBasic"
+
+    def test_extract_expression_language_none(self):
+        """Test when language cannot be detected."""
+        xaml = """<?xml version="1.0"?>
+<Activity xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities">
+    <Sequence DisplayName="Main">
+    </Sequence>
+</Activity>"""
+        root = parse_xaml_string(xaml)
+
+        result = MetadataExtractor.extract_expression_language(root)
+        assert result is None
 
 
 # ============================================================================
@@ -957,12 +1162,12 @@ class TestActivityExtractorInstances:
         )
 
         # Some activities should have container types
-        activities_with_containers = [a for a in activities if a.container_type is not None]
+        [a for a in activities if a.container_type is not None]
         # May or may not have containers depending on hierarchy
 
     def test_namespace_cache_precomputation(self, xaml_with_namespaces):
         """Test precomputation of namespace cache for performance."""
-        root = parse_xaml_string(xaml_with_namespaces)
+        parse_xaml_string(xaml_with_namespaces)
         namespaces = {
             "x": "http://schemas.microsoft.com/winfx/2006/xaml",
             "sap2010": "http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation",

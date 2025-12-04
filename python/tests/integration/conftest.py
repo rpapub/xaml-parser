@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from xaml_parser import XamlParser
+from cpmf_xaml_parser import XamlParser
 
 
 @pytest.fixture

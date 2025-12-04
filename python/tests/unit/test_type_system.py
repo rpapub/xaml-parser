@@ -1,6 +1,6 @@
 """Tests for type system module."""
 
-from xaml_parser.type_system import TypeInfo
+from cpmf_xaml_parser.type_system import TypeInfo
 
 
 class TestTypeInfoParsing:

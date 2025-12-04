@@ -10,13 +10,16 @@ Design: ADR-DTO-DESIGN.md (Normalization Layer)
 from datetime import UTC, datetime
 from pathlib import Path
 
+from .anti_patterns import AntiPatternDetector
 from .control_flow import ControlFlowExtractor
 from .dto import (
     ActivityDto,
+    AntiPattern,
     ArgumentDto,
     DependencyDto,
     InvocationDto,
     IssueDto,
+    QualityMetrics,
     SourceInfo,
     VariableDto,
     WorkflowDto,
@@ -26,6 +29,7 @@ from .id_generation import IdGenerator, generate_stable_id
 from .models import Activity, ParseResult, WorkflowArgument, WorkflowVariable
 from .ordering import sort_by_id, sort_by_name
 from .provenance import create_provenance
+from .quality_metrics import QualityMetricsCalculator
 
 
 class Normalizer:
@@ -62,6 +66,8 @@ class Normalizer:
         sort_output: bool = False,
         project_dependencies: dict[str, str] | None = None,
         author: str | None = None,
+        calculate_metrics: bool = False,
+        detect_anti_patterns: bool = False,
     ) -> WorkflowDto:
         """Transform ParseResult to WorkflowDto.
 
@@ -76,6 +82,8 @@ class Normalizer:
                                 Format: {"PackageName": "[version_constraint]", ...}
                                 Example: {"UiPath.Excel.Activities": "[3.0.1]"}
             author: Author name for provenance metadata (will load from config if None)
+            calculate_metrics: If True, calculate quality metrics (v0.2.10)
+            detect_anti_patterns: If True, detect anti-patterns and code smells (v0.2.10)
 
         Returns:
             WorkflowDto with stable IDs, edges, and metadata
@@ -187,6 +195,56 @@ class Normalizer:
                 )
             )
 
+        # Calculate quality metrics (v0.2.10)
+        quality_metrics: QualityMetrics | None = None
+        if calculate_metrics:
+            metrics_calculator = QualityMetricsCalculator()
+            # Collect all expressions from activities
+            expressions = []
+            for activity in content.activities:
+                expressions.extend(activity.expression_objects)
+            # Calculate metrics
+            raw_metrics = metrics_calculator.calculate(
+                content.activities, content.variables, [str(e) for e in expressions]
+            )
+            # Convert to DTO format (copy fields)
+            quality_metrics = QualityMetrics(
+                cyclomatic_complexity=raw_metrics.cyclomatic_complexity,
+                cognitive_complexity=raw_metrics.cognitive_complexity,
+                max_nesting_depth=raw_metrics.max_nesting_depth,
+                total_activities=raw_metrics.total_activities,
+                control_flow_activities=raw_metrics.control_flow_activities,
+                ui_automation_activities=raw_metrics.ui_automation_activities,
+                data_activities=raw_metrics.data_activities,
+                total_variables=raw_metrics.total_variables,
+                total_expressions=raw_metrics.total_expressions,
+                complex_expressions=raw_metrics.complex_expressions,
+                has_error_handling=raw_metrics.has_error_handling,
+                empty_catch_blocks=raw_metrics.empty_catch_blocks,
+                hardcoded_strings=raw_metrics.hardcoded_strings,
+                unreachable_activities=raw_metrics.unreachable_activities,
+                unused_variables=raw_metrics.unused_variables,
+                quality_score=raw_metrics.quality_score,
+            )
+
+        # Detect anti-patterns (v0.2.10)
+        anti_patterns: list[AntiPattern] | None = None
+        if detect_anti_patterns:
+            detector = AntiPatternDetector()
+            raw_patterns = detector.detect(content.activities, content.variables)
+            # Convert to DTO format (copy fields)
+            anti_patterns = [
+                AntiPattern(
+                    pattern_type=p.pattern_type,
+                    severity=p.severity,
+                    activity_id=p.activity_id,
+                    message=p.message,
+                    suggestion=p.suggestion,
+                    location=p.location,
+                )
+                for p in raw_patterns
+            ]
+
         # Create workflow DTO
         return WorkflowDto(
             schema_id="https://rpax.io/schemas/xaml-workflow.json",
@@ -204,6 +262,8 @@ class Normalizer:
             edges=edges,
             invocations=self._extract_invocations(content.activities, workflow_id_map or {}),
             issues=issues,
+            quality_metrics=quality_metrics,
+            anti_patterns=anti_patterns,
         )
 
     def _detect_property_direction(self, property_name: str, activity: Activity) -> str | None:

@@ -17,10 +17,10 @@ from pathlib import Path
 
 import pytest
 
-from xaml_parser.dto import ActivityDto, WorkflowDto, WorkflowMetadata
-from xaml_parser.emitters import EmitResult, Emitter, EmitterConfig
-from xaml_parser.emitters.json_emitter import JsonEmitter
-from xaml_parser.emitters.registry import EmitterRegistry
+from cpmf_xaml_parser.dto import ActivityDto, WorkflowDto, WorkflowMetadata
+from cpmf_xaml_parser.emitters import EmitResult, Emitter, EmitterConfig
+from cpmf_xaml_parser.emitters.json_emitter import JsonEmitter
+from cpmf_xaml_parser.emitters.registry import EmitterRegistry
 
 
 class TestEmitterInterface:

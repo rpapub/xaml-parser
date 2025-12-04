@@ -1,6 +1,6 @@
 """Tests for graph module."""
 
-from xaml_parser.graph import Graph
+from cpmf_xaml_parser.graph import Graph
 
 
 def test_add_node():

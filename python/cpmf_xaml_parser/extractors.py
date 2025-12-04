@@ -368,26 +368,47 @@ class ActivityExtractor:
     def _extract_expressions(self, elem: ET.Element) -> list[Expression]:
         """Extract expressions from activity element."""
         expressions = []
+        language = self.config.get("expression_language", "VisualBasic")
+        use_parser = self.config.get("parse_expressions", True)
 
         # Check attributes for expressions
         for key, value in elem.attrib.items():
             if self._is_expression(value):
-                expr = Expression(
-                    content=value,
-                    expression_type=self._classify_expression(key),
-                    language=self.config.get("expression_language", "VisualBasic"),
-                    context=key,
-                )
+                if use_parser:
+                    # Use new tokenizer-based parser
+                    parsed = ActivityUtils.parse_expression(value, language)
+                    expr = parsed.to_expression(
+                        expression_type=self._classify_expression(key),
+                        context=key,
+                    )
+                else:
+                    # Fallback to simple Expression creation
+                    expr = Expression(
+                        content=value,
+                        expression_type=self._classify_expression(key),
+                        language=language,
+                        context=key,
+                    )
                 expressions.append(expr)
 
         # Check text content
         if elem.text and self._is_expression(elem.text):
-            expr = Expression(
-                content=elem.text.strip(),
-                expression_type="text_content",
-                language=self.config.get("expression_language", "VisualBasic"),
-                context="text",
-            )
+            text_content = elem.text.strip()
+            if use_parser:
+                # Use new tokenizer-based parser
+                parsed = ActivityUtils.parse_expression(text_content, language)
+                expr = parsed.to_expression(
+                    expression_type="text_content",
+                    context="text",
+                )
+            else:
+                # Fallback to simple Expression creation
+                expr = Expression(
+                    content=text_content,
+                    expression_type="text_content",
+                    language=language,
+                    context="text",
+                )
             expressions.append(expr)
 
         return expressions
@@ -912,3 +933,43 @@ class MetadataExtractor:
                     references.append(ref.strip())
 
         return references
+
+    @staticmethod
+    def extract_expression_language(root: ET.Element) -> str | None:
+        """Detect expression language (VB.NET or C#) from workflow XAML.
+
+        Detection strategies:
+        1. Look for VisualBasic.Settings element → "VisualBasic"
+        2. Look for CSharpValue/CSharpReference elements → "CSharp"
+        3. Look for VisualBasicValue/VisualBasicReference elements → "VisualBasic"
+        4. Look for namespace declarations with CSharp or VisualBasic hints
+
+        Returns:
+            "VisualBasic", "CSharp", or None if not detected
+        """
+        # Strategy 1: Check for VisualBasic.Settings element
+        for elem in root.iter():
+            tag = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
+
+            if "VisualBasic.Settings" in elem.tag or (
+                tag == "Settings" and "VisualBasic" in elem.tag
+            ):
+                return "VisualBasic"
+
+        # Strategy 2: Check for expression type elements
+        for elem in root.iter():
+            tag = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
+
+            if tag in ("CSharpValue", "CSharpReference"):
+                return "CSharp"
+            if tag in ("VisualBasicValue", "VisualBasicReference"):
+                return "VisualBasic"
+
+        # Strategy 3: Check for namespace declarations
+        for key, value in root.attrib.items():
+            if "CSharpExpressions" in value or "CSharp" in value:
+                return "CSharp"
+            if "VisualBasic" in value and not key.startswith("sap"):
+                return "VisualBasic"
+
+        return None

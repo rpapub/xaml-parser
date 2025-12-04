@@ -8,7 +8,7 @@ These tests verify basic robustness:
 
 import pytest
 
-from xaml_parser.project import ProjectParser
+from cpmf_xaml_parser.project import ProjectParser
 
 
 @pytest.mark.corpus

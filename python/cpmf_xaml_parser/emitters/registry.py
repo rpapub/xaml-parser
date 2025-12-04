@@ -52,7 +52,7 @@ class EmitterRegistry:
         """
         if name not in cls._emitters:
             raise ValueError(
-                f"Unknown emitter: {name}. " f"Available emitters: {', '.join(cls.list_emitters())}"
+                f"Unknown emitter: {name}. Available emitters: {', '.join(cls.list_emitters())}"
             )
 
         emitter_class = cls._emitters[name]

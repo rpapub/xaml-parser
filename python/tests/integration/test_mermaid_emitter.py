@@ -2,9 +2,9 @@
 
 from pathlib import Path
 
-from xaml_parser.dto import ActivityDto, EdgeDto, WorkflowDto
-from xaml_parser.emitters import EmitterConfig
-from xaml_parser.emitters.mermaid_emitter import MermaidEmitter
+from cpmf_xaml_parser.dto import ActivityDto, EdgeDto, WorkflowDto
+from cpmf_xaml_parser.emitters import EmitterConfig
+from cpmf_xaml_parser.emitters.mermaid_emitter import MermaidEmitter
 
 
 class TestMermaidEmitter:

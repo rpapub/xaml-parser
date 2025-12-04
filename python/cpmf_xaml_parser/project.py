@@ -14,17 +14,18 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-logger = logging.getLogger(__name__)
-
 from .control_flow import ControlFlowExtractor
 from .dto import EntryPointInfo, ProjectInfo, WorkflowCollectionDto
 from .id_generation import IdGenerator
 from .models import ParseResult, WorkflowContent
 from .normalization import Normalizer
 from .parser import XamlParser
+from .progress import ProgressTracker
 
 if TYPE_CHECKING:
     from .analyzer import ProjectIndex
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -100,7 +101,11 @@ class ProjectParser:
         self.xaml_parser = XamlParser(parser_config)
 
     def parse_project(
-        self, project_dir: Path, recursive: bool = True, entry_points_only: bool = False
+        self,
+        project_dir: Path,
+        recursive: bool = True,
+        entry_points_only: bool = False,
+        show_progress: bool = False,
     ) -> ProjectResult:
         """Parse entire UiPath project.
 
@@ -108,6 +113,7 @@ class ProjectParser:
             project_dir: Path to project directory (containing project.json)
             recursive: Follow InvokeWorkflowFile references recursively
             entry_points_only: Only parse entry points, don't discover dependencies
+            show_progress: Show progress bars for multi-file operations (v0.2.12)
 
         Returns:
             ProjectResult with all workflows and dependency information
@@ -150,37 +156,44 @@ class ProjectParser:
             )
             logger.info("Workflow discovery complete: %d workflows found", len(workflows_to_parse))
 
-        # Parse all workflows
+        # Parse all workflows with progress tracking (v0.2.12)
         workflow_results = []
         total_parse_time = 0.0
 
-        for file_path in workflows_to_parse:
-            # Determine if this is an entry point
-            relative_path = self._make_relative_path(file_path, project_dir)
-            is_entry = self._is_entry_point(relative_path, project_config)
+        # Create progress tracker
+        tracker = ProgressTracker(len(workflows_to_parse), show_progress)
 
-            # Parse workflow
-            parse_result = self.xaml_parser.parse_file(file_path)
-            total_parse_time += parse_result.parse_time_ms
+        with tracker.track_parse(f"Parsing {len(workflows_to_parse)} workflows") as update:
+            for file_path in workflows_to_parse:
+                # Determine if this is an entry point
+                relative_path = self._make_relative_path(file_path, project_dir)
+                is_entry = self._is_entry_point(relative_path, project_config)
 
-            # Extract invoked workflows
-            invoked = []
-            if parse_result.success and parse_result.content:
-                invoked = self._extract_invoke_workflow_files(parse_result.content)
+                # Parse workflow
+                parse_result = self.xaml_parser.parse_file(file_path)
+                total_parse_time += parse_result.parse_time_ms
 
-            workflow_result = WorkflowResult(
-                file_path=file_path,
-                relative_path=relative_path,
-                parse_result=parse_result,
-                invoked_workflows=invoked,
-                is_entry_point=is_entry,
-            )
-            workflow_results.append(workflow_result)
+                # Extract invoked workflows
+                invoked = []
+                if parse_result.success and parse_result.content:
+                    invoked = self._extract_invoke_workflow_files(parse_result.content)
 
-            # Track errors and warnings
-            if not parse_result.success:
-                errors.append(f"{relative_path}: {', '.join(parse_result.errors[:2])}")
-            warnings.extend(parse_result.warnings)
+                workflow_result = WorkflowResult(
+                    file_path=file_path,
+                    relative_path=relative_path,
+                    parse_result=parse_result,
+                    invoked_workflows=invoked,
+                    is_entry_point=is_entry,
+                )
+                workflow_results.append(workflow_result)
+
+                # Track errors and warnings
+                if not parse_result.success:
+                    errors.append(f"{relative_path}: {', '.join(parse_result.errors[:2])}")
+                warnings.extend(parse_result.warnings)
+
+                # Update progress bar
+                update()
 
         # Build dependency graph
         dependency_graph = self._build_dependency_graph(workflow_results)

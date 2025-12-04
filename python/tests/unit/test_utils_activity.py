@@ -1,6 +1,6 @@
 """Tests for ActivityUtils utility functions."""
 
-from xaml_parser.utils import ActivityUtils
+from cpmf_xaml_parser.utils import ActivityUtils
 
 
 class TestGenerateActivityId:

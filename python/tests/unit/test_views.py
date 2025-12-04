@@ -1,8 +1,8 @@
 """Tests for views module."""
 
-from xaml_parser.analyzer import ProjectAnalyzer
-from xaml_parser.dto import ActivityDto, InvocationDto, SourceInfo, WorkflowDto
-from xaml_parser.views import ExecutionView, NestedView, SliceView
+from cpmf_xaml_parser.analyzer import ProjectAnalyzer
+from cpmf_xaml_parser.dto import ActivityDto, InvocationDto, SourceInfo, WorkflowDto
+from cpmf_xaml_parser.views import ExecutionView, NestedView, SliceView
 
 
 def test_nested_view_empty():

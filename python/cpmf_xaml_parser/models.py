@@ -34,6 +34,8 @@ class WorkflowContent:
     imported_namespaces: list[str] = field(default_factory=list)
     # TextExpression.ReferencesForImplementation
     assembly_references: list[str] = field(default_factory=list)
+    # Expression language: "VisualBasic" or "CSharp"
+    expression_language: str | None = None
 
     # Raw metadata for future extensions
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -141,6 +143,64 @@ class ViewStateData:
 
 
 @dataclass
+class QualityMetrics:
+    """Quality and complexity metrics for a workflow (v0.2.10)."""
+
+    # Complexity metrics
+    cyclomatic_complexity: int = 0  # Count of decision points + 1
+    cognitive_complexity: int = 0  # Includes nesting penalties
+    max_nesting_depth: int = 0  # Maximum activity depth
+
+    # Size metrics
+    total_activities: int = 0
+    control_flow_activities: int = 0  # If, While, ForEach, etc.
+    ui_automation_activities: int = 0  # Click, Type, Get activities
+    data_activities: int = 0  # Assign, Invoke, Read/Write
+    total_variables: int = 0
+    total_expressions: int = 0
+    complex_expressions: int = 0  # Expressions longer than 100 chars
+
+    # Quality indicators
+    has_error_handling: bool = False  # Has at least one TryCatch
+    empty_catch_blocks: int = 0  # TryCatch with no error handling
+    hardcoded_strings: int = 0  # Hardcoded paths, URLs, credentials
+    unreachable_activities: int = 0  # Code after Throw/TerminateWorkflow
+    unused_variables: int = 0  # Declared but never referenced
+
+    # Overall quality score (0-100)
+    quality_score: float = 0.0
+
+
+@dataclass
+class AntiPattern:
+    """Detected anti-pattern or code smell in workflow (v0.2.10)."""
+
+    pattern_type: str  # 'empty_catch' | 'hardcoded_value' | 'unreachable_code' | etc.
+    severity: str  # 'error' | 'warning' | 'info'
+    activity_id: str | None = None  # Activity where detected
+    message: str = ""  # Human-readable description
+    suggestion: str | None = None  # How to fix
+    location: str | None = None  # Context (e.g., 'TryCatch.Catch', 'Assign.Value')
+
+
+@dataclass
+class ParseDiagnostic:
+    """Individual diagnostic message from parsing (error, warning, or info)."""
+
+    level: str  # "error", "warning", "info"
+    message: str
+    line: int | None = None
+    column: int | None = None
+    element: str | None = None  # Element that caused the issue
+    suggestion: str | None = None  # How to fix
+
+    def __str__(self) -> str:
+        """Format diagnostic as readable string."""
+        loc = f" at line {self.line}" if self.line else ""
+        return f"[{self.level.upper()}]{loc}: {self.message}"
+
+
+@dataclass
 class ParseDiagnostics:
     """Detailed diagnostic information about parsing operation."""
 
@@ -158,6 +218,8 @@ class ParseDiagnostics:
     root_element_tag: str | None = None
     processing_steps: list[str] = field(default_factory=list)
     performance_metrics: dict[str, float] = field(default_factory=dict)
+    # Individual diagnostic messages (errors/warnings/info)
+    messages: list["ParseDiagnostic"] = field(default_factory=list)
 
 
 @dataclass

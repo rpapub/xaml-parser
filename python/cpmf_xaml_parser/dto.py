@@ -126,6 +126,35 @@ class VariableDto:
 
 
 @dataclass
+class VariableFlowDto:
+    """Variable data flow analysis.
+
+    Tracks read/write patterns for a variable across activities.
+
+    Attributes:
+        variable_name: Variable name
+        first_read: Activity ID where variable is first read
+        first_write: Activity ID where variable is first written
+        read_locations: List of activity IDs where variable is read
+        write_locations: List of activity IDs where variable is written
+        read_count: Total number of read operations
+        write_count: Total number of write operations
+        is_uninitialized: True if variable read before write (potential bug)
+        is_unused: True if variable defined but never read
+    """
+
+    variable_name: str
+    first_read: str | None = None
+    first_write: str | None = None
+    read_locations: list[str] = field(default_factory=list)
+    write_locations: list[str] = field(default_factory=list)
+    read_count: int = 0
+    write_count: int = 0
+    is_uninitialized: bool = False
+    is_unused: bool = False
+
+
+@dataclass
 class DependencyDto:
     """Package dependency.
 
@@ -300,6 +329,51 @@ class WorkflowDto:
 
     # Issues
     issues: list[IssueDto] = field(default_factory=list)
+
+    # Quality Metrics (v0.2.10) - Optional, enabled by config
+    quality_metrics: "QualityMetrics | None" = None
+    anti_patterns: list["AntiPattern"] | None = None
+
+
+@dataclass
+class QualityMetrics:
+    """Quality and complexity metrics for a workflow."""
+
+    # Complexity metrics
+    cyclomatic_complexity: int = 0
+    cognitive_complexity: int = 0
+    max_nesting_depth: int = 0
+
+    # Size metrics
+    total_activities: int = 0
+    control_flow_activities: int = 0
+    ui_automation_activities: int = 0
+    data_activities: int = 0
+    total_variables: int = 0
+    total_expressions: int = 0
+    complex_expressions: int = 0
+
+    # Quality indicators
+    has_error_handling: bool = False
+    empty_catch_blocks: int = 0
+    hardcoded_strings: int = 0
+    unreachable_activities: int = 0
+    unused_variables: int = 0
+
+    # Overall score (0-100)
+    quality_score: float = 0.0
+
+
+@dataclass
+class AntiPattern:
+    """Detected anti-pattern or code smell in workflow."""
+
+    pattern_type: str
+    severity: str
+    activity_id: str | None = None
+    message: str = ""
+    suggestion: str | None = None
+    location: str | None = None
 
 
 @dataclass

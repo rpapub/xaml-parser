@@ -2,7 +2,7 @@
 
 import logging
 
-from xaml_parser.logging_config import setup_logging
+from cpmf_xaml_parser.logging_config import setup_logging
 
 
 def test_setup_logging_default(tmp_path):

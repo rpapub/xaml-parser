@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from xaml_parser.analyzer import ProjectAnalyzer
-from xaml_parser.dto import ActivityDto, EdgeDto, InvocationDto, SourceInfo, WorkflowDto
+from cpmf_xaml_parser.analyzer import ProjectAnalyzer
+from cpmf_xaml_parser.dto import ActivityDto, EdgeDto, InvocationDto, SourceInfo, WorkflowDto
 
 
 def test_analyze_empty():

@@ -31,7 +31,7 @@ class InterproceduralAliasAnalyzer:
     4. Provide query APIs for ancestry, descendants, impact analysis
     """
 
-    def __init__(self, workflows: list[WorkflowDto]):
+    def __init__(self, workflows: list[WorkflowDto]) -> None:
         """Initialize analyzer with workflows.
 
         Args:

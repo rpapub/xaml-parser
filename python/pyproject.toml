@@ -3,14 +3,14 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "xaml-parser"
-version = "0.1.0"
+name = "cpmf-xaml-parser"
+version = "0.2.0"
 authors = [
     {name = "Christian Prior-Mamulyan", email = "cprior@gmail.com"}
 ]
-description = "Standalone XAML workflow parser for automation projects"
+description = "Standalone XAML workflow parser for automation projects (CPRIMA Forge)"
 readme = "README.md"
-license = {text = "CC-BY-4.0"}
+license = {text = "Apache-2.0 AND CC-BY-4.0"}
 requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -22,9 +22,8 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Text Processing :: Markup :: XML",
-    "Topic :: Office/Business :: Office Suites",
 ]
-keywords = ["xaml", "workflow", "automation", "parsing", "rpa", "uipath"]
+keywords = ["xaml", "workflow", "automation", "parsing", "rpa", "uipath", "cprima-forge"]
 
 # Minimal dependencies for standalone package
 dependencies = [
@@ -32,6 +31,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Optional features (undocumented "easter eggs")
+extras = [
+    "psutil>=5.9.0",      # Performance profiling with --performance flag
+    "rich>=13.0.0",       # Progress bars with --progress flag
+    "watchdog>=3.0.0",    # File system watching (future feature)
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=4.1",
@@ -40,6 +45,9 @@ dev = [
     "types-defusedxml",
     "pre-commit>=3.5",
     "twine>=5.0",
+    "psutil>=5.9.0",
+    "rich>=13.0.0",
+    "watchdog>=3.0.0",
 ]
 test = [
     "pytest>=8.0",
@@ -50,6 +58,9 @@ docs = [
 ]
 full = [
     "jinja2>=3.1",
+    "psutil>=5.9.0",
+    "rich>=13.0.0",
+    "watchdog>=3.0.0",
 ]
 
 [dependency-groups]
@@ -67,29 +78,49 @@ Repository = "https://github.com/rpapub/xaml-parser"
 Issues = "https://github.com/rpapub/xaml-parser/issues"
 
 [project.scripts]
-xaml-parser = "xaml_parser.cli:main"
+cpmf-xaml-parser = "cpmf_xaml_parser.cli:main"
 
-[project.entry-points."xamlparser.emitters"]
-json = "xaml_parser.emitters.json_emitter:JsonEmitter"
-mermaid = "xaml_parser.emitters.mermaid_emitter:MermaidEmitter"
-doc = "xaml_parser.emitters.doc_emitter:DocEmitter"
+[project.entry-points."cpmfxamlparser.emitters"]
+json = "cpmf_xaml_parser.emitters.json_emitter:JsonEmitter"
+mermaid = "cpmf_xaml_parser.emitters.mermaid_emitter:MermaidEmitter"
+doc = "cpmf_xaml_parser.emitters.doc_emitter:DocEmitter"
 
 [tool.hatch.build.targets.wheel]
-packages = ["xaml_parser"]
+packages = ["cpmf_xaml_parser"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"xaml_parser/templates" = "xaml_parser/templates"
+"cpmf_xaml_parser/py.typed" = "cpmf_xaml_parser/py.typed"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "cpmf_xaml_parser/**/*.py",
+    "cpmf_xaml_parser/py.typed",
+    "cpmf_xaml_parser/templates/**/*",
+    "tests/**/*.py",
+    "LICENSE-APACHE",
+    "LICENSE-CC-BY",
+    "README.md",
+    "CHANGELOG.md",
+    "pyproject.toml",
+]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "N", "D", "ANN"]
-ignore = ["D203", "D212", "ANN101", "ANN102", "ANN401"]
+ignore = ["D203", "D212", "ANN101", "ANN102", "ANN401", "E501", "B019"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.ruff.format]
+# Use black-compatible formatting
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.mypy]
 python_version = "3.11"
@@ -115,7 +146,7 @@ python_functions = ["test_*"]
 # Deterministic test execution
 addopts = [
     "--verbose",
-    "--cov=xaml_parser",
+    "--cov=cpmf_xaml_parser",
     "--cov-report=term-missing",
     "--cov-report=html",
     "--cov-fail-under=90",
@@ -134,7 +165,7 @@ env = [
 ]
 
 [tool.coverage.run]
-source = ["xaml_parser"]
+source = ["cpmf_xaml_parser"]
 omit = ["tests/*", "**/__pycache__/*"]
 
 [tool.coverage.report]
