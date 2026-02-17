@@ -22,7 +22,7 @@ except ImportError:
     # Fallback to standard library if defusedxml not available
     from xml.etree.ElementTree import fromstring as defused_fromstring
 
-from .extractors import MetadataExtractor
+from .extractors import BindingExtractor, MetadataExtractor
 from ..normalize.id_generation import IdGenerator
 from ...shared.model.models import (
     Activity,
@@ -386,7 +386,10 @@ class XamlParser:
         # Extract activities with complete metadata
         if self.config["extract_activities"]:
             with self.profiler.profile("activities_extract"):
-                content.activities = self._extract_activities(root, content.namespaces, workflow_id)
+                content.activities = self._extract_activities(
+                    root, content.namespaces, workflow_id,
+                    expression_language=content.expression_language or "VisualBasic"
+                )
                 self._diagnostics.activities_found = len(content.activities)
                 # Count activities with annotations
                 self._diagnostics.annotations_found = sum(
@@ -505,11 +508,16 @@ class XamlParser:
         return variables
 
     def _extract_activities(
-        self, root: ET.Element, namespaces: dict[str, str], workflow_id: str
+        self,
+        root: ET.Element,
+        namespaces: dict[str, str],
+        workflow_id: str,
+        expression_language: str = "VisualBasic",
     ) -> list[Activity]:
         """Extract all activities with complete metadata."""
         activities = []
         sap2010_ns = namespaces.get("sap2010", "")
+        binding_extractor = BindingExtractor(expression_language=expression_language)
 
         def process_element(elem: ET.Element, parent_id: str | None = None, depth: int = 0) -> None:
             """Recursively process elements to find activities."""
@@ -573,6 +581,9 @@ class XamlParser:
                                 )
                             )
 
+                # Extract data-flow bindings (InArgument/OutArgument/Assign.To etc.)
+                bindings = binding_extractor.extract(elem)
+
                 # Create activity content
                 activity = Activity(
                     activity_id=activity_id,
@@ -589,7 +600,13 @@ class XamlParser:
                     configuration=self._extract_configuration(elem),
                     properties=visible_attrs,  # Map to properties
                     metadata=invisible_attrs,  # Map to metadata
-                    expressions=[expr.content for expr in expressions] if expressions else [],
+                    in_args=bindings["in_args"],
+                    out_args=bindings["out_args"],
+                    expressions=(
+                        [expr.content for expr in expressions] + bindings["expressions"]
+                        if expressions
+                        else bindings["expressions"]
+                    ),
                     variables_referenced=[],  # Extract separately
                     selectors={},  # Extract separately
                     annotation=annotation,

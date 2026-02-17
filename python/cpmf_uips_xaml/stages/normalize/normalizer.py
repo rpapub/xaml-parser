@@ -333,24 +333,21 @@ class Normalizer:
         type_namespace = activity.activity_namespace
         type_prefix = activity.activity_prefix
 
-        # Extract input/output arguments from arguments dict
-        in_args: dict[str, str] = {}
-        out_args: dict[str, str] = {}
+        # Use direction-aware bindings from BindingExtractor (populated in parser.py)
+        in_args: dict[str, str] = dict(activity.in_args)
+        out_args: dict[str, str] = dict(activity.out_args)
 
-        # Parse arguments dict to separate In/Out based on metadata
+        # Fall back to heuristic for any arguments not covered by BindingExtractor
         for key, value in activity.arguments.items():
+            if key in in_args or key in out_args:
+                continue
             str_value = str(value) if not isinstance(value, str) else value
-
-            # Detect direction from metadata (if available)
-            # Check metadata for property direction attributes
             direction = self._detect_property_direction(key, activity)
-
             if direction == "out" or direction == "inout":
                 out_args[key] = str_value
             if direction == "in" or direction == "inout":
                 in_args[key] = str_value
             if direction is None:
-                # Default: treat as input argument for backward compatibility
                 in_args[key] = str_value
 
         return ActivityDto(

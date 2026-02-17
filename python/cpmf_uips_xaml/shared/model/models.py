@@ -94,6 +94,10 @@ class Activity:
     properties: dict[str, Any] = field(default_factory=dict)  # All visible properties
     metadata: dict[str, Any] = field(default_factory=dict)  # ViewState, IdRef, etc.
 
+    # Binding extraction: direction-aware argument maps (populated by BindingExtractor)
+    in_args: dict[str, str] = field(default_factory=dict)   # property → expression (reads)
+    out_args: dict[str, str] = field(default_factory=dict)  # property → expression (writes)
+
     # Business logic analysis
     expressions: list[str] = field(default_factory=list)  # UiPath expressions found
     variables_referenced: list[str] = field(default_factory=list)  # Variables used

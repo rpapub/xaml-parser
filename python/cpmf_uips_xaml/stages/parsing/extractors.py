@@ -1008,4 +1008,113 @@ class MetadataExtractor:
             if "VisualBasic" in value and not key.startswith("sap"):
                 return "VisualBasic"
 
+
+class BindingExtractor:
+    """Extracts data-flow bindings from activity elements.
+
+    Reads InArgument / OutArgument / InOutArgument child elements and
+    property-wrapper children (e.g. <Assign.To>, <UseApplication.UiElement>)
+    to populate direction-aware in_args / out_args on Activity instances.
+
+    Expression language (VB.NET vs C#) is passed from ProjectConfig so that
+    VB.NET bracket notation [ ] is stripped while C# expressions pass through.
+    """
+
+    DIRECTION_TAGS: dict[str, str] = {
+        "InArgument": "in",
+        "OutArgument": "out",
+        "InOutArgument": "inout",
+    }
+
+    def __init__(self, expression_language: str = "VisualBasic") -> None:
+        self.expression_language = expression_language
+
+    def extract(self, element: ET.Element) -> dict[str, Any]:
+        """Extract bindings from an activity element.
+
+        Returns dict with keys:
+            in_args  — {property_name: expression}
+            out_args — {property_name: expression}
+            expressions — [raw expression strings]
+        """
+        in_args: dict[str, str] = {}
+        out_args: dict[str, str] = {}
+        expressions: list[str] = []
+
+        # Also capture element text itself (e.g. AssignOperation.To text content)
+        if element.text:
+            expr = self._normalize_expr(element.text)
+            if expr:
+                expressions.append(expr)
+                local_self = get_local_tag(element)
+                if "." in local_self:
+                    prop = local_self.split(".", 1)[1]
+                    if prop in ("To",):
+                        out_args[prop] = expr
+                    else:
+                        in_args[prop] = expr
+
+        for child in element:
+            if callable(child.tag):  # Skip XML comments / processing instructions
+                continue
+            local = get_local_tag(child)
+            direction = self.DIRECTION_TAGS.get(local)
+
+            if direction is not None:
+                # Direct <InArgument x:Key="name">expr</InArgument>
+                x_key = None
+                for attr_name, attr_val in child.attrib.items():
+                    if attr_name.endswith("}Key") or attr_name == "Key":
+                        x_key = attr_val
+                        break
+                key = x_key or local
+                expr = self._normalize_expr(child.text)
+                if expr:
+                    expressions.append(expr)
+                    if direction in ("out", "inout"):
+                        out_args[key] = expr
+                    if direction in ("in", "inout"):
+                        in_args[key] = expr
+
+            elif "." in local:
+                # Property wrapper: <ActivityName.PropertyName> or <AssignOperation.To>
+                prop_name = local.split(".", 1)[1]
+                # Check for nested Argument element
+                for grandchild in child:
+                    if callable(grandchild.tag):
+                        continue
+                    gc_local = get_local_tag(grandchild)
+                    gc_dir = self.DIRECTION_TAGS.get(gc_local)
+                    if gc_dir is not None:
+                        expr = self._normalize_expr(grandchild.text)
+                        if expr:
+                            expressions.append(expr)
+                            if gc_dir in ("out", "inout"):
+                                out_args[prop_name] = expr
+                            if gc_dir in ("in", "inout"):
+                                in_args[prop_name] = expr
+                # Also handle bare text in the property wrapper itself
+                if child.text:
+                    expr = self._normalize_expr(child.text)
+                    if expr:
+                        expressions.append(expr)
+                        if prop_name in ("To",):
+                            out_args[prop_name] = expr
+                        elif prop_name in ("Value",):
+                            in_args[prop_name] = expr
+
+        return {"in_args": in_args, "out_args": out_args, "expressions": expressions}
+
+    def _normalize_expr(self, text: str | None) -> str | None:
+        """Strip VB.NET [ ] brackets for VisualBasic; pass C# through unchanged."""
+        if not text:
+            return None
+        text = text.strip()
+        if not text:
+            return None
+        if self.expression_language == "VisualBasic":
+            if text.startswith("[") and text.endswith("]"):
+                return text[1:-1]
+        return text
+
         return None
