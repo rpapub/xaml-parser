@@ -19,6 +19,7 @@ Example:
     True
 """
 
+import html
 import re
 from typing import Pattern
 
@@ -43,8 +44,10 @@ TAG_PATTERN: Pattern = re.compile(
 def parse_annotation(text: str | None) -> AnnotationBlock | None:
     """Parse annotation text into structured tags.
 
+    HTML entities are automatically decoded before parsing.
+
     Args:
-        text: Raw annotation text (HTML entities should already be decoded)
+        text: Raw annotation text (may contain HTML entities like &amp; &#xA;)
 
     Returns:
         AnnotationBlock with parsed tags, or None if text is empty/None
@@ -61,8 +64,11 @@ def parse_annotation(text: str | None) -> AnnotationBlock | None:
     if not text or not text.strip():
         return None
 
-    # Preserve original text exactly (don't strip)
-    raw_text = text
+    # Decode HTML entities (e.g., &amp; → &, &#xA; → \n)
+    decoded_text = html.unescape(text)
+
+    # Preserve decoded text exactly (don't strip)
+    raw_text = decoded_text
     lines = raw_text.split("\n")
     tags = []
 

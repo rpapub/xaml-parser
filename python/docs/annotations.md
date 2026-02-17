@@ -172,19 +172,19 @@ Tags not in the standard list are automatically prefixed with `custom:`:
 
 ### HTML Entity Decoding
 
-**Important**: HTML entity decoding happens in the **extractor layer** before the annotation text reaches the parser. The parser expects already-decoded text.
+**Important**: HTML entity decoding happens **automatically in the parser**. You can pass raw XML attribute values directly to `parse_annotation()`.
 
 ```xml
 <Sequence sap2010:Annotation.AnnotationText="Author: John &amp; Jane&#xA;Version: 2.0">
 ```
 
-Is decoded by the extractor to:
+The parser automatically decodes to:
 ```
 Author: John & Jane
 Version: 2.0
 ```
 
-Then passed to `parse_annotation()`.
+Both `annotation` (raw text field) and `annotation_block.raw` contain the **decoded** text for consistency.
 
 ### Ordering and Preservation
 

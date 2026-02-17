@@ -312,3 +312,30 @@ Third paragraph"""
         # Custom tags (explicit custom: format)
         assert block.get_tag("custom:priority").value == "high"
         assert block.get_tag("custom:reviewed-by").value == "Jane"
+
+    def test_html_entity_decoding(self):
+        """Test that HTML entities are automatically decoded."""
+        # Text with HTML entities as it appears in XML
+        text = "@author John &amp; Jane&#xA;@description Process &lt;data&gt;"
+        block = parse_annotation(text)
+
+        assert len(block.tags) == 2
+        # Ampersand should be decoded
+        author = block.get_tag("author")
+        assert author.value == "John & Jane"
+        # Angle brackets should be decoded
+        desc = block.get_tag("description")
+        assert desc.value == "Process <data>"
+        # Raw text should also be decoded
+        assert "&amp;" not in block.raw
+        assert "&" in block.raw
+
+    def test_html_entity_in_raw_text(self):
+        """Test that raw text is stored as decoded."""
+        text = "@module Test&amp;Module"
+        block = parse_annotation(text)
+
+        # Raw should be decoded
+        assert block.raw == "@module Test&Module"
+        # Tag value should be decoded
+        assert block.get_tag("module").value == "Test&Module"

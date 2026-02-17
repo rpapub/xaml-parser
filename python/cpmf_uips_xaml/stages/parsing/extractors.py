@@ -74,10 +74,12 @@ class ArgumentExtractor:
         annotation_block = None
         if sap2010_ns:
             annotation_attr = f"{{{sap2010_ns}}}Annotation.AnnotationText"
-            annotation = prop.get(annotation_attr)
-            if annotation:
-                annotation = html.unescape(annotation)
-                annotation_block = parse_annotation(annotation)  # Parse structured tags
+            raw_annotation = prop.get(annotation_attr)
+            if raw_annotation:
+                # Parser handles HTML decoding internally
+                annotation_block = parse_annotation(raw_annotation)
+                # Use decoded text from parser for consistency
+                annotation = annotation_block.raw if annotation_block else None
 
         # Extract default value from multiple sources
         default_value = prop.get("default") or prop.get("Default") or prop.text
@@ -316,11 +318,13 @@ class ActivityExtractor:
             return None, None
 
         annotation_attr = f"{{{sap2010_ns}}}Annotation.AnnotationText"
-        annotation = elem.get(annotation_attr)
+        raw_annotation = elem.get(annotation_attr)
 
-        if annotation:
-            annotation = html.unescape(annotation)
-            annotation_block = parse_annotation(annotation)  # Parse structured tags
+        if raw_annotation:
+            # Parser handles HTML decoding internally
+            annotation_block = parse_annotation(raw_annotation)
+            # Use decoded text from parser for consistency
+            annotation = annotation_block.raw if annotation_block else None
             return annotation, annotation_block
 
         return None, None
