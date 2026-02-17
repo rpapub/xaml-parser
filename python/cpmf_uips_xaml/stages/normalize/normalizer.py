@@ -535,48 +535,49 @@ class Normalizer:
             # Lookup stable ID from map (or use placeholder)
             callee_id = workflow_id_map.get(callee_path_str, f"wf:unresolved:{callee_path_str}")
 
-            # Extract argument mappings
-            arguments_passed = self._extract_argument_mappings(activity)
+            # Extract argument mappings (combined, in, out)
+            arguments_passed, arguments_in, arguments_out = self._extract_argument_mappings(activity)
 
             invocation = InvocationDto(
                 callee_id=callee_id,
                 callee_path=callee_path_str,
                 via_activity_id=activity.activity_id,
                 arguments_passed=arguments_passed,
+                arguments_in=arguments_in,
+                arguments_out=arguments_out,
             )
             invocations.append(invocation)
 
         return invocations
 
-    def _extract_argument_mappings(self, activity: Activity) -> dict[str, str]:
+    def _extract_argument_mappings(
+        self, activity: Activity
+    ) -> tuple[dict[str, str], dict[str, str], dict[str, str]]:
         """Extract argument mappings from InvokeWorkflowFile activity.
 
         Args:
             activity: InvokeWorkflowFile activity
 
         Returns:
-            Dictionary mapping argument names to expressions
+            Tuple of (arguments_passed, arguments_in, arguments_out) where:
+            - arguments_passed: combined flat dict (legacy, all args)
+            - arguments_in: In/InOut argument bindings (arg_name → expression)
+            - arguments_out: Out/InOut argument bindings (arg_name → expression)
         """
-        mappings = {}
+        # Use direction-aware in_args / out_args populated by BindingExtractor
+        args_in: dict[str, str] = dict(activity.in_args)
+        args_out: dict[str, str] = dict(activity.out_args)
 
-        # Look for argument bindings in arguments dict
-        # Arguments are typically in format: argumentName: expression
-        for key, value in activity.arguments.items():
-            # Skip the WorkflowFileName itself
-            if key == "WorkflowFileName":
-                continue
+        # Remove the WorkflowFileName key (not a real argument)
+        args_in.pop("WorkflowFileName", None)
+        args_out.pop("WorkflowFileName", None)
 
-            # Add argument mapping
-            if value is not None:
-                mappings[key] = str(value)
+        # Build combined flat dict (union, prefer in over out for duplicates)
+        combined = {**args_out, **args_in}
 
-        # Also check properties for argument bindings
-        # Some UiPath versions store them differently
-        if "Arguments" in activity.properties:
-            args_config = activity.properties["Arguments"]
-            if isinstance(args_config, dict):
-                for arg_name, arg_value in args_config.items():
-                    if arg_value is not None:
-                        mappings[arg_name] = str(arg_value)
+        # inout arguments appear in both dicts; ensure they're in both
+        for key in set(args_in) & set(args_out):
+            args_in[key] = args_in[key]  # already present
+            args_out[key] = args_out[key]  # already present
 
-        return mappings
+        return combined, args_in, args_out

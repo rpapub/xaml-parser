@@ -84,9 +84,15 @@ class ArgumentExtractor:
         # Extract default value from multiple sources
         default_value = prop.get("default") or prop.get("Default") or prop.text
 
+        # Extract clean inner type from wrapper (e.g., "InArgument(ui:QueueItem)" → "QueueItem")
+        clean_type = type_attr
+        if "(" in clean_type and clean_type.endswith(")"):
+            inner = clean_type[clean_type.index("(") + 1 : -1]
+            clean_type = inner.split(":", 1)[-1] if ":" in inner else inner
+
         return WorkflowArgument(
             name=name,
-            type=type_attr,
+            type=clean_type,
             direction=direction,
             annotation=annotation,
             annotation_block=annotation_block,
@@ -129,7 +135,18 @@ class VariableExtractor:
         if not name:
             return None
 
-        type_attr = elem.get("Type", "Object")
+        # UiPath XAML stores variable types in x:TypeArguments (e.g., x:TypeArguments="njl:JObject")
+        # Fall back to "Type" attribute, then "Object"
+        type_attr = "Object"
+        for attr_name, attr_val in elem.attrib.items():
+            if attr_name.endswith("}TypeArguments") or attr_name == "TypeArguments":
+                # Strip namespace prefix (e.g., "njl:JObject" → "JObject", "x:String" → "String")
+                type_attr = attr_val.split(":", 1)[-1] if ":" in attr_val else attr_val
+                break
+        if type_attr == "Object":
+            raw = elem.get("Type", "Object")
+            type_attr = raw.split(":", 1)[-1] if ":" in raw else raw
+
         default_value = elem.get("Default") or elem.text
 
         # Determine scope from parent context
@@ -1079,29 +1096,72 @@ class BindingExtractor:
             elif "." in local:
                 # Property wrapper: <ActivityName.PropertyName> or <AssignOperation.To>
                 prop_name = local.split(".", 1)[1]
-                # Check for nested Argument element
-                for grandchild in child:
-                    if callable(grandchild.tag):
-                        continue
-                    gc_local = get_local_tag(grandchild)
-                    gc_dir = self.DIRECTION_TAGS.get(gc_local)
-                    if gc_dir is not None:
-                        expr = self._normalize_expr(grandchild.text)
+
+                if prop_name == "AssignOperations":
+                    # MultipleAssign deep structure:
+                    # AssignOperations → scg:List → AssignOperation →
+                    #   AssignOperation.To → OutArgument
+                    #   AssignOperation.Value → InArgument
+                    op_index = 0
+                    for container in child:  # the scg:List element
+                        if callable(container.tag):
+                            continue
+                        for assign_op in container:  # each AssignOperation
+                            if callable(assign_op.tag):
+                                continue
+                            for op_child in assign_op:  # AssignOperation.To / .Value
+                                if callable(op_child.tag):
+                                    continue
+                                op_child_local = get_local_tag(op_child)
+                                if "." not in op_child_local:
+                                    continue
+                                op_prop = op_child_local.split(".", 1)[1]  # "To" or "Value"
+                                for op_gc in op_child:  # OutArgument / InArgument
+                                    if callable(op_gc.tag):
+                                        continue
+                                    op_gc_dir = self.DIRECTION_TAGS.get(get_local_tag(op_gc))
+                                    if op_gc_dir is not None:
+                                        expr = self._normalize_expr(op_gc.text)
+                                        if expr:
+                                            key = f"{op_prop}_{op_index}"
+                                            expressions.append(expr)
+                                            if op_gc_dir in ("out", "inout"):
+                                                out_args[key] = expr
+                                            if op_gc_dir in ("in", "inout"):
+                                                in_args[key] = expr
+                            op_index += 1
+                else:
+                    # Check for nested Argument element
+                    for grandchild in child:
+                        if callable(grandchild.tag):
+                            continue
+                        gc_local = get_local_tag(grandchild)
+                        gc_dir = self.DIRECTION_TAGS.get(gc_local)
+                        if gc_dir is not None:
+                            # Use x:Key as argument name if present (e.g. InvokeWorkflowFile.Arguments
+                            # contains <InArgument x:Key="in_config">...</InArgument>)
+                            gc_key = None
+                            for attr_name, attr_val in grandchild.attrib.items():
+                                if attr_name.endswith("}Key") or attr_name == "Key":
+                                    gc_key = attr_val
+                                    break
+                            key = gc_key if gc_key else prop_name
+                            expr = self._normalize_expr(grandchild.text)
+                            if expr:
+                                expressions.append(expr)
+                                if gc_dir in ("out", "inout"):
+                                    out_args[key] = expr
+                                if gc_dir in ("in", "inout"):
+                                    in_args[key] = expr
+                    # Also handle bare text in the property wrapper itself
+                    if child.text:
+                        expr = self._normalize_expr(child.text)
                         if expr:
                             expressions.append(expr)
-                            if gc_dir in ("out", "inout"):
+                            if prop_name in ("To",):
                                 out_args[prop_name] = expr
-                            if gc_dir in ("in", "inout"):
+                            elif prop_name in ("Value",):
                                 in_args[prop_name] = expr
-                # Also handle bare text in the property wrapper itself
-                if child.text:
-                    expr = self._normalize_expr(child.text)
-                    if expr:
-                        expressions.append(expr)
-                        if prop_name in ("To",):
-                            out_args[prop_name] = expr
-                        elif prop_name in ("Value",):
-                            in_args[prop_name] = expr
 
         return {"in_args": in_args, "out_args": out_args, "expressions": expressions}
 

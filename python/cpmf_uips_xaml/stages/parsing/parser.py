@@ -472,9 +472,15 @@ class XamlParser:
             # Extract default value (check both lowercase and capitalized)
             default_value = prop.get("default") or prop.get("Default") or prop.text
 
+            # Extract clean inner type from wrapper (e.g., "InArgument(ui:QueueItem)" → "QueueItem")
+            clean_type = type_attr
+            if "(" in clean_type and clean_type.endswith(")"):
+                inner = clean_type[clean_type.index("(") + 1 : -1]
+                clean_type = inner.split(":", 1)[-1] if ":" in inner else inner
+
             argument = WorkflowArgument(
                 name=name,
-                type=type_attr,
+                type=clean_type,
                 direction=direction,
                 annotation=annotation,
                 default_value=default_value,
@@ -493,7 +499,15 @@ class XamlParser:
         for elem in root.iter():
             if elem.tag.endswith("Variable") or "Variable" in elem.tag:
                 name = elem.get("Name")
-                type_attr = elem.get("Type", "Object")
+                # UiPath XAML stores variable types in x:TypeArguments
+                type_attr = "Object"
+                for attr_name, attr_val in elem.attrib.items():
+                    if attr_name.endswith("}TypeArguments") or attr_name == "TypeArguments":
+                        type_attr = attr_val.split(":", 1)[-1] if ":" in attr_val else attr_val
+                        break
+                if type_attr == "Object":
+                    raw = elem.get("Type", "Object")
+                    type_attr = raw.split(":", 1)[-1] if ":" in raw else raw
                 default_value = elem.get("Default") or elem.text
 
                 if name:

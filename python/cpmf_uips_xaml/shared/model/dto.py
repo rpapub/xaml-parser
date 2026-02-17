@@ -419,6 +419,8 @@ class InvocationDto:
     callee_path: str
     via_activity_id: str  # act:sha256:...
     arguments_passed: dict[str, str] = field(default_factory=dict)
+    arguments_in: dict[str, str] = field(default_factory=dict)   # arg_name → expression (In/InOut)
+    arguments_out: dict[str, str] = field(default_factory=dict)  # arg_name → expression (Out/InOut)
 
 
 @dataclass
