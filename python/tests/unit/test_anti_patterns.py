@@ -1,7 +1,7 @@
 """Tests for anti-pattern detector (v0.2.10)."""
 
-from cpmf_xaml_parser.anti_patterns import AntiPatternDetector
-from cpmf_xaml_parser.models import Activity, WorkflowVariable
+from cpmf_uips_xaml.stages.analysis.anti_patterns import AntiPatternDetector
+from cpmf_uips_xaml.shared.model.models import Activity, WorkflowVariable
 
 
 class TestAntiPatternDetector:

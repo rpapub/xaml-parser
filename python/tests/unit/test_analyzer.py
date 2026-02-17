@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from cpmf_xaml_parser.analyzer import ProjectAnalyzer
-from cpmf_xaml_parser.dto import ActivityDto, EdgeDto, InvocationDto, SourceInfo, WorkflowDto
+from cpmf_uips_xaml.stages.assemble.analyzer import ProjectAnalyzer
+from cpmf_uips_xaml.shared.model.dto import ActivityDto, EdgeDto, InvocationDto, SourceInfo, WorkflowDto
 
 
 def test_analyze_empty():
@@ -13,8 +13,8 @@ def test_analyze_empty():
 
     assert index.total_workflows == 0
     assert index.total_activities == 0
-    assert index.workflows.node_count() == 0
-    assert index.activities.node_count() == 0
+    assert analyzer.workflows_graph.node_count() == 0
+    assert analyzer.activities_graph.node_count() == 0
 
 
 def test_analyze_single_workflow():
@@ -45,10 +45,10 @@ def test_analyze_single_workflow():
 
     assert index.total_workflows == 1
     assert index.total_activities == 1
-    assert index.workflows.has_node("wf:test")
-    assert index.activities.has_node("act:1")
-    assert index.get_workflow("wf:test") == workflow
-    assert index.get_activity("act:1") == workflow.activities[0]
+    assert analyzer.workflows_graph.has_node("wf:test")
+    assert analyzer.activities_graph.has_node("act:1")
+    assert analyzer.get_workflow("wf:test") == workflow
+    assert analyzer.get_activity("act:1") == workflow.activities[0]
 
 
 def test_analyze_workflow_with_hierarchy():
@@ -96,10 +96,10 @@ def test_analyze_workflow_with_hierarchy():
     index = analyzer.analyze([workflow])
 
     # Check activity hierarchy
-    assert index.activities.has_edge("act:parent", "act:child1")
-    assert index.activities.has_edge("act:parent", "act:child2")
-    assert index.activities.successors("act:parent") == ["act:child1", "act:child2"]
-    assert index.activities.predecessors("act:child1") == ["act:parent"]
+    assert analyzer.activities_graph.has_edge("act:parent", "act:child1")
+    assert analyzer.activities_graph.has_edge("act:parent", "act:child2")
+    assert analyzer.activities_graph.successors("act:parent") == ["act:child1", "act:child2"]
+    assert analyzer.activities_graph.predecessors("act:child1") == ["act:parent"]
 
 
 def test_analyze_workflow_invocations():
@@ -146,9 +146,9 @@ def test_analyze_workflow_invocations():
     index = analyzer.analyze([main_workflow, helper_workflow])
 
     # Check call graph
-    assert index.call_graph.has_edge("wf:main", "wf:helper")
-    assert index.call_graph.successors("wf:main") == ["wf:helper"]
-    assert index.call_graph.predecessors("wf:helper") == ["wf:main"]
+    assert analyzer.call_graph.has_edge("wf:main", "wf:helper")
+    assert analyzer.call_graph.successors("wf:main") == ["wf:helper"]
+    assert analyzer.call_graph.predecessors("wf:helper") == ["wf:main"]
 
 
 def test_analyze_control_flow():
@@ -209,8 +209,8 @@ def test_analyze_control_flow():
     index = analyzer.analyze([workflow])
 
     # Check control flow graph
-    assert index.control_flow.has_edge("act:1", "act:2")
-    assert index.control_flow.has_edge("act:1", "act:3")
+    assert analyzer.control_flow_graph.has_edge("act:1", "act:2")
+    assert analyzer.control_flow_graph.has_edge("act:1", "act:3")
 
 
 def test_workflow_by_path_lookup():
@@ -259,7 +259,7 @@ def test_activity_to_workflow_lookup():
     index = analyzer.analyze([workflow])
 
     assert index.activity_to_workflow["act:1"] == "wf:test"
-    assert index.get_workflow_for_activity("act:1") == workflow
+    assert analyzer.get_workflow_for_activity("act:1", index) == workflow
 
 
 def test_slice_context():
@@ -307,7 +307,7 @@ def test_slice_context():
     index = analyzer.analyze([workflow])
 
     # Slice with radius=1 from grandchild
-    context = index.slice_context("act:grandchild", radius=1)
+    context = analyzer.slice_context("act:grandchild", index, radius=1)
 
     assert "act:grandchild" in context
     assert "act:child1" in context  # Parent (1 level up)

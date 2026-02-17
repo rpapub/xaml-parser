@@ -1,7 +1,7 @@
-# TestPyPI Upload Success - cpmf-xaml-parser
+# TestPyPI Upload Success - cpmf-uips-xaml
 
 **Date**: 2025-12-04
-**Package**: cpmf-xaml-parser
+**Package**: cpmf-uips-xaml
 **Version**: 0.2.0
 **Status**: ✅ Successfully uploaded to TestPyPI
 
@@ -9,11 +9,11 @@
 
 ## Package Information
 
-- **PyPI Name**: `cpmf-xaml-parser`
-- **Python Import**: `cpmf_xaml_parser`
-- **CLI Command**: `cpmf-xaml-parser`
+- **PyPI Name**: `cpmf-uips-xaml`
+- **Python Import**: `cpmf_uips_xaml`
+- **CLI Command**: `cpmf-uips-xaml`
 - **Organization**: CPRIMA Forge
-- **TestPyPI URL**: https://test.pypi.org/project/cpmf-xaml-parser/0.2.0/
+- **TestPyPI URL**: https://test.pypi.org/project/cpmf-uips-xaml/0.2.0/
 
 ---
 
@@ -21,8 +21,8 @@
 
 ### Files Uploaded
 ```
-✓ cpmf_xaml_parser-0.2.0-py3-none-any.whl (149.3 KB)
-✓ cpmf_xaml_parser-0.2.0.tar.gz (200.1 KB)
+✓ cpmf_uips_xaml-0.2.0-py3-none-any.whl (149.3 KB)
+✓ cpmf_uips_xaml-0.2.0.tar.gz (200.1 KB)
 ```
 
 ### Upload Command Used
@@ -40,19 +40,19 @@ Duplicate filename in local headers
 ```
 
 **Cause**: Templates were included twice in the wheel:
-1. Auto-discovered by `packages = ["cpmf_xaml_parser"]`
+1. Auto-discovered by `packages = ["cpmf_uips_xaml"]`
 2. Explicitly added via `force-include`
 
 **Fix Applied**:
 ```toml
 # Before (caused duplicates):
 [tool.hatch.build.targets.wheel.force-include]
-"cpmf_xaml_parser/templates" = "cpmf_xaml_parser/templates"
-"cpmf_xaml_parser/py.typed" = "cpmf_xaml_parser/py.typed"
+"cpmf_uips_xaml/templates" = "cpmf_uips_xaml/templates"
+"cpmf_uips_xaml/py.typed" = "cpmf_uips_xaml/py.typed"
 
 # After (fixed):
 [tool.hatch.build.targets.wheel.force-include]
-"cpmf_xaml_parser/py.typed" = "cpmf_xaml_parser/py.typed"
+"cpmf_uips_xaml/py.typed" = "cpmf_uips_xaml/py.typed"
 ```
 
 **Result**: Templates now auto-discovered, no duplicates, upload successful ✓
@@ -89,22 +89,22 @@ source /c/Temp/test-cpmf/Scripts/activate
 ```bash
 pip install --index-url https://test.pypi.org/simple/ \
     --extra-index-url https://pypi.org/simple/ \
-    cpmf-xaml-parser
+    cpmf-uips-xaml
 ```
 
 **Why two index URLs?**
-- `--index-url` → TestPyPI (where `cpmf-xaml-parser` is hosted)
+- `--index-url` → TestPyPI (where `cpmf-uips-xaml` is hosted)
 - `--extra-index-url` → Real PyPI (where `defusedxml` dependency is hosted)
 
 **Expected Output:**
 ```
 Looking in indexes: https://test.pypi.org/simple/, https://pypi.org/simple/
-Collecting cpmf-xaml-parser
-  Downloading https://test-files.pythonhosted.org/.../cpmf_xaml_parser-0.2.0-py3-none-any.whl
+Collecting cpmf-uips-xaml
+  Downloading https://test-files.pythonhosted.org/.../cpmf_uips_xaml-0.2.0-py3-none-any.whl
 Collecting defusedxml>=0.7.1
   Downloading https://files.pythonhosted.org/.../defusedxml-0.7.1-py2.py3-none-any.whl
-Installing collected packages: defusedxml, cpmf-xaml-parser
-Successfully installed cpmf-xaml-parser-0.2.0 defusedxml-0.7.1
+Installing collected packages: defusedxml, cpmf-uips-xaml
+Successfully installed cpmf-uips-xaml-0.2.0 defusedxml-0.7.1
 ```
 
 ---
@@ -113,7 +113,7 @@ Successfully installed cpmf-xaml-parser-0.2.0 defusedxml-0.7.1
 
 **Test 1: CLI Help**
 ```bash
-cpmf-xaml-parser --help
+cpmf-uips-xaml --help
 ```
 
 **Expected**: Help text displays with all available commands
@@ -121,7 +121,7 @@ cpmf-xaml-parser --help
 **Test 2: Python Import**
 ```bash
 python << 'EOF'
-from cpmf_xaml_parser import XamlParser, ProjectParser
+from cpmf_uips_xaml import XamlParser, ProjectParser
 print("✓ Imports successful")
 EOF
 ```
@@ -130,19 +130,19 @@ EOF
 
 **Test 3: Version Check**
 ```bash
-python -c "from cpmf_xaml_parser import __version__; print(f'Version: {__version__}')"
+python -c "from cpmf_uips_xaml import __version__; print(f'Version: {__version__}')"
 ```
 
 **Expected**: `Version: 0.2.0`
 
 **Test 4: Package Info**
 ```bash
-pip show cpmf-xaml-parser
+pip show cpmf-uips-xaml
 ```
 
 **Expected Output:**
 ```
-Name: cpmf-xaml-parser
+Name: cpmf-uips-xaml
 Version: 0.2.0
 Summary: Standalone XAML workflow parser for automation projects (CPRIMA Forge)
 Home-page: https://github.com/rpapub/xaml-parser
@@ -166,7 +166,7 @@ pip install mypy
 **Create test script:**
 ```bash
 cat > test_types.py << 'EOF'
-from cpmf_xaml_parser import XamlParser, ParseResult
+from cpmf_uips_xaml import XamlParser, ParseResult
 from pathlib import Path
 
 def test_typing() -> None:
@@ -195,7 +195,7 @@ If mypy complains about missing types, the `py.typed` marker isn't working prope
 ```bash
 pip install --index-url https://test.pypi.org/simple/ \
     --extra-index-url https://pypi.org/simple/ \
-    'cpmf-xaml-parser[extras]'
+    'cpmf-uips-xaml[extras]'
 ```
 
 **Verify extras installed:**
@@ -208,14 +208,14 @@ python -c "import psutil; import rich; print('✓ Optional extras installed succ
 **Test performance flag (requires psutil):**
 ```bash
 echo '<Activity x:Class="Test"></Activity>' > test.xaml
-cpmf-xaml-parser test.xaml --performance --verbose
+cpmf-uips-xaml test.xaml --performance --verbose
 ```
 
 **Expected**: Performance metrics displayed
 
 **Test progress bars (requires rich):**
 ```bash
-cpmf-xaml-parser test.xaml --progress
+cpmf-uips-xaml test.xaml --progress
 ```
 
 **Expected**: Progress bar displayed (if multiple files)
@@ -228,23 +228,23 @@ If you have a UiPath XAML file:
 
 ```bash
 # Parse single workflow
-cpmf-xaml-parser path/to/workflow.xaml
+cpmf-uips-xaml path/to/workflow.xaml
 
 # Parse with JSON output
-cpmf-xaml-parser path/to/workflow.xaml --json
+cpmf-uips-xaml path/to/workflow.xaml --json
 
 # Parse entire project
-cpmf-xaml-parser path/to/project.json
+cpmf-uips-xaml path/to/project.json
 
 # Parse with dependency graph
-cpmf-xaml-parser path/to/project.json --graph
+cpmf-uips-xaml path/to/project.json --graph
 ```
 
 ---
 
 ## Verification Checklist
 
-Visit https://test.pypi.org/project/cpmf-xaml-parser/ and verify:
+Visit https://test.pypi.org/project/cpmf-uips-xaml/ and verify:
 
 - [ ] **Package appears** on TestPyPI
 - [ ] **Version 0.2.0** is listed
@@ -263,8 +263,8 @@ Visit https://test.pypi.org/project/cpmf-xaml-parser/ and verify:
 
 ### ✓ Basic Installation
 - [x] Package installs successfully
-- [x] CLI command available: `cpmf-xaml-parser`
-- [x] Python imports work: `from cpmf_xaml_parser import XamlParser`
+- [x] CLI command available: `cpmf-uips-xaml`
+- [x] Python imports work: `from cpmf_uips_xaml import XamlParser`
 - [x] Version correct: 0.2.0
 - [x] Dependencies installed: defusedxml
 
@@ -286,9 +286,9 @@ Visit https://test.pypi.org/project/cpmf-xaml-parser/ and verify:
 ### None Critical
 All known issues have been resolved:
 - ✓ Duplicate file issue fixed (templates no longer duplicated)
-- ✓ Package name updated to `cpmf-xaml-parser`
-- ✓ All imports updated to `cpmf_xaml_parser`
-- ✓ CLI command updated to `cpmf-xaml-parser`
+- ✓ Package name updated to `cpmf-uips-xaml`
+- ✓ All imports updated to `cpmf_uips_xaml`
+- ✓ CLI command updated to `cpmf-uips-xaml`
 
 ---
 
@@ -317,8 +317,8 @@ All known issues have been resolved:
 4. **Final Checks**
    - Run full test suite: `uv run pytest tests/ -v`
    - Run validation: `uv run python test_package.py`
-   - Check ruff: `uv run ruff check cpmf_xaml_parser/`
-   - Check mypy: `uv run mypy cpmf_xaml_parser/`
+   - Check ruff: `uv run ruff check cpmf_uips_xaml/`
+   - Check mypy: `uv run mypy cpmf_uips_xaml/`
 
 ### Production PyPI Upload
 
@@ -331,7 +331,7 @@ All known issues have been resolved:
 
 #### 2. Create Production API Token
 - Go to: https://pypi.org/manage/account/token/
-- Token name: `cpmf-xaml-parser-pypi`
+- Token name: `cpmf-uips-xaml-pypi`
 - Scope: "Entire account" (for first upload)
 - Save token securely
 
@@ -356,8 +356,8 @@ uv run twine upload dist/*
 ```
 
 #### 5. Verify Production Upload
-- Visit: https://pypi.org/project/cpmf-xaml-parser/
-- Test install: `pip install cpmf-xaml-parser`
+- Visit: https://pypi.org/project/cpmf-uips-xaml/
+- Test install: `pip install cpmf-uips-xaml`
 - Create git tag: `git tag v0.2.0 && git push --tags`
 - Create GitHub release
 
@@ -371,10 +371,10 @@ uv run twine upload dist/*
 **Prevention**: Only use `force-include` for individual files like `py.typed`
 
 ### Issue 2: Package Renaming
-**Problem**: Needed to change from `xaml-parser` to `cpmf-xaml-parser`
+**Problem**: Needed to change from `xaml-parser` to `cpmf-uips-xaml`
 **Solution**: Update all references in:
 - pyproject.toml (name, scripts, entry-points, packages, coverage)
-- Directory name (xaml_parser → cpmf_xaml_parser)
+- Directory name (xaml_parser → cpmf_uips_xaml)
 - All imports in tests
 - README.md
 - __version__.py
@@ -390,7 +390,7 @@ uv run twine upload dist/*
 
 ```bash
 # Check what's in the wheel
-python -m zipfile -l dist/cpmf_xaml_parser-0.2.0-py3-none-any.whl | less
+python -m zipfile -l dist/cpmf_uips_xaml-0.2.0-py3-none-any.whl | less
 
 # Validate packages
 uv run twine check dist/*
@@ -401,19 +401,19 @@ uv run twine upload --repository testpypi dist/*
 # Install from TestPyPI
 pip install --index-url https://test.pypi.org/simple/ \
     --extra-index-url https://pypi.org/simple/ \
-    cpmf-xaml-parser
+    cpmf-uips-xaml
 
 # Upload to production PyPI
 uv run twine upload dist/*
 
 # Install from production PyPI
-pip install cpmf-xaml-parser
+pip install cpmf-uips-xaml
 ```
 
 ### Important URLs
 
-- **TestPyPI Package**: https://test.pypi.org/project/cpmf-xaml-parser/
-- **Production PyPI**: https://pypi.org/project/cpmf-xaml-parser/ (after production upload)
+- **TestPyPI Package**: https://test.pypi.org/project/cpmf-uips-xaml/
+- **Production PyPI**: https://pypi.org/project/cpmf-uips-xaml/ (after production upload)
 - **GitHub Repository**: https://github.com/rpapub/xaml-parser
 - **Issues**: https://github.com/rpapub/xaml-parser/issues
 
@@ -456,4 +456,4 @@ If issues arise:
 
 **Generated**: 2025-12-04
 **Maintainer**: Christian Prior-Mamulyan (CPRIMA Forge)
-**Package**: cpmf-xaml-parser v0.2.0
+**Package**: cpmf-uips-xaml v0.2.0

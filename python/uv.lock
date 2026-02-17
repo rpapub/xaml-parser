@@ -217,15 +217,18 @@ toml = [
 ]
 
 [[package]]
-name = "cpmf-xaml-parser"
-version = "0.2.0"
+name = "cpmf-uips-xaml"
 source = { editable = "." }
 dependencies = [
     { name = "defusedxml" },
 ]
 
 [package.optional-dependencies]
+cli = [
+    { name = "rich" },
+]
 dev = [
+    { name = "deepdiff" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "psutil" },
@@ -242,7 +245,6 @@ docs = [
 ]
 extras = [
     { name = "psutil" },
-    { name = "rich" },
     { name = "watchdog" },
 ]
 full = [
@@ -256,17 +258,9 @@ test = [
     { name = "pytest-cov" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "deepdiff" },
-]
-test = [
-    { name = "pytest" },
-    { name = "pytest-cov" },
-]
-
 [package.metadata]
 requires-dist = [
+    { name = "deepdiff", marker = "extra == 'dev'", specifier = ">=8.6.1" },
     { name = "defusedxml", specifier = ">=0.7.1" },
     { name = "jinja2", marker = "extra == 'docs'", specifier = ">=3.1" },
     { name = "jinja2", marker = "extra == 'full'", specifier = ">=3.1" },
@@ -279,9 +273,9 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.1" },
     { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=4.1" },
-    { name = "rich", marker = "extra == 'dev'", specifier = ">=13.0.0" },
-    { name = "rich", marker = "extra == 'extras'", specifier = ">=13.0.0" },
-    { name = "rich", marker = "extra == 'full'", specifier = ">=13.0.0" },
+    { name = "rich", marker = "extra == 'cli'", specifier = ">=14.2.0" },
+    { name = "rich", marker = "extra == 'dev'", specifier = ">=14.2.0" },
+    { name = "rich", marker = "extra == 'full'", specifier = ">=14.2.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
     { name = "twine", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "types-defusedxml", marker = "extra == 'dev'" },
@@ -289,14 +283,7 @@ requires-dist = [
     { name = "watchdog", marker = "extra == 'extras'", specifier = ">=3.0.0" },
     { name = "watchdog", marker = "extra == 'full'", specifier = ">=3.0.0" },
 ]
-provides-extras = ["extras", "dev", "test", "docs", "full"]
-
-[package.metadata.requires-dev]
-dev = [{ name = "deepdiff", specifier = ">=8.6.1" }]
-test = [
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-cov", specifier = ">=4.1" },
-]
+provides-extras = ["cli", "dev", "docs", "extras", "full", "test"]
 
 [[package]]
 name = "cryptography"

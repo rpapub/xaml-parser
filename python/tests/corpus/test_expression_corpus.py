@@ -6,8 +6,8 @@ to ensure >80% success rate on production code.
 
 import pytest
 
-from cpmf_xaml_parser.expression_parser import ExpressionParser
-from cpmf_xaml_parser.project import ProjectParser
+from cpmf_uips_xaml.stages.parsing.expression_parser import ExpressionParser
+from cpmf_uips_xaml.stages.assemble.project import ProjectParser
 
 
 @pytest.mark.corpus

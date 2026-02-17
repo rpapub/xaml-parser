@@ -15,14 +15,15 @@ from typing import Any
 
 import pytest
 
-from cpmf_xaml_parser.constants import DEFAULT_CONFIG
-from cpmf_xaml_parser.extractors import (
+from cpmf_uips_xaml.platforms.uipath.constants import DEFAULT_CONFIG
+from cpmf_uips_xaml.stages.parsing.extractors import (
     ActivityExtractor,
     AnnotationExtractor,
     ArgumentExtractor,
     MetadataExtractor,
     VariableExtractor,
 )
+from cpmf_uips_xaml.stages.assemble.project import _create_platform_config
 
 # ============================================================================
 # Helper Functions
@@ -44,11 +45,24 @@ def create_mock_namespaces() -> dict[str, str]:
     }
 
 
+def create_argument_extractor() -> ArgumentExtractor:
+    """Create ArgumentExtractor with platform config."""
+    platform_config = _create_platform_config()
+    return ArgumentExtractor(platform_config)
+
+
+def create_variable_extractor() -> VariableExtractor:
+    """Create VariableExtractor with platform config."""
+    platform_config = _create_platform_config()
+    return VariableExtractor(platform_config)
+
+
 def create_activity_extractor(config: dict[str, Any] | None = None) -> ActivityExtractor:
-    """Create ActivityExtractor with config."""
+    """Create ActivityExtractor with platform config and parser config."""
     if config is None:
         config = DEFAULT_CONFIG.copy()
-    return ActivityExtractor(config)
+    platform_config = _create_platform_config()
+    return ActivityExtractor(platform_config, config)
 
 
 # ============================================================================
@@ -70,7 +84,7 @@ class TestArgumentExtractor:
         root = parse_xaml_string(xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 1
         assert arguments[0].name == "in_FilePath"
@@ -90,7 +104,7 @@ class TestArgumentExtractor:
         root = parse_xaml_string(xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 1
         assert arguments[0].name == "out_Result"
@@ -107,7 +121,7 @@ class TestArgumentExtractor:
         root = parse_xaml_string(xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 1
         assert arguments[0].name == "io_Data"
@@ -122,7 +136,7 @@ class TestArgumentExtractor:
             "sap2010": "http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation",
         }
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         in_arg = next(a for a in arguments if a.name == "in_FilePath")
         assert in_arg.annotation == "Input file path"
@@ -135,7 +149,7 @@ class TestArgumentExtractor:
             "sap2010": "http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation",
         }
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         in_arg = next(a for a in arguments if a.name == "in_FilePath")
         assert in_arg.default_value == "config.json"
@@ -148,7 +162,7 @@ class TestArgumentExtractor:
             "sap2010": "http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation",
         }
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 3
         directions = {arg.name: arg.direction for arg in arguments}
@@ -162,7 +176,7 @@ class TestArgumentExtractor:
         root = parse_xaml_string(simple_xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 0
 
@@ -175,7 +189,7 @@ class TestArgumentExtractor:
         root = parse_xaml_string(xaml)
         namespaces = {}
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 0
 
@@ -190,7 +204,7 @@ class TestArgumentExtractor:
         root = parse_xaml_string(xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 0
 
@@ -203,7 +217,7 @@ class TestArgumentExtractor:
         root = parse_xaml_string(xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 0
 
@@ -218,7 +232,7 @@ class TestArgumentExtractor:
         root = parse_xaml_string(xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 1
         assert arguments[0].direction == "in"
@@ -231,7 +245,7 @@ class TestArgumentExtractor:
             "sap2010": "http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation",
         }
 
-        arguments = ArgumentExtractor.extract_arguments(root, namespaces)
+        arguments = create_argument_extractor().extract_arguments(root, namespaces)
 
         assert len(arguments) == 2
 
@@ -257,7 +271,7 @@ class TestVariableExtractor:
         root = parse_xaml_string(xaml_with_variable)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        variables = VariableExtractor.extract_variables(root, namespaces)
+        variables = create_variable_extractor().extract_variables(root, namespaces)
 
         assert len(variables) >= 1
         test_var = next((v for v in variables if v.name == "testVar"), None)
@@ -271,7 +285,7 @@ class TestVariableExtractor:
         root = parse_xaml_string(xaml_with_nested_variables)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        variables = VariableExtractor.extract_variables(root, namespaces)
+        variables = create_variable_extractor().extract_variables(root, namespaces)
 
         # Should find both outer and inner variables
         assert len(variables) >= 2
@@ -284,7 +298,7 @@ class TestVariableExtractor:
         root = parse_xaml_string(xaml_with_nested_variables)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        variables = VariableExtractor.extract_variables(root, namespaces)
+        variables = create_variable_extractor().extract_variables(root, namespaces)
 
         assert len(variables) >= 2
 
@@ -293,7 +307,7 @@ class TestVariableExtractor:
         root = parse_xaml_string(xaml_with_nested_variables)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        variables = VariableExtractor.extract_variables(root, namespaces)
+        variables = create_variable_extractor().extract_variables(root, namespaces)
 
         outer_var = next((v for v in variables if v.name == "outerVar"), None)
         assert outer_var is not None
@@ -304,7 +318,7 @@ class TestVariableExtractor:
         root = parse_xaml_string(xaml_with_nested_variables)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        variables = VariableExtractor.extract_variables(root, namespaces)
+        variables = create_variable_extractor().extract_variables(root, namespaces)
 
         inner_var = next((v for v in variables if v.name == "innerVar"), None)
         assert inner_var is not None
@@ -315,11 +329,11 @@ class TestVariableExtractor:
         """Test that variable elements are correctly identified."""
         # Create a Variable element
         var_elem = ET.Element("Variable")
-        assert VariableExtractor._is_variable_element(var_elem)
+        assert create_variable_extractor()._is_variable_element(var_elem)
 
         # Create a non-variable element
         seq_elem = ET.Element("Sequence")
-        assert not VariableExtractor._is_variable_element(seq_elem)
+        assert not create_variable_extractor()._is_variable_element(seq_elem)
 
     def test_handle_variable_without_name(self):
         """Test that variables without Name attribute are skipped."""
@@ -334,7 +348,7 @@ class TestVariableExtractor:
         root = parse_xaml_string(xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        variables = VariableExtractor.extract_variables(root, namespaces)
+        variables = create_variable_extractor().extract_variables(root, namespaces)
 
         # Should not find any valid variables
         assert len(variables) == 0
@@ -344,7 +358,7 @@ class TestVariableExtractor:
         root = parse_xaml_string(xaml_with_nested_variables)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        variables = VariableExtractor.extract_variables(root, namespaces)
+        variables = create_variable_extractor().extract_variables(root, namespaces)
 
         # Check that scopes are assigned (either workflow or activity name)
         for var in variables:
@@ -356,7 +370,7 @@ class TestVariableExtractor:
         root = parse_xaml_string(empty_xaml)
         namespaces = {"x": "http://schemas.microsoft.com/winfx/2006/xaml"}
 
-        variables = VariableExtractor.extract_variables(root, namespaces)
+        variables = create_variable_extractor().extract_variables(root, namespaces)
 
         assert len(variables) == 0
 
@@ -727,7 +741,7 @@ class TestActivityExtractorCore:
     def test_initialization_with_custom_config(self):
         """Test ActivityExtractor initialization with custom config."""
         config = {"max_depth": 25, "batch_size": 50}
-        extractor = ActivityExtractor(config)
+        extractor = create_activity_extractor(config)
 
         assert extractor._max_depth == 25
         assert extractor._batch_size == 50
@@ -896,11 +910,13 @@ class TestActivityExtractorAttributes:
 
         # Find Sequence element
         seq_elem = root.find(".//{http://schemas.microsoft.com/netfx/2009/xaml/activities}Sequence")
-        annotation = extractor._extract_annotation(seq_elem, namespaces["sap2010"])
+        annotation, annotation_block = extractor._extract_annotation(seq_elem, namespaces["sap2010"])
 
         assert annotation is not None
         assert "<HTML>" in annotation
         assert "&" in annotation
+        assert annotation_block is not None
+        assert annotation_block.raw == annotation
 
     def test_handle_missing_annotation_namespace(self, simple_xaml):
         """Test handling when annotation namespace is not defined."""
@@ -908,9 +924,10 @@ class TestActivityExtractorAttributes:
         extractor = create_activity_extractor()
 
         # Try to extract annotation without namespace
-        annotation = extractor._extract_annotation(root, "")
+        annotation, annotation_block = extractor._extract_annotation(root, "")
 
         assert annotation is None
+        assert annotation_block is None
 
     def test_extract_visible_properties(self):
         """Test extraction of visible business logic properties."""
@@ -1224,7 +1241,7 @@ class TestActivityExtractorEdgeCases:
         root = parse_xaml_string(xaml)
         namespaces = create_mock_namespaces()
         config = {"max_depth": 3}
-        extractor = ActivityExtractor(config)
+        extractor = create_activity_extractor(config)
 
         activities = extractor.extract_activity_instances(
             root, namespaces, workflow_id="wf:test", project_id="proj:test"

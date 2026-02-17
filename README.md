@@ -20,7 +20,7 @@ A zero-dependency parser for UiPath XAML workflow files. Extract all metadata fr
 ### Python
 
 ```bash
-pip install xaml-parser
+pip install cpmf-xaml-parser
 ```
 
 Or for development:
@@ -36,7 +36,7 @@ uv sync
 
 ```python
 from pathlib import Path
-from xaml_parser import XamlParser
+from cpmf_xaml_parser import XamlParser
 
 parser = XamlParser()
 result = parser.parse_file(Path("Main.xaml"))
@@ -178,7 +178,7 @@ Parse entire UiPath projects and analyze call graphs, control flow, and activity
 
 ```python
 from pathlib import Path
-from xaml_parser import ProjectParser, analyze_project
+from cpmf_xaml_parser import ProjectParser, analyze_project
 
 # Parse entire project
 parser = ProjectParser()
@@ -205,7 +205,7 @@ Generate different representations of the same project:
 #### 1. Flat View (Default, Backward Compatible)
 
 ```python
-from xaml_parser.views import FlatView
+from cpmf_xaml_parser.views import FlatView
 
 view = FlatView()
 output = view.render(index)
@@ -217,7 +217,7 @@ output = view.render(index)
 Follow the execution path from an entry point, showing nested invocations:
 
 ```python
-from xaml_parser.views import ExecutionView
+from cpmf_xaml_parser.views import ExecutionView
 
 # Start from entry point workflow
 entry_workflow_id = index.entry_points[0]
@@ -237,7 +237,7 @@ output = view.render(index)
 Extract focused context around a specific activity:
 
 ```python
-from xaml_parser.views import SliceView
+from cpmf_xaml_parser.views import SliceView
 
 # Focus on a specific activity
 focal_activity_id = "act:sha256:abc123def456"

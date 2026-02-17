@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Test script to validate the cpmf-xaml-parser package before publishing."""
+"""Test script to validate the cpmf-uips-xaml package before publishing."""
 
 import sys
 from pathlib import Path
@@ -9,7 +9,7 @@ def test_imports() -> bool | None:
     """Test that all public APIs can be imported."""
     print("Testing imports...")
     try:
-        from cpmf_xaml_parser import (
+        from cpmf_uips_xaml import (
             ProjectParser,
             XamlParser,
             __author__,
@@ -30,7 +30,7 @@ def test_version_sync() -> bool | None:
     """Test that versions are synced across files."""
     print("\nTesting version sync...")
     try:
-        from cpmf_xaml_parser import __version__
+        from cpmf_uips_xaml import __version__
 
         # Check pyproject.toml
         pyproject = Path("pyproject.toml").read_text()
@@ -90,7 +90,7 @@ def test_files_exist() -> bool:
     """Test that required files exist."""
     print("\nTesting required files...")
     required_files = [
-        "cpmf_xaml_parser/py.typed",
+        "cpmf_uips_xaml/py.typed",
         "LICENSE-APACHE",
         "LICENSE-CC-BY",
         "README.md",

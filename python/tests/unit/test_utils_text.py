@@ -1,6 +1,6 @@
 """Tests for TextUtils utility functions."""
 
-from cpmf_xaml_parser.utils import TextUtils
+from cpmf_uips_xaml.shared.utils import TextUtils
 
 
 class TestTextUtilsCleanAnnotation:

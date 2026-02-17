@@ -1,6 +1,6 @@
 """Tests for ActivityUtils utility functions."""
 
-from cpmf_xaml_parser.utils import ActivityUtils
+from cpmf_uips_xaml.platforms.uipath.activities import ActivityUtils
 
 
 class TestGenerateActivityId:

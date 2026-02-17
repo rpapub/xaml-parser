@@ -3,7 +3,7 @@
 import unittest
 from pathlib import Path
 
-from cpmf_xaml_parser import XamlParser
+from cpmf_uips_xaml import XamlParser
 
 
 class TestXamlParser(unittest.TestCase):

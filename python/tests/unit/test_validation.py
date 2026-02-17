@@ -3,8 +3,8 @@
 import unittest
 from unittest.mock import Mock
 
-from cpmf_xaml_parser import OutputValidator, ValidationError, validate_output
-from cpmf_xaml_parser.models import (
+from cpmf_uips_xaml.shared.model.validation import OutputValidator, ValidationError, validate_output
+from cpmf_uips_xaml.shared.model.models import (
     ParseDiagnostics,
     ParseResult,
     WorkflowArgument,

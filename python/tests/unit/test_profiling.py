@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from cpmf_xaml_parser.profiling import ProfileData, Profiler
+from cpmf_uips_xaml.profiling import ProfileData, Profiler
 
 
 class TestProfileData:

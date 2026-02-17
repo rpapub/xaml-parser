@@ -250,7 +250,7 @@ xaml-parser --help
 
 # Test Python API
 python << 'EOF'
-from xaml_parser import XamlParser, __version__
+from cpmf_uips_xaml import XamlParser, __version__
 print(f"Version: {__version__}")
 print(f"Parser: {XamlParser}")
 print("SUCCESS: Package works!")
@@ -272,7 +272,7 @@ pip install mypy
 
 # Create test script
 cat > test_types.py << 'EOF'
-from xaml_parser import XamlParser, ParseResult
+from cpmf_uips_xaml import XamlParser, ParseResult
 from pathlib import Path
 
 def test() -> None:

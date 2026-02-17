@@ -1,6 +1,6 @@
 """Tests for DataUtils utility functions."""
 
-from cpmf_xaml_parser.utils import DataUtils
+from cpmf_uips_xaml.shared.utils import DataUtils
 
 
 class TestMergeDictionaries:

@@ -1,7 +1,7 @@
 """Tests for quality metrics calculator (v0.2.10)."""
 
-from cpmf_xaml_parser.models import Activity, WorkflowVariable
-from cpmf_xaml_parser.quality_metrics import QualityMetricsCalculator
+from cpmf_uips_xaml.shared.model.models import Activity, WorkflowVariable
+from cpmf_uips_xaml.stages.analysis.quality_metrics import QualityMetricsCalculator
 
 
 class TestQualityMetricsCalculator:

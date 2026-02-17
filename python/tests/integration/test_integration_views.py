@@ -5,8 +5,8 @@ Tests the complete flow: Parse → Analyze → View → Render
 
 import pytest
 
-from cpmf_xaml_parser import ProjectParser, analyze_project
-from cpmf_xaml_parser.views import ExecutionView, NestedView, SliceView
+from cpmf_uips_xaml.stages.assemble.project import ProjectParser, analyze_project
+from cpmf_uips_xaml.stages.emit.views import ExecutionView, NestedView, SliceView
 
 
 @pytest.mark.integration
@@ -19,11 +19,11 @@ def test_nested_view_produces_backward_compatible_output(simple_project):
     assert result.success, f"Project parsing failed: {result.errors}"
 
     # Analyze
-    index = analyze_project(result)
+    analyzer, index = analyze_project(result)
 
     # Render nested view
     view = NestedView()
-    output = view.render(index)
+    output = view.render(analyzer, index)
 
     # Verify structure
     assert "schema_id" in output
@@ -44,17 +44,17 @@ def test_execution_view_traverses_call_graph(simple_project):
     assert result.total_workflows > 0
 
     # Analyze
-    index = analyze_project(result)
+    analyzer, index = analyze_project(result)
 
     # Get first workflow ID as entry point
-    if not index.workflows.nodes():
+    if not analyzer.workflows_graph.nodes():
         pytest.skip("No workflows found")
 
-    first_workflow_id = index.workflows.nodes()[0]
+    first_workflow_id = analyzer.workflows_graph.nodes()[0]
 
     # Render execution view
     view = ExecutionView(entry_point=first_workflow_id, max_depth=10)
-    output = view.render(index)
+    output = view.render(analyzer, index)
 
     # Verify structure
     assert "schema_id" in output
@@ -80,17 +80,17 @@ def test_execution_view_nests_activities(simple_project):
     assert result.success
 
     # Analyze
-    index = analyze_project(result)
+    analyzer, index = analyze_project(result)
 
     # Get first workflow ID as entry point
-    if not index.workflows.nodes():
+    if not analyzer.workflows_graph.nodes():
         pytest.skip("No workflows found")
 
-    first_workflow_id = index.workflows.nodes()[0]
+    first_workflow_id = analyzer.workflows_graph.nodes()[0]
 
     # Render execution view
     view = ExecutionView(entry_point=first_workflow_id, max_depth=10)
-    output = view.render(index)
+    output = view.render(analyzer, index)
 
     # Check for nested structure
     for wf in output["workflows"]:
@@ -113,17 +113,17 @@ def test_slice_view_extracts_activity_context(simple_project):
     assert result.success
 
     # Analyze
-    index = analyze_project(result)
+    analyzer, index = analyze_project(result)
 
     # Get first activity ID
-    if not index.activities.nodes():
+    if not analyzer.activities_graph.nodes():
         pytest.skip("No activities found in project")
 
-    focal_activity_id = index.activities.nodes()[0]
+    focal_activity_id = analyzer.activities_graph.nodes()[0]
 
     # Render slice view
     view = SliceView(focus=focal_activity_id, radius=2)
-    output = view.render(index)
+    output = view.render(analyzer, index)
 
     # Verify structure
     assert "schema_id" in output
@@ -147,22 +147,22 @@ def test_analyze_project_builds_all_graphs(simple_project):
     assert result.success
 
     # Analyze
-    index = analyze_project(result)
+    analyzer, index = analyze_project(result)
 
     # Verify all graphs are populated
-    assert index.workflows.node_count() > 0
+    assert analyzer.workflows_graph.node_count() > 0
     assert index.total_workflows > 0
 
     # Activities graph (should have activities from all workflows)
-    assert index.activities.node_count() >= 0  # May be 0 for minimal test projects
+    assert analyzer.activities_graph.node_count() >= 0  # May be 0 for minimal test projects
 
     # Workflow lookups
     assert len(index.workflow_by_path) > 0
 
     # Activity to workflow mapping
-    if index.activities.node_count() > 0:
-        first_activity_id = index.activities.nodes()[0]
-        workflow = index.get_workflow_for_activity(first_activity_id)
+    if analyzer.activities_graph.node_count() > 0:
+        first_activity_id = analyzer.activities_graph.nodes()[0]
+        workflow = analyzer.get_workflow_for_activity(first_activity_id, index)
         assert workflow is not None
 
 
@@ -176,11 +176,11 @@ def test_view_query_methods(simple_project):
     assert result.success
 
     # Analyze
-    index = analyze_project(result)
+    analyzer, index = analyze_project(result)
 
     # Test get_workflow
-    first_wf_id = index.workflows.nodes()[0]
-    workflow = index.get_workflow(first_wf_id)
+    first_wf_id = analyzer.workflows_graph.nodes()[0]
+    workflow = analyzer.get_workflow(first_wf_id)
     assert workflow is not None
     assert workflow.id == first_wf_id
 
@@ -191,7 +191,7 @@ def test_view_query_methods(simple_project):
     # Test get_execution_order
     order = index.get_execution_order()
     assert isinstance(order, list)
-    assert len(order) == index.workflows.node_count()
+    assert len(order) == analyzer.workflows_graph.node_count()
 
 
 @pytest.mark.integration
@@ -203,11 +203,11 @@ def test_end_to_end_nested_view_json_output(simple_project, tmp_path):
     assert result.success
 
     # Analyze
-    index = analyze_project(result)
+    analyzer, index = analyze_project(result)
 
     # Render
     view = NestedView()
-    output = view.render(index)
+    output = view.render(analyzer, index)
 
     # Write to file
     import json

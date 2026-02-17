@@ -2,9 +2,10 @@
 
 from pathlib import Path
 
-from cpmf_xaml_parser.dto import ActivityDto, EdgeDto, WorkflowDto
-from cpmf_xaml_parser.emitters import EmitterConfig
-from cpmf_xaml_parser.emitters.mermaid_emitter import MermaidEmitter
+from cpmf_uips_xaml.shared.model.dto import ActivityDto, EdgeDto, WorkflowDto
+from cpmf_uips_xaml.stages.emit.emitters import EmitterConfig
+from cpmf_uips_xaml.stages.emit.emitters.mermaid_emitter import MermaidEmitter
+from cpmf_uips_xaml.stages.emit.utils import sanitize_filename
 
 
 class TestMermaidEmitter:
@@ -57,7 +58,16 @@ class TestMermaidEmitter:
         )
 
         output_file = tmp_path / "test.mmd"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="mermaid",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = MermaidEmitter()
         result = emitter.emit([workflow], output_file, config)
@@ -101,7 +111,16 @@ class TestMermaidEmitter:
         ]
 
         output_dir = tmp_path / "diagrams"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="mermaid",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = MermaidEmitter()
         result = emitter.emit(workflows, output_dir, config)
@@ -187,7 +206,16 @@ class TestMermaidEmitter:
         )
 
         output_file = tmp_path / "shapes.mmd"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="mermaid",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = MermaidEmitter()
         result = emitter.emit([workflow], output_file, config)
@@ -291,7 +319,16 @@ class TestMermaidEmitter:
         )
 
         output_file = tmp_path / "edges.mmd"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="mermaid",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = MermaidEmitter()
         result = emitter.emit([workflow], output_file, config)
@@ -377,7 +414,17 @@ class TestMermaidEmitter:
         )
 
         output_file = tmp_path / "depth.mmd"
-        config = EmitterConfig(extra={"max_depth": 5})
+        config = EmitterConfig(
+            format="mermaid",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+            extra={"max_depth": 5},
+        )
 
         emitter = MermaidEmitter()
         result = emitter.emit([workflow], output_file, config)
@@ -403,12 +450,11 @@ class TestMermaidEmitter:
         assert result == "n123abc"
 
     def test_sanitize_filename(self) -> None:
-        """Test filename sanitization."""
-        emitter = MermaidEmitter()
-
-        assert emitter._sanitize_filename("My Workflow") == "My Workflow"
-        assert emitter._sanitize_filename("Test/Invalid:Name") == "Test_Invalid_Name"
-        assert emitter._sanitize_filename("  Trimmed  ") == "Trimmed"
+        """Test filename sanitization using shared utility."""
+        # Test shared utility function (behavior unified across all emitters)
+        assert sanitize_filename("My Workflow") == "My Workflow"
+        assert sanitize_filename("Test/Invalid:Name") == "Test_Invalid_Name"
+        assert sanitize_filename("  Trimmed  ") == "Trimmed"
 
     def test_error_handling(self, tmp_path: Path) -> None:
         """Test error handling in emitter."""
@@ -440,7 +486,16 @@ class TestMermaidEmitter:
         )
 
         output_file = tmp_path / "test.mmd"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="mermaid",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         result = emitter.emit([workflow], output_file, config)
         assert result.success is True
@@ -528,7 +583,16 @@ class TestMermaidFormatting:
         )
 
         output_file = tmp_path / "annotated.mmd"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="mermaid",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = MermaidEmitter()
         result = emitter.emit([workflow], output_file, config)

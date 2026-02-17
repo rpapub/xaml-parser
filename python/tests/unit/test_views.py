@@ -1,8 +1,8 @@
 """Tests for views module."""
 
-from cpmf_xaml_parser.analyzer import ProjectAnalyzer
-from cpmf_xaml_parser.dto import ActivityDto, InvocationDto, SourceInfo, WorkflowDto
-from cpmf_xaml_parser.views import ExecutionView, NestedView, SliceView
+from cpmf_uips_xaml.stages.assemble.analyzer import ProjectAnalyzer
+from cpmf_uips_xaml.shared.model.dto import ActivityDto, InvocationDto, SourceInfo, WorkflowDto
+from cpmf_uips_xaml.stages.emit.views import ExecutionView, NestedView, SliceView
 
 
 def test_nested_view_empty():
@@ -11,7 +11,7 @@ def test_nested_view_empty():
     index = analyzer.analyze([])
 
     view = NestedView()
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     assert result["schema_id"] == "https://rpax.io/schemas/xaml-nested-workflow-graph.json"
     assert result["schema_version"] == "0.4.0"
@@ -47,7 +47,7 @@ def test_nested_view_single_workflow():
     index = analyzer.analyze([workflow])
 
     view = NestedView()
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     assert len(result["workflows"]) == 1
     wf_dict = result["workflows"][0]
@@ -63,7 +63,7 @@ def test_execution_view_entry_not_found():
     index = analyzer.analyze([])
 
     view = ExecutionView(entry_point="wf:nonexistent")
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     assert "error" in result
     assert "not found" in result["error"]
@@ -96,7 +96,7 @@ def test_execution_view_single_workflow():
     index = analyzer.analyze([workflow])
 
     view = ExecutionView(entry_point="wf:main")
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     assert result["schema_id"] == "https://rpax.io/schemas/xaml-workflow-execution.json"
     assert result["schema_version"] == "0.4.0"
@@ -161,7 +161,7 @@ def test_execution_view_with_invocation():
     index = analyzer.analyze([main_workflow, helper_workflow])
 
     view = ExecutionView(entry_point="wf:main", max_depth=5)
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     # Should have both workflows
     assert len(result["workflows"]) == 2
@@ -213,7 +213,7 @@ def test_execution_view_nested_activities():
     index = analyzer.analyze([workflow])
 
     view = ExecutionView(entry_point="wf:test")
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     # Check nested structure
     wf = result["workflows"][0]
@@ -252,7 +252,7 @@ def test_execution_view_resolve_entry_by_path():
 
     # Resolve by path instead of ID
     view = ExecutionView(entry_point="Main.xaml")
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     assert result["entry_point"] == "wf:main"
     assert len(result["workflows"]) == 1
@@ -264,7 +264,7 @@ def test_slice_view_activity_not_found():
     index = analyzer.analyze([])
 
     view = SliceView(focus="act:nonexistent")
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     assert "error" in result
     assert "not found" in result["error"]
@@ -297,7 +297,7 @@ def test_slice_view_single_activity():
     index = analyzer.analyze([workflow])
 
     view = SliceView(focus="act:focal", radius=2)
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     assert result["schema_id"] == "https://rpax.io/schemas/xaml-activity-slice.json"
     assert result["schema_version"] == "0.4.0"
@@ -355,7 +355,7 @@ def test_slice_view_with_parent_chain():
     index = analyzer.analyze([workflow])
 
     view = SliceView(focus="act:focal", radius=2)
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     # Should have parent chain: root -> child
     assert len(result["parent_chain"]) == 2
@@ -417,7 +417,7 @@ def test_slice_view_with_siblings():
     index = analyzer.analyze([workflow])
 
     view = SliceView(focus="act:focal", radius=2)
-    result = view.render(index)
+    result = view.render(analyzer, index)
 
     # Should have 2 siblings
     assert len(result["siblings"]) == 2

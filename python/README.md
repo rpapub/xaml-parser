@@ -7,15 +7,15 @@ Python implementation of the XAML workflow parser for automation projects.
 ### From PyPI (when published)
 
 ```bash
-pip install cpmf-cpmf-xaml-parser
+pip install cpmf-uips-xaml
 ```
 
 ### For Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/rpapub/cpmf-xaml-parser.git
-cd cpmf-xaml-parser/python
+git clone https://github.com/rpapub/cpmf-uips-xaml.git
+cd cpmf-uips-xaml/python
 
 # Install with uv (recommended)
 uv sync
@@ -30,7 +30,7 @@ pip install -e .
 
 ```python
 from pathlib import Path
-from cpmf_xaml_parser import XamlParser
+from cpmf_uips_xaml import XamlParser
 
 # Parse a workflow file
 parser = XamlParser()
@@ -62,46 +62,46 @@ else:
 
 ```bash
 # Parse entire project from project.json
-cpmf-xaml-parser project.json
-cpmf-xaml-parser /path/to/project.json
-cpmf-xaml-parser /path/to/project        # Directory containing project.json
+cpmf-uips-xaml project.json
+cpmf-uips-xaml /path/to/project.json
+cpmf-uips-xaml /path/to/project        # Directory containing project.json
 
 # Show workflow dependency graph
-cpmf-xaml-parser project.json --graph
+cpmf-uips-xaml project.json --graph
 
 # Parse only entry points (no recursive discovery)
-cpmf-xaml-parser project.json --entry-points-only
+cpmf-uips-xaml project.json --entry-points-only
 
 # Save to file
-cpmf-xaml-parser project.json --json -o output.json
+cpmf-uips-xaml project.json --json -o output.json
 ```
 
 **Individual Workflow Files:**
 
 ```bash
 # Parse single workflow
-cpmf-xaml-parser Main.xaml
+cpmf-uips-xaml Main.xaml
 
 # JSON output
-cpmf-xaml-parser Main.xaml --json
+cpmf-uips-xaml Main.xaml --json
 
 # List only arguments
-cpmf-xaml-parser Main.xaml --arguments
+cpmf-uips-xaml Main.xaml --arguments
 
 # Show activity tree
-cpmf-xaml-parser Main.xaml --tree
+cpmf-uips-xaml Main.xaml --tree
 
 # Process multiple files
-cpmf-xaml-parser *.xaml --summary
+cpmf-uips-xaml *.xaml --summary
 
 # Recursive search
-cpmf-xaml-parser **/*.xaml --summary
+cpmf-uips-xaml **/*.xaml --summary
 ```
 
 **Using with uv (development):**
 ```bash
-uv run cpmf-xaml-parser project.json
-uv run cpmf-xaml-parser workflow.xaml
+uv run cpmf-uips-xaml project.json
+uv run cpmf-uips-xaml workflow.xaml
 ```
 
 **CLI Options:**
@@ -127,7 +127,7 @@ uv run cpmf-xaml-parser workflow.xaml
 
 ```python
 from pathlib import Path
-from cpmf_xaml_parser import ProjectParser
+from cpmf_uips_xaml import ProjectParser
 
 # Parse entire project
 parser = ProjectParser()
@@ -229,12 +229,289 @@ Data models for parsed content:
 Schema-based validation:
 
 ```python
-from cpmf_xaml_parser.validation import validate_output
+from cpmf_uips_xaml.validation import validate_output
 
 errors = validate_output(result)
 if errors:
     print("Validation failed:", errors)
 ```
+
+## Library API (v0.3.0+)
+
+Starting in v0.3.0, the package provides a stable orchestration API that coordinates parsing, analysis, and output generation. This API is the recommended way to integrate XAML parsing into libraries and tools.
+
+### Architecture
+
+The package follows a layered architecture:
+
+```
+Your Application
+      ↓
+API Layer (orchestration) ← You are here
+      ↓
+Core, UiPS, Emitters, Views (internal implementation)
+```
+
+The API layer provides stable entry points while internal implementation details may change between versions.
+
+### Core API Functions
+
+#### parse_and_analyze_project()
+
+Parse a project and build queryable index in one step:
+
+```python
+from pathlib import Path
+from cpmf_uips_xaml.api import parse_and_analyze_project
+
+# Parse project and build complete analysis
+project_result, analyzer, index = parse_and_analyze_project(
+    Path("./MyProject"),
+    recursive=True,              # Follow InvokeWorkflowFile references
+    entry_points_only=False,     # Parse all workflows, not just entry points
+    show_progress=False          # Show progress bars
+)
+
+# Access project info
+if project_result.project_config:
+    print(f"Project: {project_result.project_config.name}")
+    print(f"Main workflow: {project_result.project_config.main}")
+
+# Query workflows
+workflow_ids = index.list_workflows()
+print(f"Total workflows: {len(workflow_ids)}")
+
+# Traverse call graph
+for workflow_id in index.list_workflows():
+    callees = index.get_callees(workflow_id)
+    if callees:
+        print(f"{workflow_id} calls: {callees}")
+```
+
+#### render_project_view()
+
+Transform analysis results into different view formats:
+
+```python
+from cpmf_uips_xaml.api import parse_and_analyze_project, render_project_view
+
+# Parse and analyze
+project_result, analyzer, index = parse_and_analyze_project(Path("./MyProject"))
+
+# Render nested view (hierarchical structure)
+nested = render_project_view(
+    analyzer, index,
+    view_type="nested"
+)
+
+# Render execution view (call graph traversal from entry point)
+execution = render_project_view(
+    analyzer, index,
+    view_type="execution",
+    entry_point="Main.xaml",
+    max_depth=10
+)
+
+# Render slice view (context window around focal activity)
+slice_view = render_project_view(
+    analyzer, index,
+    view_type="slice",
+    focus="LogMessage_abc123",
+    radius=2
+)
+```
+
+#### emit_workflows()
+
+Output workflows in different formats:
+
+```python
+from pathlib import Path
+from cpmf_uips_xaml.api import parse_and_analyze_project, emit_workflows
+
+# Parse project
+project_result, analyzer, index = parse_and_analyze_project(Path("./MyProject"))
+
+# Get workflow DTOs from analyzer
+workflows = list(analyzer.workflows.values())
+
+# Emit as JSON
+result = emit_workflows(
+    workflows,
+    format="json",
+    output_path=Path("output.json"),
+    pretty=True,
+    exclude_none=True
+)
+
+if result.success:
+    print(f"Written {len(result.files_written)} files")
+else:
+    print(f"Errors: {result.errors}")
+
+# Emit as Mermaid diagram
+emit_workflows(
+    workflows,
+    format="mermaid",
+    output_path=Path("output.mmd")
+)
+
+# Emit as Markdown documentation
+emit_workflows(
+    workflows,
+    format="doc",
+    output_path=Path("output.md")
+)
+```
+
+Available formats: `json`, `mermaid`, `doc`
+
+#### normalize_parse_results()
+
+Convert raw ParseResult objects to structured WorkflowDto objects:
+
+```python
+from pathlib import Path
+from cpmf_uips_xaml import XamlParser
+from cpmf_uips_xaml.api import normalize_parse_results
+
+# Parse files
+parser = XamlParser()
+parse_results = [
+    parser.parse_file(Path("Main.xaml")),
+    parser.parse_file(Path("GetConfig.xaml"))
+]
+
+# Normalize to DTOs
+workflows = normalize_parse_results(
+    parse_results,
+    project_dir=Path("./MyProject"),
+    sort_output=True,
+    calculate_metrics=True,
+    detect_anti_patterns=True
+)
+
+# Now you have structured DTOs ready for emission or analysis
+for workflow in workflows:
+    print(f"Workflow: {workflow.name}")
+    print(f"  Activities: {len(workflow.activities)}")
+    print(f"  Arguments: {len(workflow.arguments)}")
+```
+
+#### parse_file_to_dto()
+
+Single-file parsing with DTO normalization:
+
+```python
+from pathlib import Path
+from cpmf_uips_xaml.api import parse_file_to_dto
+
+# Parse and normalize in one call
+workflow = parse_file_to_dto(
+    Path("Main.xaml"),
+    project_dir=Path("./MyProject")
+)
+
+print(f"Workflow: {workflow.name}")
+print(f"Activities: {len(workflow.activities)}")
+```
+
+#### Configuration Helpers
+
+```python
+from cpmf_uips_xaml.api import load_default_config, create_emitter_config
+
+# Load default parser config
+config = load_default_config()
+print(config)  # Shows default settings
+
+# Create emitter config with overrides
+emitter_config = create_emitter_config(
+    pretty=True,
+    exclude_none=True,
+    field_profile="minimal"
+)
+```
+
+### Complete Example: Project Analysis Pipeline
+
+```python
+from pathlib import Path
+from cpmf_uips_xaml.api import (
+    parse_and_analyze_project,
+    render_project_view,
+    emit_workflows
+)
+
+# 1. Parse and analyze entire project
+project_result, analyzer, index = parse_and_analyze_project(
+    Path("./MyProject"),
+    recursive=True,
+    show_progress=True
+)
+
+# 2. Generate execution view from main entry point
+execution_view = render_project_view(
+    analyzer, index,
+    view_type="execution",
+    entry_point="Main.xaml",
+    max_depth=15
+)
+
+# 3. Export workflows as JSON
+workflows = list(analyzer.workflows.values())
+emit_result = emit_workflows(
+    workflows,
+    format="json",
+    output_path=Path("output.json"),
+    pretty=True
+)
+
+print(f"Analyzed {len(workflows)} workflows")
+print(f"Exported to {emit_result.files_written}")
+```
+
+### Migration from v0.2.x
+
+If you were using internal APIs that are no longer exported, use direct imports:
+
+```python
+# ❌ v0.2.x - No longer works
+from cpmf_uips_xaml import XmlUtils, ActivityExtractor
+
+# ✅ v0.3.0+ - Use direct imports if needed
+from cpmf_uips_xaml.core.utils import XmlUtils
+from cpmf_uips_xaml.core.extractors import ActivityExtractor
+
+# ✅ v0.3.0+ - Or better, use the API layer
+from cpmf_uips_xaml.api import parse_and_analyze_project
+```
+
+**Recommended approach**: Use the API layer functions instead of reaching into internal modules. The API provides stable contracts while internals may change.
+
+### Data Models (DTOs)
+
+The API works with strongly-typed DTO models for all data exchange:
+
+**Workflow DTOs:**
+- `WorkflowDto` - Complete workflow with metadata, activities, edges
+- `WorkflowCollectionDto` - Multiple workflows with project context
+- `ActivityDto` - Activity with arguments and properties
+- `ArgumentDto` - Workflow or activity argument
+- `VariableDto` - Workflow variable
+- `EdgeDto` - Control flow edge between activities
+
+**Project DTOs:**
+- `ProjectInfo` - Project metadata (name, version, dependencies)
+- `EntryPointInfo` - Entry point definition
+- `ProvenanceInfo` - Parser version and author tracking
+
+**Analysis DTOs:**
+- `QualityMetrics` - Workflow quality scores
+- `AntiPattern` - Detected anti-patterns
+- `IssueDto` - Parse errors or warnings
+
+All DTOs are immutable dataclasses with full type hints.
 
 ## Development
 
@@ -337,6 +614,6 @@ You may choose which license applies to your use case.
 
 ## Links
 
-- **Repository**: https://github.com/rpapub/cpmf-xaml-parser
-- **Issues**: https://github.com/rpapub/cpmf-xaml-parser/issues
-- **PyPI**: https://pypi.org/project/cpmf-xaml-parser/ (coming soon)
+- **Repository**: https://github.com/rpapub/cpmf-uips-xaml
+- **Issues**: https://github.com/rpapub/cpmf-uips-xaml/issues
+- **PyPI**: https://pypi.org/project/cpmf-uips-xaml/ (coming soon)

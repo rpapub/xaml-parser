@@ -19,7 +19,7 @@ import pytest
 
 # Mock stdout wrapping before importing cli module to avoid I/O conflicts with pytest
 with patch("sys.stdout"), patch("sys.stderr"):
-    from cpmf_xaml_parser.cli import (
+    from cpmf_uips_xaml.cli.cli import (
         format_activities,
         format_arguments,
         format_dependency_graph,
@@ -31,14 +31,14 @@ with patch("sys.stdout"), patch("sys.stderr"):
         parse_files,
     )
 
-from cpmf_xaml_parser.models import (
+from cpmf_uips_xaml.shared.model.models import (
     Activity,
     ParseResult,
     WorkflowArgument,
     WorkflowContent,
     WorkflowVariable,
 )
-from cpmf_xaml_parser.project import ProjectConfig, ProjectResult, WorkflowResult
+from cpmf_uips_xaml.stages.assemble.project import ProjectConfig, ProjectResult, WorkflowResult
 
 
 class TestFormatPretty:

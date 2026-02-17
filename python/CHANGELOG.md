@@ -7,6 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **BREAKING**: Renamed `stages.build` module to `stages.assemble` to avoid gitignore conflicts
+  - Import path changed: `from cpmf_uips_xaml.stages.build` → `from cpmf_uips_xaml.stages.assemble`
+  - All functionality preserved, only module name changed
+  - Fixes issue where source code directory was being ignored by git due to Python build/ artifact pattern
+
+## [0.1.0] - 2025-02-06
+
+### Changed
+- **BREAKING**: Package renamed from `cpmf-xaml-parser` to `cpmf-uips-xaml`
+- **BREAKING**: Python import changed from `cpmf_xaml_parser` to `cpmf_uips_xaml`
+- **BREAKING**: CLI command changed from `cpmf-xaml-parser` to `cpmf-uips-xaml`
+
+### Migration Guide
+
+**Old installation:**
+```bash
+pip install cpmf-xaml-parser
+from cpmf_xaml_parser import XamlParser
+cpmf-xaml-parser project.json
+```
+
+**New installation:**
+```bash
+pip install cpmf-uips-xaml
+from cpmf_uips_xaml import XamlParser
+cpmf-uips-xaml project.json
+```
+
+### Notes
+This is the initial release under the new CPRIMA UIPS (UiPath Integration & Parsing Suite) branding. All functionality from cpmf-xaml-parser 0.3.0 is preserved.
+
+## [0.3.0] - 2025-02-06
+
+### Added
+- Modular API structure with focused submodules (`api.parsing`, `api.analysis`, `api.views`, `api.emit`, `api.config`)
+- Platform injection system with UiPath dialect abstraction (`platforms/uipath/`)
+- Event-based progress reporting with `ProgressReporter` protocol
+- Multiple progress reporter implementations (`RichReporter`, `TqdmReporter`, `JsonReporter`, `SimpleReporter`)
+- Layered architecture with clear boundaries (`shared/`, `stages/`, `platforms/`, `api/`, `cli/`)
+- `NULL_REPORTER` constant for disabling progress reporting
+
+### Changed
+- **BREAKING**: Progress reporting API - `show_progress: bool` parameter replaced with `reporter: ProgressReporter`
+- **BREAKING**: CLI `--progress` flag now accepts choices (`rich`, `tqdm`, `json`, `simple`) instead of boolean
+- API `__init__.py` refactored from 402 to 127 lines (backward compatible via re-exports)
+- CLI reorganized into package structure (`cli/cli.py`, `cli/reporters.py`)
+- File organization follows stages-based architecture (parsing → normalize → build → emit → analysis)
+- Utility functions consolidated under `shared.utils` (data, debug, text, validation, xml)
+
+### Fixed
+- CLI layer boundary violations - imports now strictly through API facade
+- Layer coupling - proper dependency injection through dialect pattern
+
+### Documentation
+- Comprehensive CLI reference with all flags organized by category
+- API module organization guide with usage examples
+- Architecture documentation (5-stage pipeline)
+- Breaking changes migration guide for v0.3.0
+- "When to use XamlParser vs API facade" guidance
+
+### Developer
+- Clean architectural boundaries enforced (CLI → API → Stages)
+- Platform-specific code isolated and injected via dialect
+- 100% backward compatible API despite internal refactoring
+
 ## [0.2.0] - 2025-12-03
 
 ### Added

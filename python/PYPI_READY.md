@@ -179,7 +179,7 @@ pip install --index-url https://test.pypi.org/simple/ \
 
 # Test
 xaml-parser --help
-python -c "from xaml_parser import XamlParser, __version__; print(__version__)"
+python -c "from cpmf_uips_xaml import XamlParser, __version__; print(__version__)"
 
 # Test with extras
 pip install --index-url https://test.pypi.org/simple/ \

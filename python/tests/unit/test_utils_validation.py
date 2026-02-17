@@ -1,6 +1,6 @@
 """Tests for ValidationUtils utility functions."""
 
-from cpmf_xaml_parser.utils import ValidationUtils
+from cpmf_uips_xaml.shared.utils import ValidationUtils
 
 
 class TestValidateWorkflowContent:

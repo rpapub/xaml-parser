@@ -2,7 +2,7 @@
 
 import xml.etree.ElementTree as ET
 
-from cpmf_xaml_parser.utils import DebugUtils
+from cpmf_uips_xaml.shared.utils import DebugUtils
 
 
 class TestElementInfo:

@@ -65,7 +65,7 @@ def test_id_generation_deterministic(simple_xaml):
 ```python
 def test_project_parsing_complete(simple_project, parser):
     """Complete project should parse successfully."""
-    from xaml_parser.project import ProjectParser
+    from cpmf_uips_xaml.project import ProjectParser
     project_parser = ProjectParser()
     result = project_parser.parse_project(simple_project)
     assert result.success

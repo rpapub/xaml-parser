@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from cpmf_xaml_parser.dto import (
+from cpmf_uips_xaml.shared.model.dto import (
     ActivityDto,
     ArgumentDto,
     EdgeDto,
@@ -10,8 +10,9 @@ from cpmf_xaml_parser.dto import (
     VariableDto,
     WorkflowDto,
 )
-from cpmf_xaml_parser.emitters import EmitterConfig
-from cpmf_xaml_parser.emitters.doc_emitter import DocEmitter
+from cpmf_uips_xaml.stages.emit.emitters import EmitterConfig
+from cpmf_uips_xaml.stages.emit.emitters.doc_emitter import DocEmitter
+from cpmf_uips_xaml.stages.emit.utils import sanitize_filename
 
 
 class TestDocEmitter:
@@ -68,7 +69,16 @@ class TestDocEmitter:
         )
 
         output_dir = tmp_path / "docs"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="doc",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = DocEmitter()
         result = emitter.emit([workflow], output_dir, config)
@@ -120,7 +130,16 @@ class TestDocEmitter:
         ]
 
         output_dir = tmp_path / "docs"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="doc",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = DocEmitter()
         result = emitter.emit(workflows, output_dir, config)
@@ -174,7 +193,16 @@ class TestDocEmitter:
         )
 
         output_dir = tmp_path / "docs"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="doc",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = DocEmitter()
         result = emitter.emit([workflow], output_dir, config)
@@ -229,7 +257,16 @@ class TestDocEmitter:
         )
 
         output_dir = tmp_path / "docs"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="doc",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = DocEmitter()
         result = emitter.emit([workflow], output_dir, config)
@@ -308,7 +345,16 @@ class TestDocEmitter:
         )
 
         output_dir = tmp_path / "docs"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="doc",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = DocEmitter()
         result = emitter.emit([workflow], output_dir, config)
@@ -354,7 +400,16 @@ class TestDocEmitter:
         )
 
         output_dir = tmp_path / "docs"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="doc",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = DocEmitter()
         result = emitter.emit([workflow], output_dir, config)
@@ -413,11 +468,19 @@ class TestDocEmitter:
 
         output_dir = tmp_path / "docs"
         config = EmitterConfig(
+            format="doc",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
             extra={
                 "project_name": "TestProject",
                 "project_path": "/path/to/project",
                 "main_workflow": "Workflow0",
-            }
+            },
         )
 
         emitter = DocEmitter()
@@ -434,12 +497,14 @@ class TestDocEmitter:
         assert "**Total Activities:** 2" in content
 
     def test_sanitize_filename(self) -> None:
-        """Test filename sanitization."""
-        emitter = DocEmitter()
-
-        assert emitter._sanitize_filename("My Workflow") == "My_Workflow"
-        assert emitter._sanitize_filename("Test/Invalid:Name") == "TestInvalidName"
-        assert emitter._sanitize_filename("  Trimmed  ") == "__Trimmed__"
+        """Test filename sanitization using shared utility."""
+        # Test shared utility function (behavior unified across all emitters)
+        assert sanitize_filename("My Workflow") == "My Workflow"
+        assert sanitize_filename("Test/Invalid:Name") == "Test_Invalid_Name"
+        assert sanitize_filename("  Trimmed  ") == "Trimmed"
+        assert sanitize_filename("") == "untitled"
+        assert sanitize_filename("workflow.") == "workflow"
+        assert sanitize_filename("_workflow_") == "workflow"
 
     def test_custom_template_directory(self, tmp_path: Path) -> None:
         """Test using custom template directory."""
@@ -482,7 +547,16 @@ class TestDocEmitter:
         )
 
         output_dir = tmp_path / "docs"
-        config = EmitterConfig()
+        config = EmitterConfig(
+            format="doc",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         emitter = DocEmitter(template_dir=custom_templates)
         result = emitter.emit([workflow], output_dir, config)

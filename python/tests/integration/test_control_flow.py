@@ -12,8 +12,8 @@ Tests:
 
 import pytest
 
-from cpmf_xaml_parser.control_flow import ControlFlowExtractor
-from cpmf_xaml_parser.models import Activity
+from cpmf_uips_xaml.stages.assemble.control_flow import ControlFlowExtractor
+from cpmf_uips_xaml.shared.model.models import Activity
 
 
 class TestSequenceEdges:

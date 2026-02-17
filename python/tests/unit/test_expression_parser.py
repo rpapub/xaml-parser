@@ -1,6 +1,6 @@
 """Tests for expression parser module (v0.2.9 tokenizer-based parser)."""
 
-from cpmf_xaml_parser.expression_parser import (
+from cpmf_uips_xaml.stages.parsing.expression_parser import (
     ExpressionParser,
     ExpressionTokenizer,
     TokenType,

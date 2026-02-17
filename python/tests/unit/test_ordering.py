@@ -12,14 +12,14 @@ Tests:
 
 import pytest
 
-from cpmf_xaml_parser.dto import (
+from cpmf_uips_xaml.shared.model.dto import (
     ActivityDto,
     ArgumentDto,
     EdgeDto,
     VariableDto,
     WorkflowDto,
 )
-from cpmf_xaml_parser.ordering import (
+from cpmf_uips_xaml.stages.normalize.ordering import (
     ensure_deterministic_order,
     sort_by_id,
     sort_by_key,

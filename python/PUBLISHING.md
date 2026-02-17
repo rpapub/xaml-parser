@@ -235,7 +235,7 @@ xaml-parser --help
 
 # Test Python API
 python << EOF
-from xaml_parser import XamlParser, __version__
+from cpmf_uips_xaml import XamlParser, __version__
 print(f"Version: {__version__}")
 parser = XamlParser()
 print(f"Parser created: {parser}")
@@ -247,7 +247,7 @@ EOF
 ```bash
 # Create test script
 cat > test_types.py << 'EOF'
-from xaml_parser import XamlParser, ParseResult
+from cpmf_uips_xaml import XamlParser, ParseResult
 from pathlib import Path
 
 def test_typing() -> None:
@@ -362,7 +362,7 @@ pip install xaml-parser
 
 # Test
 xaml-parser --help
-python -c "from xaml_parser import XamlParser; print('Success!')"
+python -c "from cpmf_uips_xaml import XamlParser; print('Success!')"
 ```
 
 ### 5. Announce

@@ -17,10 +17,10 @@ from pathlib import Path
 
 import pytest
 
-from cpmf_xaml_parser.dto import ActivityDto, WorkflowDto, WorkflowMetadata
-from cpmf_xaml_parser.emitters import EmitResult, Emitter, EmitterConfig
-from cpmf_xaml_parser.emitters.json_emitter import JsonEmitter
-from cpmf_xaml_parser.emitters.registry import EmitterRegistry
+from cpmf_uips_xaml.shared.model.dto import ActivityDto, WorkflowDto, WorkflowMetadata
+from cpmf_uips_xaml.stages.emit.emitters import EmitResult, Emitter, EmitterConfig
+from cpmf_uips_xaml.stages.emit.emitters.json_emitter import JsonEmitter
+from cpmf_uips_xaml.stages.emit.registry import EmitterRegistry
 
 
 class TestEmitterInterface:
@@ -44,13 +44,26 @@ class TestEmitterInterface:
                 return ".txt"
 
             def emit(self, workflows, output_path, config) -> EmitResult:
-                return EmitResult(success=True)
+                return EmitResult(success=True, files_written=[])
 
         emitter = TestEmitter()
         assert emitter.name == "test"
         assert emitter.output_extension == ".txt"
 
-        result = emitter.emit([], Path("output.txt"), EmitterConfig())
+        result = emitter.emit(
+            [],
+            Path("output.txt"),
+            EmitterConfig(
+                format="json",
+                combine=False,
+                pretty=True,
+                exclude_none=False,
+                field_profile="full",
+                indent=2,
+                encoding="utf-8",
+                overwrite=True,
+            ),
+        )
         assert result.success
 
 
@@ -128,7 +141,16 @@ class TestJsonEmitter:
 
         # Emit combined
         emitter = JsonEmitter()
-        config = EmitterConfig(combine=True, pretty=True)
+        config = EmitterConfig(
+            format="json",
+            combine=True,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
         output_file = tmp_path / "workflows.json"
 
         result = emitter.emit([workflow], output_file, config)
@@ -164,7 +186,16 @@ class TestJsonEmitter:
 
         # Emit per-workflow
         emitter = JsonEmitter()
-        config = EmitterConfig(combine=False, pretty=True)
+        config = EmitterConfig(
+            format="json",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
         output_dir = tmp_path / "workflows"
 
         result = emitter.emit([workflow1, workflow2], output_dir, config)
@@ -211,7 +242,16 @@ class TestJsonEmitter:
 
         # Emit with minimal profile
         emitter = JsonEmitter()
-        config = EmitterConfig(combine=False, field_profile="minimal", pretty=True)
+        config = EmitterConfig(
+            format="json",
+            combine=False,
+            field_profile="minimal",
+            pretty=True,
+            exclude_none=False,
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
         output_dir = tmp_path / "workflows"
 
         result = emitter.emit([workflow], output_dir, config)
@@ -250,7 +290,16 @@ class TestJsonEmitter:
 
         # Emit with exclude_none=True
         emitter = JsonEmitter()
-        config = EmitterConfig(combine=False, exclude_none=True, pretty=True)
+        config = EmitterConfig(
+            format="json",
+            combine=False,
+            exclude_none=True,
+            pretty=True,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
         output_dir = tmp_path / "workflows"
 
         result = emitter.emit([workflow], output_dir, config)
@@ -277,7 +326,16 @@ class TestJsonEmitter:
         output_dir = tmp_path / "workflows"
 
         # Emit with pretty=True
-        config_pretty = EmitterConfig(combine=False, pretty=True)
+        config_pretty = EmitterConfig(
+            format="json",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
         emitter.emit([workflow], output_dir, config_pretty)
 
         file_pretty = output_dir / "TestWorkflow.json"
@@ -290,7 +348,16 @@ class TestJsonEmitter:
 
         # Emit with pretty=False
         output_dir2 = tmp_path / "workflows2"
-        config_compact = EmitterConfig(combine=False, pretty=False)
+        config_compact = EmitterConfig(
+            format="json",
+            combine=False,
+            pretty=False,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
         emitter.emit([workflow], output_dir2, config_compact)
 
         file_compact = output_dir2 / "TestWorkflow.json"
@@ -317,7 +384,16 @@ class TestJsonEmitter:
         ]
 
         emitter = JsonEmitter()
-        config = EmitterConfig(combine=False)
+        config = EmitterConfig(
+            format="json",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
         output_dir = tmp_path / "workflows"
 
         result = emitter.emit(workflows, output_dir, config)
@@ -345,7 +421,16 @@ class TestJsonEmitter:
         )
 
         emitter = JsonEmitter()
-        config = EmitterConfig(combine=False)
+        config = EmitterConfig(
+            format="json",
+            combine=False,
+            pretty=True,
+            exclude_none=False,
+            field_profile="full",
+            indent=2,
+            encoding="utf-8",
+            overwrite=True,
+        )
 
         # Try to emit to invalid path (e.g., file instead of directory)
         invalid_path = tmp_path / "file.txt"
