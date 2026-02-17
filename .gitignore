@@ -7,7 +7,8 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 dist/
-build/
+/build/
+**/dist/build/
 .venv/
 venv/
 env/
@@ -17,6 +18,8 @@ ENV/
 htmlcov/
 .tox/
 .hypothesis/
+.ruff_cache/
+.mypy_cache/
 
 # Go
 *.exe
@@ -51,7 +54,18 @@ Thumbs.db
 .env
 .env.local
 .secrets
-.xaml-parser.json
+.cpmf_uips_xaml.json
 
 # Test artifacts
 .test-artifacts/
+*_TEST_RESULTS.md
+*_analysis.json
+analyze_*.py
+process-analysis.json/
+test-output-dto.json/
+python/coverage.json
+python/test_results.txt
+python/workflows.json
+python/InitAllSettings.json
+test_minimal.json
+test_output.json

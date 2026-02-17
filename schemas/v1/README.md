@@ -84,8 +84,8 @@ Located in `legacy/` - older monolithic schema files with all definitions inline
 
 **Python Usage**:
 ```python
-from cpmf_xaml_parser import ProjectParser, analyze_project
-from cpmf_xaml_parser.views import FlatView
+from cpmf_uips_xaml import ProjectParser, analyze_project
+from cpmf_uips_xaml.views import FlatView
 
 parser = ProjectParser()
 result = parser.parse_project(Path("project"))
@@ -294,7 +294,7 @@ output = view.render(index)  # Validates against this schema
 
 **Python Usage**:
 ```python
-from cpmf_xaml_parser.views import ExecutionView
+from cpmf_uips_xaml.views import ExecutionView
 
 entry_workflow_id = index.entry_points[0]
 view = ExecutionView(entry_point=entry_workflow_id, max_depth=10)
@@ -345,7 +345,7 @@ uv run xaml-parser project.json --dto --json \
 
 **Python Usage**:
 ```python
-from cpmf_xaml_parser.views import SliceView
+from cpmf_uips_xaml.views import SliceView
 
 focal_activity_id = "act:sha256:abc123def456"
 view = SliceView(focus=focal_activity_id, radius=2)
@@ -389,7 +389,7 @@ When modifying schemas:
 ### Python
 
 ```python
-from cpmf_xaml_parser.validation import validate_output, get_validator
+from cpmf_uips_xaml.validation import validate_output, get_validator
 
 # Validate parser output
 result = parser.parse_file(Path("workflow.xaml"))

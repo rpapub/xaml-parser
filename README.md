@@ -20,7 +20,7 @@ A zero-dependency parser for UiPath XAML workflow files. Extract all metadata fr
 ### Python
 
 ```bash
-pip install cpmf-xaml-parser
+pip install cpmf-uips-xaml
 ```
 
 Or for development:
@@ -36,7 +36,7 @@ uv sync
 
 ```python
 from pathlib import Path
-from cpmf_xaml_parser import XamlParser
+from cpmf_uips_xaml import XamlParser
 
 parser = XamlParser()
 result = parser.parse_file(Path("Main.xaml"))
@@ -178,7 +178,7 @@ Parse entire UiPath projects and analyze call graphs, control flow, and activity
 
 ```python
 from pathlib import Path
-from cpmf_xaml_parser import ProjectParser, analyze_project
+from cpmf_uips_xaml import ProjectParser, analyze_project
 
 # Parse entire project
 parser = ProjectParser()
@@ -205,7 +205,7 @@ Generate different representations of the same project:
 #### 1. Flat View (Default, Backward Compatible)
 
 ```python
-from cpmf_xaml_parser.views import FlatView
+from cpmf_uips_xaml.views import FlatView
 
 view = FlatView()
 output = view.render(index)
@@ -217,7 +217,7 @@ output = view.render(index)
 Follow the execution path from an entry point, showing nested invocations:
 
 ```python
-from cpmf_xaml_parser.views import ExecutionView
+from cpmf_uips_xaml.views import ExecutionView
 
 # Start from entry point workflow
 entry_workflow_id = index.entry_points[0]
@@ -237,7 +237,7 @@ output = view.render(index)
 Extract focused context around a specific activity:
 
 ```python
-from cpmf_xaml_parser.views import SliceView
+from cpmf_uips_xaml.views import SliceView
 
 # Focus on a specific activity
 focal_activity_id = "act:sha256:abc123def456"
@@ -257,19 +257,66 @@ output = view.render(index)
 
 ```bash
 # Parse project with flat view (default)
-uv run xaml-parser project.json --dto --json
+cpmf-uips-xaml project.json --dto --json
 
 # Execution view from entry point
-uv run xaml-parser project.json --dto --json \
+cpmf-uips-xaml project.json --dto --json \
   --view execution \
   --entry "wf:sha256:abc123def456"
 
 # Slice view around specific activity
-uv run xaml-parser project.json --dto --json \
+cpmf-uips-xaml project.json --dto --json \
   --view slice \
   --focus "act:sha256:abc123def456" \
   --radius 3
+
+# With progress reporting (rich/tqdm/json/simple)
+cpmf-uips-xaml project.json --progress rich --json
 ```
+
+#### Available CLI Flags
+
+**Output Modes:**
+- `--json` - Raw JSON output
+- `--dto` - Normalized DTO with stable IDs and edges
+- `--arguments` - Show only arguments
+- `--activities` - Show only activities
+- `--tree` - Show activity tree
+- `--summary` - Show summary for multiple files
+- `--graph` - Show workflow dependency graph (project mode)
+
+**View Transformations** (with `--dto`):
+- `--view {nested,execution,slice}` - View type (default: nested)
+- `--entry WORKFLOW_ID` - Entry point for execution view
+- `--focus ACTIVITY_ID` - Focal activity for slice view
+- `--radius N` - Context radius for slice view
+
+**Output Options:**
+- `--profile {full,minimal,mcp,datalake}` - Output profile
+- `--combine` - Combine all workflows into single output
+- `--sort` - Sort output alphabetically
+- `-o, --output PATH` - Output file/directory
+
+**Analysis:**
+- `--metrics` - Include workflow metrics
+- `--anti-patterns` - Detect anti-patterns
+
+**Progress Reporting:** _(new in v0.3)_
+- `--progress {rich,tqdm,json,simple}` - Progress reporter type
+  - `rich` - Animated progress bars (requires `pip install rich`)
+  - `tqdm` - tqdm-style progress (requires `pip install tqdm`)
+  - `json` - JSON-lines for machine parsing
+  - `simple` - Plain text progress
+
+**Logging & Performance:**
+- `-v, --verbose` - Enable verbose diagnostic logging
+- `--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}` - Set log level
+- `--log-dir DIR` - Directory for log files
+- `--no-log-file` - Disable log file output
+- `--performance` - Enable detailed performance profiling
+
+**Project Parsing:**
+- `--entry-points-only` - Parse only entry points (no recursive discovery)
 
 ### Graph Query Methods
 
@@ -294,15 +341,96 @@ execution_order = index.get_execution_order()
 context = index.slice_context("act:sha256:abc123", radius=2)
 ```
 
-### Architecture
+### Architecture & API Modules
+
+#### Processing Pipeline
 
 ```
 XAML Files → Parse → Normalize → Analyze → ProjectIndex (IR)
                                               ↓
-                          Views (Flat, Execution, Slice)
+                          Views (Nested, Execution, Slice)
                                               ↓
                               Emitters (JSON, Mermaid, Docs)
 ```
+
+**Stages:**
+1. **Parse** - Extract raw data from XAML (XamlParser, ProjectParser)
+2. **Normalize** - Convert to stable DTOs with IDs and edges
+3. **Analyze** - Build queryable graph structures (ProjectIndex)
+4. **View** - Transform IR for specific use cases
+5. **Emit** - Output in various formats
+
+#### API Organization
+
+The `cpmf_uips_xaml.api` module provides a clean facade organized into focused submodules:
+
+**`api.parsing`** - Parse and normalize XAML
+```python
+from cpmf_uips_xaml.api import parse_file, parse_project, normalize_parse_results
+
+# Parse single file
+result = parse_file(Path("Main.xaml"))
+
+# Parse entire project
+project_result = parse_project(Path("MyProject"))
+
+# Parse + normalize to DTO
+workflow_dto = parse_file_to_dto(Path("Main.xaml"))
+```
+
+**`api.analysis`** - Build indices and analyze
+```python
+from cpmf_uips_xaml.api import build_index, analyze_project
+
+# Build index from workflows
+index = build_index(workflows, project_dir=Path("."))
+
+# Parse + analyze (complete pipeline)
+project_result, analyzer, index = parse_and_analyze_project(Path("MyProject"))
+```
+
+**`api.views`** - Transform to different views
+```python
+from cpmf_uips_xaml.api import render_project_view
+
+# Render execution view
+output = render_project_view(
+    analyzer, index,
+    view_type="execution",
+    entry_point="wf:sha256:abc123"
+)
+```
+
+**`api.emit`** - Output workflows
+```python
+from cpmf_uips_xaml.api import emit_workflows
+
+# Emit to JSON
+emit_workflows(workflows, format="json", output_path=Path("output.json"))
+
+# Emit to Mermaid diagram
+emit_workflows(workflows, format="mermaid", output_path=Path("diagram.md"))
+```
+
+**`api.config`** - Configuration management
+```python
+from cpmf_uips_xaml.api import load_default_config
+
+config = load_default_config()
+```
+
+#### When to Use XamlParser vs API Facade
+
+**Use `XamlParser` directly** when:
+- Parsing a single file with minimal processing
+- Need fine-grained control over parser config
+- Working with raw `ParseResult` objects
+
+**Use API facade (`api.*`)** when:
+- Parsing projects (multiple files)
+- Building indices and graphs
+- Generating different views
+- Orchestrating the full pipeline (parse → normalize → analyze → emit)
 
 **ProjectIndex** is an Intermediate Representation (IR) with 4 graph layers:
 - **Workflows Graph**: All workflows with metadata
@@ -314,7 +442,8 @@ XAML Files → Parse → Normalize → Analyze → ProjectIndex (IR)
 - Single parse, multiple output formats
 - Queryable structure for analysis tools
 - Optimized for LLM context extraction
-- 100% backward compatible (FlatView produces same output as v1.x)
+- 100% backward compatible (NestedView produces same output as v1.x)
+- Clean layer boundaries (CLI → API → Stages)
 
 See [docs/ADR-GRAPH-ARCHITECTURE.md](docs/ADR-GRAPH-ARCHITECTURE.md) for design decisions.
 
@@ -349,6 +478,37 @@ See [docs/ADR-GRAPH-ARCHITECTURE.md](docs/ADR-GRAPH-ARCHITECTURE.md) for design 
 - Assembly references
 - Expression language (VB/C#)
 - Parse diagnostics and performance
+
+## Output Formats
+
+The parser supports multiple output formats via emitters:
+
+| Format | Extension | Description | Use Case |
+|--------|-----------|-------------|----------|
+| **JSON** | `.json` | Structured workflow data | API integration, data analysis |
+| **Mermaid** | `.md` | Call graph diagrams | Documentation, visualization |
+| **Doc** | `.md` | Human-readable docs | Team documentation |
+
+**Emitter Usage:**
+```python
+from cpmf_uips_xaml.api import emit_workflows
+
+# JSON output
+emit_workflows(workflows, format="json", output_path=Path("output.json"))
+
+# Mermaid diagram
+emit_workflows(workflows, format="mermaid", output_path=Path("diagram.md"))
+
+# Documentation
+emit_workflows(workflows, format="doc", output_path=Path("docs.md"))
+```
+
+**CLI:**
+```bash
+# Automatic format selection based on extension
+cpmf-uips-xaml project.json -o output.json  # JSON
+cpmf-uips-xaml project.json --graph -o diagram.md  # Mermaid
+```
 
 ## Configuration Options
 
@@ -409,6 +569,66 @@ if result.content:
 - **CI/CD Validation** - Validate structure in pipelines
 - **Code Review** - Extract business logic for review
 - **Dependency Analysis** - Map workflow dependencies
+
+## Breaking Changes & Migration
+
+### v0.3.0 - Event-Based Progress Reporting
+
+**CLI Breaking Change:**
+
+The `--progress` flag changed from a boolean to a choice of reporter types.
+
+**Before (v0.2.x):**
+```bash
+cpmf-uips-xaml project.json --progress  # Boolean flag
+```
+
+**After (v0.3.x):**
+```bash
+# Choose a specific reporter
+cpmf-uips-xaml project.json --progress rich
+cpmf-uips-xaml project.json --progress tqdm
+cpmf-uips-xaml project.json --progress json
+cpmf-uips-xaml project.json --progress simple
+
+# Or omit for no progress (default)
+cpmf-uips-xaml project.json
+```
+
+**API Breaking Change:**
+
+The `show_progress` parameter was replaced with a `reporter` parameter.
+
+**Before (v0.2.x):**
+```python
+from cpmf_uips_xaml.api import parse_and_analyze_project
+
+result, analyzer, index = parse_and_analyze_project(
+    project_dir,
+    show_progress=True  # Boolean
+)
+```
+
+**After (v0.3.x):**
+```python
+from cpmf_uips_xaml.api import parse_and_analyze_project
+from cpmf_uips_xaml.cli.reporters import RichReporter
+
+# With progress
+result, analyzer, index = parse_and_analyze_project(
+    project_dir,
+    reporter=RichReporter()
+)
+
+# No progress (default)
+result, analyzer, index = parse_and_analyze_project(project_dir)
+```
+
+**Benefits:**
+- Library is now UI-agnostic (no Rich dependency in core)
+- Multiple reporter types (Rich, tqdm, JSON, Simple)
+- Easy to add custom reporters (implement `ProgressReporter` protocol)
+- Zero overhead when disabled (default `NULL_REPORTER`)
 
 ## License
 

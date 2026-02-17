@@ -26,12 +26,12 @@ uv run pytest tests/ -v           # All tests
 uv run pytest tests/ -m "not corpus"  # Fast tests only (default)
 uv run pytest tests/ -m corpus    # Slow corpus tests
 uv run pytest tests/test_parser.py::test_specific -v  # Single test
-uv run pytest tests/ --cov=cpmf_xaml_parser --cov-report=html  # Coverage
+uv run pytest tests/ --cov=cpmf_uips_xaml --cov-report=html  # Coverage
 
 # Code Quality
-uv run ruff check cpmf_xaml_parser/ tests/       # Lint
-uv run ruff format cpmf_xaml_parser/ tests/      # Format
-uv run mypy cpmf_xaml_parser/                     # Type check
+uv run ruff check cpmf_uips_xaml/ tests/       # Lint
+uv run ruff format cpmf_uips_xaml/ tests/      # Format
+uv run mypy cpmf_uips_xaml/                     # Type check
 
 # CLI Usage
 uv run xaml-parser project.json             # Parse project
@@ -185,7 +185,7 @@ All output is deterministically sorted for reproducibility:
 
 ```python
 from pathlib import Path
-from cpmf_xaml_parser import ProjectParser
+from cpmf_uips_xaml import ProjectParser
 
 parser = ProjectParser()
 result = parser.parse_project(
@@ -206,9 +206,9 @@ for path, deps in result.dependency_graph.items():
 ### Converting to DTOs
 
 ```python
-from cpmf_xaml_parser.normalization import Normalizer
-from cpmf_xaml_parser.id_generation import IdGenerator
-from cpmf_xaml_parser.control_flow import ControlFlowExtractor
+from cpmf_uips_xaml.normalization import Normalizer
+from cpmf_uips_xaml.id_generation import IdGenerator
+from cpmf_uips_xaml.control_flow import ControlFlowExtractor
 
 # Create normalizer pipeline
 id_gen = IdGenerator()
@@ -228,7 +228,7 @@ workflow_dto = normalizer.normalize(
 ### Emitting Output
 
 ```python
-from cpmf_xaml_parser.emitters import JsonEmitter, EmitterConfig
+from cpmf_uips_xaml.emitters import JsonEmitter, EmitterConfig
 
 emitter = JsonEmitter()
 config = EmitterConfig(
