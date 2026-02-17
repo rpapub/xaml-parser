@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cpmf-uips-xaml.schemas/v2/workflow-record.schema.json",
+  "title": "Workflow Record Payload",
+  "description": "Workflow record payload for external consumption (v2 contract)",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Stable workflow ID (content-hash based)",
+      "pattern": "^wf:sha256:[a-f0-9]{64}$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Workflow filename without extension"
+    },
+    "path": {
+      "type": "string",
+      "description": "Relative path from project root (POSIX-style)"
+    },
+    "display_name": {
+      "type": ["string", "null"],
+      "description": "Workflow display name from metadata"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "description": "Workflow description from metadata"
+    },
+    "xaml_class": {
+      "type": ["string", "null"],
+      "description": "XAML class name"
+    },
+    "annotation": {
+      "type": ["string", "null"],
+      "description": "Raw annotation text"
+    },
+    "annotation_tags": {
+      "type": "array",
+      "description": "Parsed annotation tags (curated from annotation_block)",
+      "items": {
+        "$ref": "#/definitions/AnnotationTag"
+      }
+    },
+    "arguments": {
+      "type": "array",
+      "description": "Workflow arguments (curated)",
+      "items": {
+        "$ref": "#/definitions/Argument"
+      }
+    },
+    "activity_ids": {
+      "type": "array",
+      "description": "List of activity IDs (curated - IDs only, not full objects)",
+      "items": {
+        "type": "string"
+      }
+    },
+    "activity_count": {
+      "type": "integer",
+      "description": "Total number of activities",
+      "minimum": 0
+    },
+    "edges": {
+      "type": "array",
+      "description": "Workflow control flow edges",
+      "items": {
+        "$ref": "#/definitions/Edge"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "path",
+    "annotation_tags",
+    "arguments",
+    "activity_ids",
+    "activity_count",
+    "edges"
+  ],
+  "definitions": {
+    "AnnotationTag": {
+      "type": "object",
+      "description": "Parsed annotation tag",
+      "properties": {
+        "tag": {
+          "type": "string",
+          "description": "Tag name without @ prefix"
+        },
+        "value": {
+          "type": ["string", "null"],
+          "description": "Tag value"
+        },
+        "line_number": {
+          "type": "integer",
+          "description": "Line number in annotation block (1-indexed)",
+          "minimum": 1
+        }
+      },
+      "required": ["tag"]
+    },
+    "Argument": {
+      "type": "object",
+      "description": "Workflow argument (curated fields)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Argument name"
+        },
+        "type": {
+          "type": ["string", "null"],
+          "description": "Argument type"
+        },
+        "direction": {
+          "type": "string",
+          "description": "Argument direction",
+          "enum": ["In", "Out", "InOut"]
+        },
+        "default_value": {
+          "type": ["string", "null"],
+          "description": "Default value"
+        }
+      },
+      "required": ["name", "direction"]
+    },
+    "Edge": {
+      "type": "object",
+      "description": "Control flow edge",
+      "properties": {
+        "from": {
+          "type": "string",
+          "description": "Source activity ID"
+        },
+        "to": {
+          "type": "string",
+          "description": "Target activity ID"
+        },
+        "label": {
+          "type": ["string", "null"],
+          "description": "Edge label (e.g., condition)"
+        }
+      },
+      "required": ["from", "to"]
+    }
+  }
+}

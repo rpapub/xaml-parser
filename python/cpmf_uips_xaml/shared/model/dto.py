@@ -557,6 +557,7 @@ class ProjectInfo:
     Attributes:
         name: Project name
         path: Project directory path
+        project_type: Project type (Process, Library, BusinessProcess, etc.)
         project_id: UUID from project.json
         description: Project description
         project_version: Semantic version (e.g., "1.0.0")
@@ -571,6 +572,7 @@ class ProjectInfo:
 
     name: str
     path: str
+    project_type: str = "Process"  # Process, Library, BusinessProcess, etc.
     project_id: str | None = None
     description: str | None = None
     project_version: str | None = None

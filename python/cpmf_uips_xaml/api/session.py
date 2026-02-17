@@ -179,14 +179,14 @@ class ProjectSession:
 
     def emit(
         self,
-        format: Literal["json", "yaml", "mermaid", "doc"] = "json",
+        format: Literal["json", "yaml", "mermaid", "doc", "record"] = "json",
         output_path: Path | None = None,
         **options: Any,
     ) -> PipelineResult | str:
         """Emit workflows to specified format.
 
         Args:
-            format: Output format (json, yaml, mermaid, doc)
+            format: Output format (json, yaml, mermaid, doc, record)
             output_path: Output file/directory path (None = return string)
             **options: Additional emitter options:
                 - combine: Combine all workflows into single file (default: False)
@@ -196,6 +196,7 @@ class ProjectSession:
                 - indent: Indentation spaces (default: 2)
                 - encoding: Output encoding (default: "utf-8")
                 - overwrite: Overwrite existing files (default: True)
+                - kinds: Record kinds to include for record format (default: ["workflow"])
 
         Returns:
             PipelineResult if output_path provided, string otherwise
@@ -207,10 +208,23 @@ class ProjectSession:
             >>> json_str = session.emit("json")
             >>> # Emit combined output
             >>> session.emit("json", Path("all.json"), combine=True)
+            >>> # Emit records with multiple kinds
+            >>> records_jsonl = session.emit("record", kinds=["workflow", "activity"])
         """
         from ..config.models import EmitterConfig
 
         workflows = self.workflows()
+
+        # Extract project info for record format
+        project_info = None
+        if self.result.project_config:
+            project_info = {
+                "name": self.result.project_config.name,
+                "type": self.result.project_config.project_type,
+                "path": str(self.project_dir),
+                "version": self.result.project_config.project_version,
+                "description": self.result.project_config.description,
+            }
 
         # Build EmitterConfig from options
         emitter_config = EmitterConfig(
@@ -222,6 +236,8 @@ class ProjectSession:
             indent=options.get("indent", 2),
             encoding=options.get("encoding", "utf-8"),
             overwrite=options.get("overwrite", True),
+            kinds=options.get("kinds", ["workflow"]),  # For record format
+            project_info=project_info,  # For project records
         )
 
         if output_path is None:
@@ -229,6 +245,7 @@ class ProjectSession:
             import dataclasses
             from ..stages.emit.renderers.json_renderer import JsonRenderer
             from ..stages.emit.renderers.mermaid_renderer import MermaidRenderer
+            from ..stages.emit.renderers.record_renderer import RecordRenderer
             from ..stages.emit.filters.field_filter import FieldFilter
             from ..stages.emit.filters.none_filter import NoneFilter
 
@@ -240,6 +257,8 @@ class ProjectSession:
             elif format == "doc":
                 from ..stages.emit.renderers.doc_renderer import DocRenderer
                 renderer = DocRenderer()
+            elif format == "record":
+                renderer = RecordRenderer()
             else:
                 raise ValueError(f"Unsupported format for string output: {format}")
 
@@ -247,11 +266,13 @@ class ProjectSession:
             workflow_dicts = [dataclasses.asdict(wf) for wf in workflows]
 
             # Apply filters (same as pipeline does)
+            # CRITICAL: Bypass filters for record format to prevent schema validation failures
             filters = []
-            if emitter_config.exclude_none:
-                filters.append(NoneFilter())
-            if emitter_config.field_profile != "full":
-                filters.append(FieldFilter(profile=emitter_config.field_profile))
+            if format != "record":
+                if emitter_config.exclude_none:
+                    filters.append(NoneFilter())
+                if emitter_config.field_profile != "full":
+                    filters.append(FieldFilter(profile=emitter_config.field_profile))
 
             if filters:
                 # Apply filters to each workflow

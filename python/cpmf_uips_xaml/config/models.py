@@ -50,7 +50,7 @@ class EmitterConfig:
     Controls how parsed data is serialized and output.
     """
 
-    format: Literal["json", "mermaid", "doc"]
+    format: Literal["json", "mermaid", "doc", "record"]
     combine: bool
     pretty: bool
     exclude_none: bool
@@ -58,6 +58,8 @@ class EmitterConfig:
     indent: int
     encoding: str
     overwrite: bool
+    kinds: list[str] = field(default_factory=lambda: ["workflow"])  # For record format
+    project_info: dict[str, Any] | None = None  # For project records in record format
     extra: dict[str, Any] = field(default_factory=dict)
 
 

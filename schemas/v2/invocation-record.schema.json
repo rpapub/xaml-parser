@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cpmf-uips-xaml.schemas/v2/invocation-record.schema.json",
+  "title": "Invocation Record Payload",
+  "description": "Workflow invocation relationship for external consumption (v2 contract)",
+  "type": "object",
+  "properties": {
+    "caller_workflow_id": {
+      "type": "string",
+      "description": "Calling workflow ID",
+      "pattern": "^wf:sha256:[a-f0-9]{64}$"
+    },
+    "caller_activity_id": {
+      "type": "string",
+      "description": "Calling activity ID",
+      "pattern": "^act:sha256:[a-f0-9]{64}$"
+    },
+    "callee_workflow_id": {
+      "type": ["string", "null"],
+      "description": "Called workflow ID (null if unresolved)",
+      "pattern": "^wf:sha256:[a-f0-9]{64}$"
+    },
+    "callee_workflow_path": {
+      "type": ["string", "null"],
+      "description": "Called workflow path (raw)"
+    },
+    "invocation_type": {
+      "type": "string",
+      "description": "Type of invocation",
+      "enum": ["InvokeWorkflow", "InvokeWorkflowFile", "DynamicInvoke"]
+    }
+  },
+  "required": ["caller_workflow_id", "caller_activity_id", "invocation_type"]
+}

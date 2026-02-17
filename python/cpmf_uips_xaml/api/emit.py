@@ -10,7 +10,7 @@ from ..config.models import EmitterConfig
 from ..shared.model.dto import WorkflowDto
 from ..stages.emit.filters import FieldFilter, NoneFilter
 from ..stages.emit.pipeline import EmitPipeline, PipelineResult
-from ..stages.emit.renderers import DocRenderer, JsonRenderer, MermaidRenderer
+from ..stages.emit.renderers import DocRenderer, JsonRenderer, MermaidRenderer, RecordRenderer
 from ..stages.emit.sinks import FileSink, StdoutSink
 
 
@@ -48,8 +48,10 @@ def emit_workflows(
         renderer = MermaidRenderer()
     elif config.format == "doc":
         renderer = DocRenderer()
+    elif config.format == "record":
+        renderer = RecordRenderer()
     else:
-        raise ValueError(f"Unknown format: {config.format}. Valid: json, mermaid, doc")
+        raise ValueError(f"Unknown format: {config.format}. Valid: json, mermaid, doc, record")
 
     # Choose sink (stdout if path is "-")
     if str(output_path) == "-":
@@ -60,11 +62,14 @@ def emit_workflows(
         destination = output_path
 
     # Build filter chain
+    # CRITICAL: Bypass filters for record format to prevent schema validation failures
+    # Record payloads are curated and must match schemas exactly
     filters = []
-    if config.field_profile != "full":
-        filters.append(FieldFilter(profile=config.field_profile))
-    if config.exclude_none:
-        filters.append(NoneFilter())
+    if config.format != "record":
+        if config.field_profile != "full":
+            filters.append(FieldFilter(profile=config.field_profile))
+        if config.exclude_none:
+            filters.append(NoneFilter())
 
     # Create and execute pipeline
     pipeline = EmitPipeline(
@@ -155,6 +160,8 @@ def create_pipeline(
         renderer = MermaidRenderer()
     elif format == "doc":
         renderer = DocRenderer()
+    elif format == "record":
+        renderer = RecordRenderer()
     else:
         raise ValueError(f"Unknown format: {format}")
 
@@ -167,11 +174,13 @@ def create_pipeline(
         raise ValueError(f"Unknown sink type: {sink_type}")
 
     # Build filters
+    # CRITICAL: Bypass filters for record format to prevent schema validation failures
     filters = []
-    if field_profile != "full":
-        filters.append(FieldFilter(profile=field_profile))
-    if exclude_none:
-        filters.append(NoneFilter())
+    if format != "record":
+        if field_profile != "full":
+            filters.append(FieldFilter(profile=field_profile))
+        if exclude_none:
+            filters.append(NoneFilter())
 
     return EmitPipeline(
         renderer=renderer,

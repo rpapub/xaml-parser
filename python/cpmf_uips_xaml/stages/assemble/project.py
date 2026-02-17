@@ -44,6 +44,7 @@ class ProjectConfig:
     """Configuration loaded from project.json."""
 
     name: str
+    project_type: str = "Process"  # Process, Library, BusinessProcess, etc.
     main: str | None = None
     description: str | None = None
     expression_language: str = "VisualBasic"
@@ -271,8 +272,15 @@ class ProjectParser:
         with open(project_json_path, encoding="utf-8") as f:
             data = json.load(f)
 
+        # Extract project type, normalize to schema enum values
+        project_type = data.get("projectType", "Process")
+        # Normalize to schema enum: Process or Library (BusinessProcess → Process)
+        if project_type not in ("Process", "Library"):
+            project_type = "Process"  # Default for unknown types
+
         return ProjectConfig(
             name=data.get("name", "Unknown"),
+            project_type=project_type,
             main=data.get("main"),
             description=data.get("description"),
             expression_language=data.get("expressionLanguage", "VisualBasic"),
@@ -661,6 +669,7 @@ def project_result_to_dto(
         project_info = ProjectInfo(
             name=config.name,
             path=str(project_result.project_dir),
+            project_type=config.project_type,  # From project.json projectType
             project_id=config.raw_data.get("projectId"),
             description=config.description,
             project_version=config.project_version,

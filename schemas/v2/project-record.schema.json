@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cpmf-uips-xaml.schemas/v2/project-record.schema.json",
+  "title": "Project Record Payload",
+  "description": "Project metadata for external consumption (v2 contract)",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Project name"
+    },
+    "type": {
+      "type": "string",
+      "description": "Project type",
+      "enum": ["Process", "Library"]
+    },
+    "path": {
+      "type": "string",
+      "description": "Project root path"
+    },
+    "version": {
+      "type": ["string", "null"],
+      "description": "Project version"
+    },
+    "description": {
+      "type": ["string", "null"],
+      "description": "Project description"
+    }
+  },
+  "required": ["name", "type", "path"]
+}

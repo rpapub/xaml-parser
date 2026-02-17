@@ -4,6 +4,7 @@ from .base import Renderer, RenderResult
 from .doc_renderer import DocRenderer
 from .json_renderer import JsonRenderer
 from .mermaid_renderer import MermaidRenderer
+from .record_renderer import RecordRenderer
 
 __all__ = [
     "Renderer",
@@ -11,4 +12,5 @@ __all__ = [
     "JsonRenderer",
     "MermaidRenderer",
     "DocRenderer",
+    "RecordRenderer",
 ]
