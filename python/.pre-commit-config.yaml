@@ -1,0 +1,30 @@
+# Pre-commit hooks for xaml-parser
+# https://pre-commit.com/
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      - id: ruff
+        args: [--fix, --extend-ignore, E501, --extend-ignore, B019]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.2
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-defusedxml
+        # Config from pyproject.toml [tool.mypy] section
+        files: ^python/cpmf_uips_xaml/(dto|id_generation|control_flow|normalization|emitters|validation)\.py$
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: debug-statements

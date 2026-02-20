@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cpmf-uips-xaml.schemas/v2/argument-record.schema.json",
+  "title": "Argument Record Payload",
+  "description": "Workflow argument record for external consumption (v2 contract)",
+  "type": "object",
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "description": "Parent workflow ID for traceability",
+      "pattern": "^wf:sha256:[a-f0-9]{64}$"
+    },
+    "name": {
+      "type": "string",
+      "description": "Argument name"
+    },
+    "type": {
+      "type": ["string", "null"],
+      "description": "Argument type"
+    },
+    "direction": {
+      "type": "string",
+      "description": "Argument direction",
+      "enum": ["In", "Out", "InOut"]
+    },
+    "default_value": {
+      "type": ["string", "null"],
+      "description": "Default value"
+    },
+    "annotation": {
+      "type": ["string", "null"],
+      "description": "Raw annotation text"
+    }
+  },
+  "required": ["workflow_id", "name", "direction"]
+}

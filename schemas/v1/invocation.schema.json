@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rpapub/xaml-parser/schemas/invocation.schema.json",
+  "title": "Workflow Invocation",
+  "description": "Workflow invocation reference (call from one workflow to another)",
+  "version": "1.0.0",
+  "type": "object",
+  "properties": {
+    "callee_id": {
+      "type": "string",
+      "pattern": "^wf:sha256:[a-f0-9]{16}$",
+      "description": "Called workflow ID"
+    },
+    "callee_path": {
+      "type": "string",
+      "description": "Called workflow file path (relative to project root)"
+    },
+    "via_activity_id": {
+      "type": "string",
+      "pattern": "^act:sha256:[a-f0-9]{16}$",
+      "description": "InvokeWorkflowFile activity that performs the call"
+    }
+  },
+  "required": ["callee_id", "callee_path", "via_activity_id"],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "callee_id": "wf:sha256:abc123def456",
+      "callee_path": "Framework/InitAllSettings.xaml",
+      "via_activity_id": "act:sha256:def456abc123"
+    },
+    {
+      "callee_id": "wf:sha256:ghi789jkl012",
+      "callee_path": "BusinessLogic/ProcessTransaction.xaml",
+      "via_activity_id": "act:sha256:mno345pqr678"
+    }
+  ]
+}

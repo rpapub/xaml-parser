@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cpmf-uips-xaml.schemas/v2/activity-record.schema.json",
+  "title": "Activity Record Payload",
+  "description": "Activity record for external consumption (v2 contract)",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Activity ID",
+      "pattern": "^act:sha256:[a-f0-9]{64}$"
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "Parent workflow ID for traceability",
+      "pattern": "^wf:sha256:[a-f0-9]{64}$"
+    },
+    "type": {
+      "type": "string",
+      "description": "Activity type (full namespace)"
+    },
+    "type_short": {
+      "type": ["string", "null"],
+      "description": "Short activity type name"
+    },
+    "display_name": {
+      "type": ["string", "null"],
+      "description": "Activity display name"
+    },
+    "depth": {
+      "type": "integer",
+      "description": "Nesting depth in activity tree",
+      "minimum": 0
+    },
+    "children": {
+      "type": "array",
+      "description": "Child activity IDs",
+      "items": {
+        "type": "string"
+      }
+    },
+    "annotation": {
+      "type": ["string", "null"],
+      "description": "Raw annotation text"
+    },
+    "annotation_tags": {
+      "type": "array",
+      "description": "Parsed annotation tags (curated)",
+      "items": {
+        "$ref": "#/definitions/AnnotationTag"
+      }
+    },
+    "properties": {
+      "type": "object",
+      "description": "Curated activity properties (specific keys only)",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "workflow_id",
+    "type",
+    "depth",
+    "children",
+    "annotation_tags"
+  ],
+  "definitions": {
+    "AnnotationTag": {
+      "type": "object",
+      "description": "Parsed annotation tag",
+      "properties": {
+        "tag": {
+          "type": "string",
+          "description": "Tag name without @ prefix"
+        },
+        "value": {
+          "type": ["string", "null"],
+          "description": "Tag value"
+        }
+      },
+      "required": ["tag"]
+    }
+  }
+}

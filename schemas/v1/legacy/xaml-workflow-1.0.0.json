@@ -1,0 +1,386 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rpax.io/schemas/xaml-workflow-1.0.0.json",
+  "title": "XAML Workflow",
+  "description": "Schema for parsed XAML workflow with stable IDs and complete business logic",
+  "type": "object",
+  "required": ["schema_id", "schema_version", "id", "name"],
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "const": "https://rpax.io/schemas/xaml-workflow.json",
+      "description": "JSON Schema URL"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version (semver)"
+    },
+    "collected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Collection timestamp (ISO 8601 UTC)"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^wf:sha256:[a-f0-9]{16}$",
+      "description": "Stable workflow ID (content-hash based)"
+    },
+    "name": {
+      "type": "string",
+      "description": "Workflow name"
+    },
+    "source": {
+      "$ref": "#/$defs/SourceInfo"
+    },
+    "metadata": {
+      "$ref": "#/$defs/WorkflowMetadata"
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/VariableDto"
+      }
+    },
+    "arguments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ArgumentDto"
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/DependencyDto"
+      }
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ActivityDto"
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/EdgeDto"
+      }
+    },
+    "invocations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/InvocationDto"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/IssueDto"
+      }
+    }
+  },
+  "$defs": {
+    "SourceInfo": {
+      "type": "object",
+      "required": ["path", "hash"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "Current relative path (POSIX format)"
+        },
+        "path_aliases": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Historical paths for rename tracking"
+        },
+        "hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$",
+          "description": "Full SHA-256 hash of normalized XML"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "File size in bytes"
+        },
+        "encoding": {
+          "type": "string",
+          "default": "utf-8",
+          "description": "Character encoding"
+        }
+      }
+    },
+    "LocationInfo": {
+      "type": "object",
+      "properties": {
+        "line": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Line number (1-indexed)"
+        },
+        "column": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Column number (1-indexed)"
+        },
+        "xpath": {
+          "type": "string",
+          "description": "XPath location"
+        }
+      }
+    },
+    "WorkflowMetadata": {
+      "type": "object",
+      "properties": {
+        "project_name": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "expression_language": {
+          "type": "string",
+          "enum": ["VisualBasic", "CSharp"],
+          "default": "VisualBasic"
+        },
+        "annotation": {
+          "type": "string"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "ArgumentDto": {
+      "type": "object",
+      "required": ["id", "name", "type", "direction"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable argument ID"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "description": "Full .NET type signature"
+        },
+        "direction": {
+          "type": "string",
+          "enum": ["In", "Out", "InOut"]
+        },
+        "annotation": {
+          "type": "string"
+        },
+        "default_value": {
+          "type": "string"
+        }
+      }
+    },
+    "VariableDto": {
+      "type": "object",
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "description": "Full .NET type signature"
+        },
+        "scope": {
+          "type": "string",
+          "default": "workflow"
+        },
+        "default_value": {
+          "type": "string"
+        }
+      }
+    },
+    "DependencyDto": {
+      "type": "object",
+      "required": ["package", "version"],
+      "properties": {
+        "package": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      }
+    },
+    "ActivityDto": {
+      "type": "object",
+      "required": ["id", "type", "type_short"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^act:sha256:[a-f0-9]{16}$",
+          "description": "Stable activity ID (content-hash based)"
+        },
+        "type": {
+          "type": "string",
+          "description": "Fully-qualified .NET type"
+        },
+        "type_short": {
+          "type": "string",
+          "description": "Short type name"
+        },
+        "display_name": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/$defs/LocationInfo"
+        },
+        "parent_id": {
+          "type": "string",
+          "pattern": "^act:sha256:[a-f0-9]{16}$"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^act:sha256:[a-f0-9]{16}$"
+          }
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "properties": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "in_args": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "out_args": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "annotation": {
+          "type": "string"
+        },
+        "expressions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "variables_referenced": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "selectors": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "EdgeDto": {
+      "type": "object",
+      "required": ["id", "from_id", "to_id", "kind"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^edge:sha256:[a-f0-9]{16}$"
+        },
+        "from_id": {
+          "type": "string",
+          "pattern": "^act:sha256:[a-f0-9]{16}$"
+        },
+        "to_id": {
+          "type": "string",
+          "pattern": "^act:sha256:[a-f0-9]{16}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "Then",
+            "Else",
+            "Next",
+            "True",
+            "False",
+            "Case",
+            "Default",
+            "Catch",
+            "Finally",
+            "Link",
+            "Transition",
+            "Branch",
+            "Retry",
+            "Timeout",
+            "Done",
+            "Trigger"
+          ]
+        },
+        "condition": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        }
+      }
+    },
+    "InvocationDto": {
+      "type": "object",
+      "required": ["callee_id", "callee_path", "via_activity_id"],
+      "properties": {
+        "callee_id": {
+          "type": "string",
+          "pattern": "^wf:sha256:[a-f0-9]{16}$"
+        },
+        "callee_path": {
+          "type": "string"
+        },
+        "via_activity_id": {
+          "type": "string",
+          "pattern": "^act:sha256:[a-f0-9]{16}$"
+        },
+        "arguments_passed": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "IssueDto": {
+      "type": "object",
+      "required": ["level", "message"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["error", "warning", "info"]
+        },
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

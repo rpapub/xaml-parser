@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rpax.io/schemas/xaml-workflow-collection-1.0.0.json",
+  "title": "XAML Workflow Collection",
+  "description": "Schema for a collection of parsed XAML workflows (project-level)",
+  "type": "object",
+  "required": ["schema_id", "schema_version", "workflows"],
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "const": "https://rpax.io/schemas/xaml-workflow-collection.json",
+      "description": "JSON Schema URL for collection"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version (semver)"
+    },
+    "collected_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Collection timestamp (ISO 8601 UTC)"
+    },
+    "project": {
+      "$ref": "#/$defs/ProjectInfo"
+    },
+    "workflows": {
+      "type": "array",
+      "items": {
+        "$ref": "https://rpax.io/schemas/xaml-workflow-1.0.0.json"
+      },
+      "description": "List of workflows in the project"
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/IssueDto"
+      },
+      "description": "Collection-level issues"
+    }
+  },
+  "$defs": {
+    "ProjectInfo": {
+      "type": "object",
+      "required": ["name", "path"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Project name"
+        },
+        "path": {
+          "type": "string",
+          "description": "Project path"
+        },
+        "main_workflow": {
+          "type": "string",
+          "pattern": "^wf:sha256:[a-f0-9]{16}$",
+          "description": "Main workflow ID"
+        }
+      }
+    },
+    "IssueDto": {
+      "type": "object",
+      "required": ["level", "message"],
+      "properties": {
+        "level": {
+          "type": "string",
+          "enum": ["error", "warning", "info"]
+        },
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

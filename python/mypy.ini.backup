@@ -1,0 +1,26 @@
+[mypy]
+python_version = 3.11
+warn_return_any = False
+warn_unused_configs = True
+disallow_untyped_defs = False
+disallow_any_generics = False
+disallow_subclassing_any = False
+disallow_untyped_calls = False
+disallow_incomplete_defs = False
+check_untyped_defs = False
+no_implicit_optional = False
+warn_redundant_casts = True
+warn_unused_ignores = False
+warn_no_return = False
+warn_unreachable = False
+strict_equality = False
+
+# Strict checking for new DTO layer
+[mypy-xaml_parser.dto]
+strict = True
+disallow_untyped_defs = True
+no_implicit_optional = True
+
+# Allow dynamic typing for external dependencies
+[mypy-defusedxml.*]
+ignore_missing_imports = True

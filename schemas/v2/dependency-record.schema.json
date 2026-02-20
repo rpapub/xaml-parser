@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cpmf-uips-xaml.schemas/v2/dependency-record.schema.json",
+  "title": "Dependency Record Payload",
+  "description": "Package dependency for external consumption (v2 contract)",
+  "type": "object",
+  "properties": {
+    "package_id": {
+      "type": "string",
+      "description": "Package identifier (e.g., UiPath.System.Activities)"
+    },
+    "version": {
+      "type": "string",
+      "description": "Package version"
+    },
+    "source": {
+      "type": ["string", "null"],
+      "description": "Package source (e.g., UiPath Official Feed)"
+    },
+    "dependency_type": {
+      "type": "string",
+      "description": "Type of dependency",
+      "enum": ["direct", "transitive"]
+    }
+  },
+  "required": ["package_id", "version", "dependency_type"]
+}

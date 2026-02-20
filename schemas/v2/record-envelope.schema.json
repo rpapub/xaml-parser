@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cpmf-uips-xaml.schemas/v2/record-envelope.schema.json",
+  "title": "Record Envelope",
+  "description": "Versioned record envelope for stable external consumption",
+  "type": "object",
+  "properties": {
+    "schema_id": {
+      "type": "string",
+      "description": "Schema identifier URI",
+      "pattern": "^cpmf-uips-xaml://v2/[a-z-]+$",
+      "examples": [
+        "cpmf-uips-xaml://v2/workflow-record",
+        "cpmf-uips-xaml://v2/activity-record"
+      ]
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Semantic version of the schema",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "examples": ["2.0.0"]
+    },
+    "kind": {
+      "type": "string",
+      "description": "Record type discriminator",
+      "enum": [
+        "project",
+        "workflow",
+        "activity",
+        "argument",
+        "invocation",
+        "issue",
+        "dependency"
+      ]
+    },
+    "payload": {
+      "type": "object",
+      "description": "Kind-specific payload matching the schema_id"
+    }
+  },
+  "required": ["schema_id", "schema_version", "kind", "payload"],
+  "additionalProperties": false
+}

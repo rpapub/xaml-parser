@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+*.egg-info/
+dist/
+/build/
+**/dist/build/
+.venv/
+venv/
+env/
+ENV/
+*.egg
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+.ruff_cache/
+.mypy_cache/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.vs/
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+*.log
+.env
+.env.local
+.secrets
+.cpmf_uips_xaml.json
+
+# Test artifacts
+.test-artifacts/
+*_TEST_RESULTS.md
+*_analysis.json
+analyze_*.py
+process-analysis.json/
+test-output-dto.json/
+python/coverage.json
+python/test_results.txt
+python/workflows.json
+python/InitAllSettings.json
+test_minimal.json
+test_output.json
