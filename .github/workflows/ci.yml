@@ -36,7 +36,7 @@ jobs:
         working-directory: python
         run: |
           uv run pytest tests/ \
-            --cov=cpmf_xaml_parser \
+            --cov=cpmf_uips_xaml \
             --cov-report=term-missing \
             --cov-report=xml \
             --cov-fail-under=90 \
@@ -70,11 +70,11 @@ jobs:
 
       - name: Run ruff linting
         working-directory: python
-        run: uv run ruff check cpmf_xaml_parser/ tests/
+        run: uv run ruff check cpmf_uips_xaml/ tests/
 
       - name: Run ruff format check
         working-directory: python
-        run: uv run ruff format --check cpmf_xaml_parser/ tests/
+        run: uv run ruff format --check cpmf_uips_xaml/ tests/
 
   type-check:
     name: Type Check
@@ -97,7 +97,7 @@ jobs:
 
       - name: Run mypy
         working-directory: python
-        run: uv run mypy cpmf_xaml_parser/
+        run: uv run mypy cpmf_uips_xaml/
 
   build:
     name: Build Distribution
