@@ -788,16 +788,20 @@ class ActivityExtractor:
             expressions.extend(extracted_expressions)
 
         # Child-element expression syntax: <VisualBasicValue ExpressionText="..." />
-        # ExpressionText contains the raw VB.NET/C# expression (no brackets), so add directly.
-        for descendant in element.iter():
-            tag = descendant.tag.split("}")[-1] if "}" in descendant.tag else descendant.tag
-            if tag in _EXPR_ELEMENT_TAGS:
-                expr_text = descendant.get("ExpressionText")
-                if expr_text:
-                    expressions.append(expr_text)
-                # Older serializations may embed the expression as element text
-                if descendant.text and descendant.text.strip():
-                    expressions.append(descendant.text.strip())
+        # Only descend into dotted property containers (e.g. Assign.To, InvokeMethod.Parameters)
+        # to avoid walking into child activities and causing quadratic expression accumulation.
+        for child in element:
+            child_tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+            if "." not in child_tag:
+                continue
+            for descendant in child.iter():
+                tag = descendant.tag.split("}")[-1] if "}" in descendant.tag else descendant.tag
+                if tag in _EXPR_ELEMENT_TAGS:
+                    expr_text = descendant.get("ExpressionText")
+                    if expr_text:
+                        expressions.append(expr_text)
+                    if descendant.text and descendant.text.strip():
+                        expressions.append(descendant.text.strip())
 
         return list(set(expressions))  # Remove duplicates
 
