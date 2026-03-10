@@ -1127,6 +1127,98 @@ class TestActivityExtractorExpressions:
         if len(expressions) > 0:
             assert any("[" in expr or "(" in expr for expr in expressions)
 
+    def test_extract_expressions_from_visual_basic_value_element(self):
+        """VisualBasicValue ExpressionText is extracted as an expression."""
+        xaml = """<?xml version="1.0"?>
+<InvokeMethod
+    xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sd="clr-namespace:System.Data;assembly=System.Data"
+    MethodName="Foo">
+  <InvokeMethod.Parameters>
+    <InArgument x:TypeArguments="sd:DataTable">
+      <VisualBasicValue x:TypeArguments="sd:DataTable" ExpressionText="lookupData" />
+    </InArgument>
+  </InvokeMethod.Parameters>
+</InvokeMethod>"""
+        root = parse_xaml_string(xaml)
+        extractor = create_activity_extractor()
+
+        expressions = extractor._extract_business_logic_expressions(root)
+
+        assert "lookupData" in expressions
+
+    def test_extract_expressions_from_visual_basic_reference_element(self):
+        """VisualBasicReference ExpressionText contributes to expressions."""
+        xaml = """<?xml version="1.0"?>
+<Assign
+    xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sd="clr-namespace:System.Data;assembly=System.Data">
+  <Assign.To>
+    <OutArgument x:TypeArguments="sd:DataTable">
+      <VisualBasicReference x:TypeArguments="sd:DataTable" ExpressionText="myVar" />
+    </OutArgument>
+  </Assign.To>
+</Assign>"""
+        root = parse_xaml_string(xaml)
+        extractor = create_activity_extractor()
+
+        expressions = extractor._extract_business_logic_expressions(root)
+
+        assert "myVar" in expressions
+
+    def test_mixed_bracket_and_element_syntax_same_activity(self):
+        """Activities using both [expr] attributes and VisualBasicValue children are both extracted."""
+        xaml = """<?xml version="1.0"?>
+<InvokeMethod
+    xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sd="clr-namespace:System.Data;assembly=System.Data"
+    MethodName="Validate"
+    TargetObject="[servicePoint]">
+  <InvokeMethod.Parameters>
+    <InArgument x:TypeArguments="sd:DataTable">
+      <VisualBasicValue x:TypeArguments="sd:DataTable" ExpressionText="lookupData" />
+    </InArgument>
+  </InvokeMethod.Parameters>
+</InvokeMethod>"""
+        root = parse_xaml_string(xaml)
+        extractor = create_activity_extractor()
+
+        expressions = extractor._extract_business_logic_expressions(root)
+
+        assert "lookupData" in expressions
+        # Bracket syntax strips delimiters: [servicePoint] → servicePoint
+        assert "servicePoint" in expressions
+
+    def test_extract_arguments_from_child_element_syntax(self):
+        """_extract_activity_arguments captures ExpressionText from InArgument children."""
+        xaml = """<?xml version="1.0"?>
+<InvokeMethod
+    xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sd="clr-namespace:System.Data;assembly=System.Data"
+    MethodName="Foo">
+  <InvokeMethod.Parameters>
+    <InArgument x:TypeArguments="sd:DataTable">
+      <VisualBasicValue x:TypeArguments="sd:DataTable" ExpressionText="in_LookupData" />
+    </InArgument>
+    <InArgument x:TypeArguments="x:String">
+      <VisualBasicValue x:TypeArguments="x:String" ExpressionText="in_RulesString" />
+    </InArgument>
+  </InvokeMethod.Parameters>
+</InvokeMethod>"""
+        root = parse_xaml_string(xaml)
+        extractor = create_activity_extractor()
+
+        arguments = extractor._extract_activity_arguments(root)
+
+        assert "InvokeMethod.Parameters" in arguments
+        params = arguments["InvokeMethod.Parameters"]
+        assert "in_LookupData" in params
+        assert "in_RulesString" in params
+
 
 # ============================================================================
 # Test ActivityExtractor - Activity Instance Extraction (ADR-009)
