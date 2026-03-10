@@ -20,6 +20,15 @@ from .visibility import get_local_tag, get_visible_elements, is_visible_element
 if TYPE_CHECKING:
     from .parser import XamlDialect
 
+# Tags that carry VB.NET / C# expressions as an ExpressionText attribute or element text,
+# used by the "child-element expression syntax" (Syntax B) introduced in newer UiPath Studio.
+_EXPR_ELEMENT_TAGS = frozenset({
+    "VisualBasicValue",
+    "VisualBasicReference",
+    "CSharpValue",
+    "CSharpReference",
+})
+
 
 class ArgumentExtractor:
     """Extracts workflow arguments from x:Members section."""
@@ -669,6 +678,25 @@ class ActivityExtractor:
                 clean_name = attr_name.split("}")[-1] if "}" in attr_name else attr_name
                 arguments[clean_name] = attr_value
 
+        # Child-element argument syntax:
+        # <Activity.Parameters><InArgument><VisualBasicValue ExpressionText="x"/></InArgument></Activity.Parameters>
+        for child in element:
+            child_tag = get_local_tag(child)
+            if "." in child_tag:
+                for param_child in child:
+                    param_tag = get_local_tag(param_child)
+                    if param_tag in ("InArgument", "OutArgument", "InOutArgument"):
+                        for expr_elem in param_child:
+                            expr_tag = get_local_tag(expr_elem)
+                            if expr_tag in _EXPR_ELEMENT_TAGS:
+                                expr_text = expr_elem.get("ExpressionText")
+                                if expr_text:
+                                    existing = arguments.get(child_tag)
+                                    if existing is None:
+                                        arguments[child_tag] = [expr_text]
+                                    elif isinstance(existing, list):
+                                        existing.append(expr_text)
+
         return arguments
 
     def _extract_visible_properties(self, element: ET.Element) -> dict[str, Any]:
@@ -758,6 +786,18 @@ class ActivityExtractor:
         if element.text:
             extracted_expressions = self.activity_utils.extract_expressions_from_text(element.text)
             expressions.extend(extracted_expressions)
+
+        # Child-element expression syntax: <VisualBasicValue ExpressionText="..." />
+        # ExpressionText contains the raw VB.NET/C# expression (no brackets), so add directly.
+        for descendant in element.iter():
+            tag = descendant.tag.split("}")[-1] if "}" in descendant.tag else descendant.tag
+            if tag in _EXPR_ELEMENT_TAGS:
+                expr_text = descendant.get("ExpressionText")
+                if expr_text:
+                    expressions.append(expr_text)
+                # Older serializations may embed the expression as element text
+                if descendant.text and descendant.text.strip():
+                    expressions.append(descendant.text.strip())
 
         return list(set(expressions))  # Remove duplicates
 
